@@ -16,13 +16,13 @@ export default function App() {
     createRoutesFromElements(
       <>
         <Route path="/" element={<RootLayout />}>
-          <Route index element={<Home />} />
+          <Route index element={<Signup />} />
           <Route path="product-detail" element={<Product_detail />} />
           <Route path="compare-product" element={<Compare />} />
           <Route path="add-to-favorite" element={<Add_to_favorite />} />
           <Route path="payment" element={<Payment />} />
           <Route path="User-Profile" element={<UserProfile />} />
-          <Route path="After-Home-Page" element={<After_home_page/>} />
+          <Route path="After-Home-Page" element={<After_home_page />} />
         </Route>
         <Route path="/Auth" element={<AuthLayout />}>
           <Route path="Signup" element={<Signup />} />
