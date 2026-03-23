@@ -17,7 +17,7 @@ const RootLayOut = () => {
           {/* Logo */}
           <div className="flex justify-center mb-8">
             <NavLink to="/">
-              <img src={logo} alt="App logo" className="w-40 lg:w-44" />
+              <img src={logo} alt="App logo" className="w-70 lg:w-70" />
             </NavLink>
           </div>
 

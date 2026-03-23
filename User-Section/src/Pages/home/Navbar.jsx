@@ -63,14 +63,14 @@ const Navbar = ({ token, onLogin, onLogout }) => {
         <div className="flex justify-between items-center h-20">
           {/* Logo and Name */}
           <div className="flex items-center">
-            {/* <Link to="/">
-              <img src={logo} alt="Phone Shop Logo" className="h-10 w-10" />
-            </Link> */}
             <Link to="/">
-              <span className="text-green-600 text-4xl font-bold ml-2">
-                Phone Shop
-              </span>
+              <img src={logo} alt="Phone Shop Logo" className="h-40 w-65" />
             </Link>
+            {/* <Link to="/">             
+                <span className="text-green-600 text-4xl font-bold ml-2 font-poppins tracking-wider">
+                  Genius Store
+                </span>
+            </Link> */}
           </div>
 
           {/* Search Bar */}

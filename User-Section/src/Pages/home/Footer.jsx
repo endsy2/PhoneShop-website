@@ -36,7 +36,7 @@ const Footer = () => {
             </div>
             <div className="flex">
               <img src={email} alt="" className="w-auto h-6" />
-              <a href="#">Email: thongvathana22@gmail.com</a>
+              <a href="#">Email: GeniusStore168@gmail.com</a>
             </div>
           </div>
         </div>
@@ -61,7 +61,7 @@ const Footer = () => {
         {/* Left Section */}
         <div className="w-1/2">
           <p>
-            <span className="text-[22px] font-bold">Phone Shop</span> in Phnom
+            <span className="text-[22px] font-bold">Genius Store</span> in Phnom
             Penh buys and sells all kinds of smart phones, smartwatches,
             tablets, and accessories. Shop with us to get the best deals.
           </p>
@@ -69,8 +69,8 @@ const Footer = () => {
 
         {/* Right Section */}
         <div className="text-right w-1/2">
-          <p>onlinephoneshop@gmail.com</p>
-          <p className="font-bold">© COPYRIGHT PHONE SHOP</p>
+          <p>GeniusStore168@gmail.com</p>
+          <p className="font-bold">© COPYRIGHT GENIUS STORE</p>
         </div>
       </div>
     </div>

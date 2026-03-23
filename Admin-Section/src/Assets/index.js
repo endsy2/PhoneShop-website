@@ -1,5 +1,5 @@
 import dashboard from "../Assets/dashboard.svg";
-import logo from "../Assets/logo.svg";
+import logo from "../Assets/logo2.png";
 import offer from "../Assets/offer.svg";
 import order from "../Assets/order.svg";
 import product from "../Assets/product.svg";

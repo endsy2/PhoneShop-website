@@ -1,4 +1,4 @@
-import logo from "../Assets/phone-shop-logo.png";
+import logo from "../Assets/logo2.png";
 import desertColor from "../Assets/desert-titanium.png";
 import blackColor from "../Assets/black-titanium.png";
 import silverColor from "../Assets/silver-titanium.png";

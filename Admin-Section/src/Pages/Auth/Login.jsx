@@ -73,7 +73,7 @@ const Login = () => {
             </button>
             <Link
               to="/register"
-              className="font-bold px-8 py-4 rounded-xl bg-red-600 text-black hover:text-gray-700 hover:bg-red-500"
+              className="font-bold px-8 py-4 rounded-xl bg-red-600 text-white hover:text-gray-700 hover:bg-red-500"
             >
               Register
             </Link>
