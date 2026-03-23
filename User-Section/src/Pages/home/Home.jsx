@@ -225,7 +225,7 @@ const HomePage = () => {
       </div>
 
       {/* New-Arrival section */}
-      {/* <div className="px-8 py-4 bg-gray-100 rounded-lg mb-4">
+       <div className="px-8 py-4 bg-gray-100 rounded-lg mb-4">
         <div className="flex justify-between items-center">
           <h2 className="text-3xl font-extrabold text-gray-900 my-2">
             NEW ARRIVAL
@@ -237,14 +237,15 @@ const HomePage = () => {
             VIEW ALL
           </Link>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 mt-4 mb-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 mt-4 mb-4 ">
           {newArrival.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
-      </div> */}
+      </div> 
+{/*       
 
-      <div className="slider-container px-20 py-4">
+      <div className="slider-container px-8 py-4">
         <div className="flex justify-between">
           <h2 className="text-3xl font-extrabold text-gray-900 mb-4">
             NEW ARRIVAL
@@ -263,7 +264,9 @@ const HomePage = () => {
             </div>
           ))}
         </Slider>
-      </div>
+      </div> */}
+      
+  
 
       {/* Categories section */}
       {/* Smartphones section */}
