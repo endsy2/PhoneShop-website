@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { addNewProductAPI } from "../../Fetch/FetchAPI";
+import { addNewProductAPI, brandFetch, categoryFetch, productData } from "../../Fetch/FetchAPI";
 
 
 const AddProduct = ({ product_id }) => {
@@ -24,10 +24,39 @@ const AddProduct = ({ product_id }) => {
   const [battery, setBattery] = useState('');
   const [error, setError] = useState('')
   const [result, setResult] = useState('')
+  const [brandList, setBrandList] = useState([]);
+  const [categoryList, setCategoryList] = useState([]);
 
   useEffect(() => {
     setID(product_id)
   }, [product_id])
+
+  useEffect(() => {
+    const loadSelectOptions = async () => {
+      try {
+        const categoryResult = await categoryFetch();
+        const fetchedCategories = categoryResult?.data || [];
+        setCategoryList(fetchedCategories);
+
+        const brandResult = await brandFetch();
+        const fetchedBrands = brandResult?.data || [];
+
+        // Fallback to derive brands from products if brand endpoint has no data.
+        if (fetchedBrands.length > 0) {
+          setBrandList(fetchedBrands);
+        } else {
+          const productsResponse = await productData();
+          const products = productsResponse?.data?.data || productsResponse?.data || [];
+          const uniqueBrands = [...new Set(products.map((item) => item.brand).filter(Boolean))].map((name) => ({ brand_name: name }));
+          setBrandList(uniqueBrands);
+        }
+      } catch (err) {
+        console.log(err);
+      }
+    };
+
+    loadSelectOptions();
+  }, []);
 
 
   const handleImageChange = (e) => {
@@ -127,15 +156,23 @@ const AddProduct = ({ product_id }) => {
           <label className="text-sm font-medium text-primary mb-2">
             Category
           </label>
-          <input
-            type="text"
+          <select
             name="name_category"
-            placeholder="Enter product category"
             value={category}
             className="input-style"
             onChange={(e) => setCategory(e.target.value)}
             required
-          />
+          >
+            <option value="" disabled>Select category</option>
+            {categoryList.map((item, index) => (
+              <option
+                key={item.category_name || item.category || index}
+                value={item.category_name || item.category || ""}
+              >
+                {item.category_name || item.category}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* image */}
@@ -194,15 +231,23 @@ const AddProduct = ({ product_id }) => {
         {/* brand */}
         <div className="flex flex-col">
           <label className="text-sm font-medium text-primary mb-2">Brand</label>
-          <input
-            type="text"
+          <select
             name="name_brand"
-            placeholder="Enter product brand"
             value={brand}
             className="input-style"
             onChange={((e) => setBrand(e.target.value))}
             required
-          />
+          >
+            <option value="" disabled>Select brand</option>
+            {brandList.map((item, index) => (
+              <option
+                key={item.brand_name || item.brand || index}
+                value={item.brand_name || item.brand || ""}
+              >
+                {item.brand_name || item.brand}
+              </option>
+            ))}
+          </select>
         </div>
 
 
@@ -299,15 +344,18 @@ const AddProduct = ({ product_id }) => {
         {/* RAM */}
         <div className="flex flex-col">
           <label className="text-sm font-medium text-primary mb-2">RAM</label>
-          <input
-            type="text"
+          <select
             name="ram"
-            placeholder="Enter RAM size"
             className="input-style"
             value={ram}
             onChange={(e) => setRam(e.target.value)}
             required
-          />
+          >
+            <option value="" disabled>Select RAM</option>
+            <option value="32GB">32GB</option>
+            <option value="64GB">64GB</option>
+            <option value="128GB">128GB</option>
+          </select>
         </div>
 
         {/* Storage */}
