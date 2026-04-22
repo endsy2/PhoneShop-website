@@ -111,6 +111,14 @@ export const categoryFetch = async () => {
     console.log(error);
   }
 }
+export const brandFetch = async () => {
+  try {
+    const response = await axios.get(`${API_URL_COMMON}/brand`, { withCredentials: true });
+    return response.data;
+  } catch (error) {
+    console.log(error);
+  }
+}
 export const tableByCategory = async (category) => {
   try {
     const response = await axios.get(`${API_URL_COMMON}/getAllProductbyCategory`, {
