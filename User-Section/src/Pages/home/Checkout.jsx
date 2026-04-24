@@ -9,6 +9,7 @@ const CheckoutPage = () => {
   const cart = useSelector((store) => store.cart.items);
   const [totalQuatity, setTotalQuantity] = useState();
   const [token, setToken] = useState("ad");
+  const [customerName, setCustomerName] = useState("");
   const [delivery, setDelivery] = useState();
   const [payment, setPayment] = useState();
   const [location, setLocation] = useState();
@@ -20,8 +21,15 @@ const CheckoutPage = () => {
     dispatch(removeAllCart());
   };
   const handleSubmit = async () => {
+    if (!customerName?.trim()) {
+      setError("Please enter customer name");
+      setResponse("");
+      return;
+    }
+
     // Construct the `data` object with proper syntax
     const data = {
+      customerName: customerName.trim(),
       delivery,
       location,
       payment,
@@ -37,6 +45,7 @@ const CheckoutPage = () => {
       if (response) {
         setResponse("Sucessfully");
         setError("");
+        setCustomerName("");
         setDelivery("");
         setLocation("");
         setPayment("");
@@ -73,6 +82,16 @@ const CheckoutPage = () => {
                     DELIVERY INFORAMATON
                   </h3>
                   <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="flex flex-col w-full col-span-2">
+                      <h4 className="pb-2">CUSTOMER NAME</h4>
+                      <input
+                        value={customerName}
+                        type="text"
+                        onChange={(e) => setCustomerName(e.target.value)}
+                        placeholder="Enter your name"
+                        className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                      />
+                    </div>
                     <div className="col-span-1 md:col-span-2">
                       <h4 className="pb-2">Delivery Express</h4>
                       <select

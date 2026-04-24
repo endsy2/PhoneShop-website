@@ -1,7 +1,7 @@
 import { Router } from "express";
 import upload from "../Utils/handleimg.js";
 import { validateToken_refresh_token } from "../Utils/jwt_validation_refresh_token.js";
-import { addNewBrand, addNewCategory, addNewProduct, addNewSpecificate, addVariants, CountHeaderData, deleteProduct, deleteSpecification, deleteVariants, updateProduct, updateProductVariants, UpdateSpecification } from "../Controllers/adminCrud/Product.js";
+import { addNewBrand, addNewCategory, addNewProduct, addNewSpecificate, addVariants, CountHeaderData, deleteBrand, deleteCategory, deleteProduct, deleteSpecification, deleteVariants, updateProduct, updateProductVariants, UpdateSpecification } from "../Controllers/adminCrud/Product.js";
 import { dashboardHeader, dashboardHeaderAll } from "../Controllers/adminCrud/DashBoard.js"
 import { deleteOrder, deleteOrderItems, orderByID, orderTable, OrderTableItemsByID, searchOrder, updateOrderitems } from "../Controllers/adminCrud/Order.js";
 
@@ -14,6 +14,8 @@ adminRouter.use(validateToken_refresh_token);
 
 adminRouter.post("/addNewBrand", upload.single('images'), addNewBrand);
 adminRouter.post("/addNewCategory", addNewCategory);
+adminRouter.delete("/deleteBrand", deleteBrand);
+adminRouter.delete("/deleteCategory", deleteCategory);
 adminRouter.post("/addNewProduct", upload.array("images", 10), addNewProduct);
 adminRouter.put("/updateProduct", updateProduct);
 adminRouter.put("/updateSpec", UpdateSpecification);

@@ -91,9 +91,12 @@ const AddProduct = ({ product_id }) => {
     }
     try {
       const result = await addNewProductAPI(formdata, id);
-      if (result.lenght !== 0) {
+      if (result?.status >= 200 && result?.status < 300) {
         setResult("Add New Product Success")
         setError('')
+      } else {
+        setError("Something Went Wrong")
+        setResult('')
       }
       // console.log(formdata.colors);
 
@@ -118,7 +121,7 @@ const AddProduct = ({ product_id }) => {
     setProcessor('');
     setStorage('');
     setCamera('');
-    setColors(['']);
+    setColors('#000000');
     setDescription('');
     setStock('');
     setScreenSize('');
@@ -128,9 +131,7 @@ const AddProduct = ({ product_id }) => {
   }
   return (
     <div className="bg-white border-gray-300 border p-12 rounded-lg w-full max-w-9xl mx-auto mt-12 shadow-lg">
-      <h1 className="text-center text-3xl text-primary font-bold mb-8">
-        <h1>Add Product</h1>
-      </h1>
+      <h1 className="text-center text-3xl text-primary font-bold mb-8">Add Product</h1>
       <form
         onSubmit={handleSubmit}
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:items-center gap-10 "

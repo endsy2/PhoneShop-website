@@ -13,13 +13,20 @@ export const offerInsert = async (req, res) => {
     } = req.body;
     console.log(req.body);
 
+    const normalizedPhoneName = phone_name?.trim();
+    const normalizedPromoName = promo_name?.trim();
+    const normalizedStorage = storage?.trim();
+    const normalizedColor = color?.trim();
+    const normalizedDiscount = Number(String(discount_percent ?? "").replace("%", "").trim());
+
     if (
-        !phone_name ||
-        !promo_name ||
-        !discount_percent ||
+        !normalizedPhoneName ||
+        !normalizedPromoName ||
+        Number.isNaN(normalizedDiscount) ||
         !start_date ||
         !end_date ||
-        !color
+        !normalizedColor ||
+        !normalizedStorage
     ) {
         return res.status(400).json({ message: "All fields are required" });
     }
@@ -33,14 +40,23 @@ export const offerInsert = async (req, res) => {
                       FROM specifications 
                       WHERE phone_variant_id = ? AND storage = ?`;
 
+    const findExistingPromotion = `SELECT promo_id FROM promotions WHERE spec_id = ? LIMIT 1`;
+
     const insertPromote = `INSERT INTO promotions (spec_id, promo_name, discount_percentage, start_date, end_date) 
                            VALUES (?, ?, ?, ?, ?)`;
+
+    const updatePromote = `UPDATE promotions
+                           SET promo_name = ?,
+                               discount_percentage = ?,
+                               start_date = ?,
+                               end_date = ?
+                           WHERE promo_id = ?`;
 
     try {
         // Step 1: Find phone variant ID
         const [phoneRows] = await pool.promise().query(findPhoneQuery, [
-            phone_name,
-            color,
+            normalizedPhoneName,
+            normalizedColor,
         ]);
 
         if (phoneRows.length === 0) {
@@ -52,7 +68,7 @@ export const offerInsert = async (req, res) => {
         // Step 2: Find specification ID
         const [specRows] = await pool.promise().query(findSpec, [
             phone_variants_id,
-            storage,
+            normalizedStorage,
         ]);
 
         if (specRows.length === 0) {
@@ -61,23 +77,37 @@ export const offerInsert = async (req, res) => {
 
         const spec_id = specRows[0].spec_id;
 
-        // Step 3: Insert promotion
-        const [result] = await pool.promise().query(insertPromote, [
-            spec_id,
-            promo_name,
-            discount_percent,
-            start_date,
-            end_date,
-        ]);
+        // Step 3: Insert or update promotion for this spec
+        const [existingRows] = await pool.promise().query(findExistingPromotion, [spec_id]);
+
+        let result;
+        if (existingRows.length > 0) {
+            const promo_id = existingRows[0].promo_id;
+            [result] = await pool.promise().query(updatePromote, [
+                normalizedPromoName,
+                normalizedDiscount,
+                start_date,
+                end_date,
+                promo_id,
+            ]);
+        } else {
+            [result] = await pool.promise().query(insertPromote, [
+                spec_id,
+                normalizedPromoName,
+                normalizedDiscount,
+                start_date,
+                end_date,
+            ]);
+        }
 
         res.status(200).json({
-            message: "Promotions inserted successfully",
+            message: "Promotion saved successfully",
             data: result,
         });
     } catch (error) {
         console.error("Database query error:", error);
         res.status(500).json({
-            message: "Something went wrong",
+            message: error?.message || "Something went wrong",
             error: error.message,
         });
     }

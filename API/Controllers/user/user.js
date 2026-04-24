@@ -1,9 +1,16 @@
-import { response } from "express";
 import pool from "../../db/db_handle.js";
+
+const resolveUsername = (req) => {
+    const tokenPayload = req?.user?.user || {};
+    if (typeof tokenPayload.username === "object") {
+        return tokenPayload.username.username || tokenPayload.username.name || "";
+    }
+    return tokenPayload.username || tokenPayload.name || "";
+};
 
 export const getUserInformation = async (req, res) => {
     try {
-        const { username } = req.user.user.username;
+        const username = resolveUsername(req);
         // console.log(username);
 
 
@@ -32,7 +39,7 @@ export const getUserInformation = async (req, res) => {
     }
 };
 export const getOrderByName = async (req, res) => {
-    const { userName } = req.user.user.username;
+    const username = resolveUsername(req);
     const queryOrderItems = `SELECT 
     o.order_id,
     c.username,
@@ -93,7 +100,7 @@ GROUP BY
 `
     try {
 
-        const [response] = await pool.promise().query(queryOrderItems, [userName]);
+        const [response] = await pool.promise().query(queryOrderItems, [username]);
         console.log(response);
         return res.status(200).json({
             message: "successfully",

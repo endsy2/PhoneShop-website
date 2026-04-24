@@ -4,7 +4,7 @@ import { categoryFetch, tableByCategory } from "../../Fetch/FetchAPI";
 import TableProduct from "../../Component/TableProduct";
 const ProductCaterogy = () => {
   const [category, setCategory] = useState([]);
-  const [select, setSelect] = useState('Smartphones');
+  const [select, setSelect] = useState('');
   const [items, setItems] = useState([]);
 
   const fetchCategory = async () => {
@@ -12,13 +12,18 @@ const ProductCaterogy = () => {
       const data = await categoryFetch();
       console.log('here category' + data);
 
-      setCategory(data.data);
+      const categories = data?.data || [];
+      setCategory(categories);
+      if (!select && categories.length > 0) {
+        setSelect(categories[0].category_name || categories[0].category || '');
+      }
     } catch (error) {
       console.log(error);
     }
   }
 
   const fetchProducts = async () => {
+    if (!select) return;
     try {
       const data = await tableByCategory({ category: select }); // Wait for the async function to resolve
       setItems(data); // Set the data once it's fetched

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { addNewCategoryAPI } from "../../Fetch/FetchAPI";
+import { useEffect, useState } from "react";
+import { addNewCategoryAPI, categoryFetch, deleteCategoryAPI } from "../../Fetch/FetchAPI";
 
 
 const AddCategory = () => {
@@ -7,14 +7,30 @@ const AddCategory = () => {
   const [category, setCategory] = useState('');
   const [error, setError] = useState('')
   const [result, setResult] = useState('')
+  const [categoryList, setCategoryList] = useState([]);
+
+  const loadCategories = async () => {
+    try {
+      const data = await categoryFetch();
+      setCategoryList(data?.data || []);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
       const data = await addNewCategoryAPI(category);
-      if (data.length !== 0) {
+      if (data?.status >= 200 && data?.status < 300) {
         setResult("Add Success")
         setError('')
+        loadCategories();
       }
       setCategory('');
       console.log(data);
@@ -32,6 +48,18 @@ const AddCategory = () => {
     setCategory('');
 
   }
+
+  const handleDeleteCategory = async (categoryName) => {
+    try {
+      await deleteCategoryAPI(categoryName);
+      setResult("Delete Success");
+      setError("");
+      loadCategories();
+    } catch (err) {
+      setResult("");
+      setError(err.message || "Something went wrong");
+    }
+  };
 
   return (
     <div className="bg-white border-gray-300 border p-8 rounded-lg w-full max-w-4xl mx-auto mt-12 shadow-lg">
@@ -79,6 +107,28 @@ const AddCategory = () => {
       <div className="mt-16">
         {error && <p className="text-red-500">{error}</p>}
         {result && <p className="text-primary">{result}</p>}
+      </div>
+
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold text-primary mb-3">Category List</h2>
+        <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg">
+          {categoryList.length === 0 ? (
+            <p className="p-4 text-gray-500">No categories found.</p>
+          ) : (
+            categoryList.map((item) => (
+              <div key={item.category_name} className="flex justify-between items-center p-3 border-b border-gray-100 last:border-b-0">
+                <span className="text-gray-800">{item.category_name}</span>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteCategory(item.category_name)}
+                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
+                >
+                  Remove
+                </button>
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );

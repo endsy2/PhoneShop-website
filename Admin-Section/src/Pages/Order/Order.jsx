@@ -25,7 +25,7 @@ const Order = () => {
   return (
     <section>
       <Order_main />
-      <TableOrder title="Order" items={items.data} />
+      <TableOrder title="Order" items={items?.data || { data: [] }} />
     </section>
   );
 };

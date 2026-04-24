@@ -7,7 +7,7 @@ import Cookies from "js-cookie";
 const RootLayOut = () => {
   const location = useLocation();
   const [toggleMenu, setToggleMenu] = useState(false);
-  const token = Cookies.get('token'); // Get the token from cookies
+  const token = Cookies.get('token') || Cookies.get('access-token') || localStorage.getItem('adminToken'); // Get token from cookie/local storage
 
   return (
     token ? (
@@ -60,7 +60,7 @@ const RootLayOut = () => {
                   key={label}
                   to={path}
                   onClick={() => setToggleMenu(false)} // Close menu on navigation
-                  className={`flex items-center gap-4 px-4 py-2 rounded-lg text-sm font-medium transition hover:bg-gray-100 ${location.pathname === `/${path}` ? "bg-gray-100" : ""}`}
+                  className={`flex items-center gap-4 px-4 py-2 rounded-lg text-sm font-medium transition hover:bg-gray-100 ${location.pathname === `/dashboard${path ? `/${path}` : ""}` ? "bg-gray-100" : ""}`}
                 >
                   <img src={img} alt={`${label} icon`} className="w-5 h-5" />
                   <span className="green-txt">{label}</span>

@@ -11,7 +11,7 @@ const MyOrderPage = () => {
         console.log(orderUrl);
         try {
             // setListOrderState(myOrderData);
-            const response = await axios.get('http://localhost:3000/user/orderByName', { withCredentials: true });
+            const response = await axios.get(orderUrl, { withCredentials: true });
             if (response.status === 200) {
                 const groupedOrders = groupOrdersByOrderId(response.data.data);
                 setListOrderState(groupedOrders);

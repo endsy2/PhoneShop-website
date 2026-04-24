@@ -12,7 +12,7 @@ const DashBoardMain = ({ data, selectedDate }) => {
       // Use selectedDate here
 
 
-      setItems(data || []);
+      setItems(data || { data: [] });
     } catch (error) {
       console.log("Error fetching data:", error);
     }
@@ -21,7 +21,7 @@ const DashBoardMain = ({ data, selectedDate }) => {
   const fetchData = async () => {
     try {
       const data = await productData();
-      setItems(data || []);
+      setItems(data || { data: [] });
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -70,7 +70,7 @@ const DashBoardMain = ({ data, selectedDate }) => {
 
       {/* Render Table for Inventory */}
       <section className="mt-10">
-        <TableProduct title="Inventory" items={items.data} />
+        <TableProduct title="Inventory" items={items?.data || { data: [] }} />
       </section>
     </main>
   );
