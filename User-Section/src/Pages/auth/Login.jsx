@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { AiOutlineEyeInvisible, AiOutlineLock, AiOutlineLogout, AiOutlineMail, AiOutlineUser, AiOutlineEye } from 'react-icons/ai';
 import Navbar from '../home/Navbar';
 import { Spacer } from './SignUpScreen';
@@ -43,16 +43,12 @@ const Login = () => {
     }
 
 
-    useEffect(() => {
-        login()
-    }, []);
-
     //function to login
     const login = async (e) => {
         console.log(email)
         setLoading(true)
         console.log(passwordState)
-        await axios.post(`http://localhost:3000/auth/login`, {
+        await axios.post(`${NETWORK_CONFIG.apiBaseUrl}${AUTHENDPOINT.LOGIN}`, {
             email: email,
             password: passwordState,
 

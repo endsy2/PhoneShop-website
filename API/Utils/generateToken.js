@@ -3,13 +3,29 @@ import { config } from "dotenv";
 
 config();
 
+const normalizeIdentity = (identityOrUsername, roleArg) => {
+  if (
+    identityOrUsername &&
+    typeof identityOrUsername === "object" &&
+    roleArg === undefined
+  ) {
+    return {
+      username: identityOrUsername.username || identityOrUsername.name || "",
+      role: identityOrUsername.role,
+    };
+  }
+
+  return {
+    username: identityOrUsername,
+    role: roleArg,
+  };
+};
+
 export const generateAccessToken = (username, role) => {
+  const userPayload = normalizeIdentity(username, role);
   return jwt.sign(
     {
-      user: {
-        username,
-        role,
-      },
+      user: userPayload,
     },
     process.env.ACCESS_TOKEN_SECRET,
     {
@@ -18,12 +34,10 @@ export const generateAccessToken = (username, role) => {
   );
 };
 export const generateRefreshToken = (username, role) => {
+  const userPayload = normalizeIdentity(username, role);
   return jwt.sign(
     {
-      user: {
-        username,
-        role,
-      },
+      user: userPayload,
     },
     process.env.REFRESH_TOKEN_SECRET,
     {

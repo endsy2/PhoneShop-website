@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { addNewBrandAPI } from "../../Fetch/FetchAPI";
+import { useEffect, useState, useRef } from "react";
+import { addNewBrandAPI, brandFetch, deleteBrandAPI } from "../../Fetch/FetchAPI";
 
 const AddBrand = () => {
   const [brand, setBrand] = useState('');
@@ -7,6 +7,20 @@ const AddBrand = () => {
   const fileInputRef = useRef(null); // Create a ref for the file input
   const [error, setError] = useState('')
   const [result, setResult] = useState('')  // Handle form submission
+  const [brandList, setBrandList] = useState([]);
+
+  const loadBrands = async () => {
+    try {
+      const data = await brandFetch();
+      setBrandList(data?.data || []);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  useEffect(() => {
+    loadBrands();
+  }, []);
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -28,9 +42,10 @@ const AddBrand = () => {
       setImg(null);  // Reset img state
       setBrand('');  // Reset brand input
       fileInputRef.current.value = '';  // Manually reset the file input value
-      if (result.length !== 0) {
+      if (result?.status >= 200 && result?.status < 300) {
         setResult("Add Success")
         setError('')
+        loadBrands();
       }
       // Handle success response here (e.g., show success message, clear fields)
     } catch (error) {
@@ -54,6 +69,18 @@ const AddBrand = () => {
     const file = e.target.files[0];  // Get the first file
     if (file) {
       setImg(file);  // Set the selected image
+    }
+  };
+
+  const handleDeleteBrand = async (brandName) => {
+    try {
+      await deleteBrandAPI(brandName);
+      setResult("Delete Success");
+      setError("");
+      loadBrands();
+    } catch (err) {
+      setResult("");
+      setError(err.message || "Something went wrong");
     }
   };
 
@@ -113,6 +140,28 @@ const AddBrand = () => {
       <div className="mt-16">
         {error && <p className="text-red-500">{error}</p>}
         {result && <p className="text-primary">{result}</p>}
+      </div>
+
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold text-primary mb-3">Brand List</h2>
+        <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg">
+          {brandList.length === 0 ? (
+            <p className="p-4 text-gray-500">No brands found.</p>
+          ) : (
+            brandList.map((item) => (
+              <div key={item.brand_name} className="flex justify-between items-center p-3 border-b border-gray-100 last:border-b-0">
+                <span className="text-gray-800">{item.brand_name}</span>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteBrand(item.brand_name)}
+                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
+                >
+                  Remove
+                </button>
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );

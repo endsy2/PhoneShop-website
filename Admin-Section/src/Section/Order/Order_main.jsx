@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { order_header } from "../../Constants";
 import { headerOrder } from "../../Fetch/FetchAPI";
-import { data } from "autoprefixer";
 
 const Order_main = () => {
   const [headerData, setHeaderData] = useState([]);
@@ -9,8 +8,9 @@ const Order_main = () => {
     const fetchHeaderOrder = async () => {
       try {
         const header = await headerOrder();
+        const headerRows = header?.data || [];
 
-        const updatedStatusArray = header.data.map((item, index) => ({
+        const updatedStatusArray = headerRows.map((item, index) => ({
           ...item,
           img: order_header[index]?.img || null, // Assign image or null if undefined
         }));

@@ -98,6 +98,9 @@ const HomePage = () => {
   }
 
   const sliderImg = [phone1, phone2, phone3, phone4];
+  const uniqueDiscountProducts = Array.from(
+    new Map((discountProduct || []).map((item) => [item.phone_id, item])).values()
+  );
 
   useEffect(() => {
     handlefetchProduct();
@@ -159,6 +162,15 @@ const HomePage = () => {
     ],
   };
 
+  const specialOfferSettings = {
+    ...settings,
+    rows: 1,
+    vertical: false,
+    adaptiveHeight: false,
+    slidesToShow: Math.min(5, Math.max(1, uniqueDiscountProducts.length || 1)),
+    infinite: uniqueDiscountProducts.length > 5,
+  };
+
 
   const settings2 = {
     dots: true, // Show navigation dots
@@ -215,9 +227,9 @@ const HomePage = () => {
             VIEW ALL
           </Link>
         </div>
-        <Slider {...settings}>
-          {discountProduct.map((product) => (
-            <div key={product.id} className="mt-4 bg-gray-100 p-4 rounded-lg">
+        <Slider {...specialOfferSettings}>
+          {uniqueDiscountProducts.map((product) => (
+            <div key={`${product.phone_id}-${product.spec_id || product.promo_id || "offer"}`} className="mt-4 bg-gray-100 p-4 rounded-lg">
               <ProductCard product={product} />
             </div>
           ))}

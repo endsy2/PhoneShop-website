@@ -20,7 +20,7 @@ const UserProfile = () => {
   const getProfile = async () => {
 
     try {
-      const response = await axios.get('http://localhost:3000/user/userInfo', { withCredentials: true });
+      const response = await axios.get(`${NETWORK_CONFIG.apiBaseUrl}${USERENDPOINT.GET_USERINFO}`, { withCredentials: true });
       if (response.status === 200) {
         const { username, email, address } = response.data.data[0]; // Assuming response structure
         setProfile({ username, email, address }); // Update profile state

@@ -6,7 +6,7 @@ const NotificationCard = () => {
   const [notifications, setNotifications] = useState([]);
 
   let getNotifications = async () => {
-    await axios.get(`http://localhost:3000/common/notification`).then(function (response) {
+    await axios.get(`${NETWORK_CONFIG.apiBaseUrl}${COMMONENDPOINT.GET_NOTIFICATIONS}`).then(function (response) {
       if (response.status === 200) {
         setNotifications(response.data.data);
       }

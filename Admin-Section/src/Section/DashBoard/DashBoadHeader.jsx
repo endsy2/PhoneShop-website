@@ -28,6 +28,7 @@ const DashBoardHeader = () => {
     try {
       const response = await logoutFetch();
       Cookies.remove('token')
+      localStorage.removeItem('adminToken');
       console.log(response);
 
     } catch (error) {

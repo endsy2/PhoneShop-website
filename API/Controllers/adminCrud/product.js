@@ -338,6 +338,68 @@ export const addNewCategory = (req, res) => {
         return res.status(200).json({ message: "Insert Successfully", data: rows });
     });
 };
+
+export const deleteBrand = async (req, res) => {
+    const { brand } = req.query;
+
+    if (!brand || brand.trim() === "") {
+        return res.status(400).json({ message: "Brand is required" });
+    }
+
+    const findBrandQuery = `SELECT brand_id FROM brands WHERE brand_name = ?`;
+    const checkUsageQuery = `SELECT COUNT(*) AS count FROM phones WHERE brand_id = ?`;
+    const deleteQuery = `DELETE FROM brands WHERE brand_name = ?`;
+
+    try {
+        const [brandRows] = await pool.promise().query(findBrandQuery, [brand]);
+        if (brandRows.length === 0) {
+            return res.status(404).json({ message: "Brand not found" });
+        }
+
+        const brandId = brandRows[0].brand_id;
+        const [usageRows] = await pool.promise().query(checkUsageQuery, [brandId]);
+        if (usageRows[0].count > 0) {
+            return res.status(400).json({ message: "Cannot delete brand. It is used by products." });
+        }
+
+        const [result] = await pool.promise().query(deleteQuery, [brand]);
+        return res.status(200).json({ message: "Brand deleted successfully", data: result });
+    } catch (error) {
+        console.error("Error deleting brand:", error);
+        return res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+};
+
+export const deleteCategory = async (req, res) => {
+    const { category } = req.query;
+
+    if (!category || category.trim() === "") {
+        return res.status(400).json({ message: "Category is required" });
+    }
+
+    const findCategoryQuery = `SELECT category_id FROM categories WHERE category_name = ?`;
+    const checkUsageQuery = `SELECT COUNT(*) AS count FROM phones WHERE category_id = ?`;
+    const deleteQuery = `DELETE FROM categories WHERE category_name = ?`;
+
+    try {
+        const [categoryRows] = await pool.promise().query(findCategoryQuery, [category]);
+        if (categoryRows.length === 0) {
+            return res.status(404).json({ message: "Category not found" });
+        }
+
+        const categoryId = categoryRows[0].category_id;
+        const [usageRows] = await pool.promise().query(checkUsageQuery, [categoryId]);
+        if (usageRows[0].count > 0) {
+            return res.status(400).json({ message: "Cannot delete category. It is used by products." });
+        }
+
+        const [result] = await pool.promise().query(deleteQuery, [category]);
+        return res.status(200).json({ message: "Category deleted successfully", data: result });
+    } catch (error) {
+        console.error("Error deleting category:", error);
+        return res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+};
 export const CountHeaderData = (req, res) => {
     const query = `
       SELECT 'Product' AS label, COUNT(phone_id) AS quantity

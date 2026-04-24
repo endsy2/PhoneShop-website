@@ -27,11 +27,19 @@ export const validateToken_refresh_token = async (req, res, next) => {
         // Verify the refresh token
         const refreshUser = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
         req.user = refreshUser;
+        const refreshPayload = refreshUser?.user || {};
+        const username =
+          typeof refreshPayload.username === "object"
+            ? refreshPayload.username.username || refreshPayload.username.name
+            : refreshPayload.username || refreshPayload.name;
+        const role =
+          refreshPayload.role ??
+          (typeof refreshPayload.username === "object"
+            ? refreshPayload.username.role
+            : undefined);
+
         // Generate a new access token only if the refresh token is valid
-        const newAccessToken = generateAccessToken({
-          username: refreshUser.username,
-          role: refreshUser.role,
-        });
+        const newAccessToken = generateAccessToken({ username, role });
 
         // Update the session with the new access token
         res.cookie('access-token', newAccessToken, cookieConfig);

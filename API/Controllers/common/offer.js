@@ -27,7 +27,7 @@ export const offerDisplay = async (req, res) => {
         s.camera,
         b.brand_name,
         b.img AS brand_img,
-        ROW_NUMBER() OVER (PARTITION BY pv.color ORDER BY s.price DESC) AS row_num
+        ROW_NUMBER() OVER (PARTITION BY p.phone_id ORDER BY s.price DESC) AS row_num
     FROM phones p
     INNER JOIN brands b ON p.brand_id = b.brand_id
     INNER JOIN categories c ON p.category_id = c.category_id

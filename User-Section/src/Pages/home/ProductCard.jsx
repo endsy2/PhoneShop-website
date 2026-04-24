@@ -11,11 +11,12 @@ const ProductCard = ({ product }) => {
 
   // Handle adding the product to the cart
   const handleAddToCart = () => {
+    const finalPrice = product.price_discount != null ? Number(product.price_discount) : Number(product.price);
     dispatch(
       addToCart({
         productId: product.phone_id,
         quantity: 1,
-        price: product.price, // Assuming you're adding one item at a time
+        price: finalPrice, // Use discount price when available
       })
     );
     dispatch(toggleStatusTab());
@@ -34,6 +35,11 @@ const ProductCard = ({ product }) => {
 
   return (
     <div className="relative bg-white shadow-md rounded-lg p-4 hover:shadow-lg transition-all duration-300 transform hover:scale-105">
+      {product.price_discount ? (
+        <span className="absolute top-2 left-2 z-10 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded">
+          {product.discount_percentage ? `${product.discount_percentage}% OFF` : "SALE"}
+        </span>
+      ) : null}
       <Link to={`/product-detail?phone_name=${product.name}`}>
         <div className="w-auto h-[200px] flex justify-center items-center  rounded-md overflow-hidden mt-1">
           <img

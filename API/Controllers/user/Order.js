@@ -1,9 +1,20 @@
 import pool from "../../db/db_handle.js";
 
+const resolveUsername = (req) => {
+    const tokenPayload = req?.user?.user || {};
+    if (typeof tokenPayload.username === "object") {
+        return tokenPayload.username.username || tokenPayload.username.name || "";
+    }
+    return tokenPayload.username || tokenPayload.name || "";
+};
+
 export const checkout = async (req, res) => {
     try {
-        const userName = 'kongming';
-        const { items, delivery, payment, location } = req.body;
+        const { items, delivery, payment, location, customerName } = req.body;
+        const fallbackUserName = resolveUsername(req);
+
+        // Prefer the name entered at checkout; otherwise fall back to token payload.
+        let userName = customerName?.trim() || fallbackUserName || "";
 
 
 
@@ -17,7 +28,17 @@ export const checkout = async (req, res) => {
 
         // Find the customer ID
         const queryFindCustomerID = `SELECT customer_id FROM customers WHERE username = ?`;
-        const [customerRows] = await pool.promise().query(queryFindCustomerID, [userName]);
+        let [customerRows] = await pool.promise().query(queryFindCustomerID, [userName]);
+
+        // If the entered name does not exist, use the authenticated account username.
+        if (
+            customerRows.length === 0 &&
+            fallbackUserName &&
+            userName !== fallbackUserName
+        ) {
+            userName = fallbackUserName;
+            [customerRows] = await pool.promise().query(queryFindCustomerID, [userName]);
+        }
 
         if (customerRows.length === 0) {
             return res.status(404).json({ message: "Customer not found" });

@@ -1,6 +1,5 @@
-import React, { useRef, useState } from 'react';
-import { addNewColorFetch } from '../../Fetch/FetchAPI';
-import { AxiosError } from 'axios';
+import React, { useEffect, useRef, useState } from 'react';
+import { addNewColorFetch, productData } from '../../Fetch/FetchAPI';
 
 const AddColor = () => {
     const [color, setColor] = useState('#000000');
@@ -9,7 +8,23 @@ const AddColor = () => {
     const [images, setImages] = useState([]);
     const [result, setResult] = useState('');
     const [error, setError] = useState('');
+    const [productOptions, setProductOptions] = useState([]);
     const fileRef = useRef();
+
+    useEffect(() => {
+        const loadProductOptions = async () => {
+            try {
+                const response = await productData();
+                const rows = response?.data?.data || response?.data || [];
+                const uniqueProductNames = [...new Set(rows.map((item) => item.name).filter(Boolean))];
+                setProductOptions(uniqueProductNames);
+            } catch (err) {
+                console.log(err);
+            }
+        };
+
+        loadProductOptions();
+    }, []);
 
     const handleImageChange = (e) => {
         const files = Array.from(e.target.files); // Convert FileList to Array
@@ -80,14 +95,19 @@ const AddColor = () => {
                 {/* Product Name */}
                 <div className="flex flex-col">
                     <label className="text-sm font-medium text-primary mb-2">Product Name</label>
-                    <input
-                        type="text"
+                    <select
                         value={productName}
-                        placeholder="Enter product name"
                         onChange={(e) => setProductName(e.target.value)}
                         className="input-style"
                         required
-                    />
+                    >
+                        <option value="">Select product</option>
+                        {productOptions.map((name) => (
+                            <option key={name} value={name}>
+                                {name}
+                            </option>
+                        ))}
+                    </select>
                 </div>
 
                 {/* Color */}

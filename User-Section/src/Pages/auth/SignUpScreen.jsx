@@ -102,7 +102,7 @@ const Signup = () => {
             password: passwordState,
         }
 
-        await axios.post(/*`${path}`*/'http://localhost:3000/auth/register', userBody, { withCredentials: true })
+        await axios.post(path, userBody, { withCredentials: true })
             .then(function (response) {
                 if (response.status === 201) {
                     console.log(response.data)

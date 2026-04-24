@@ -255,6 +255,30 @@ export const addNewCategoryAPI = async (category) => {
   }
 };
 
+export const deleteBrandAPI = async (brand) => {
+  try {
+    const response = await axios.delete(`${API_URL_Admin}/deleteBrand?brand=${encodeURIComponent(brand)}`, {
+      withCredentials: true,
+    });
+    return response;
+  } catch (error) {
+    const serverMessage = error.response?.data?.message || "Failed to delete brand";
+    throw new Error(serverMessage);
+  }
+};
+
+export const deleteCategoryAPI = async (category) => {
+  try {
+    const response = await axios.delete(`${API_URL_Admin}/deleteCategory?category=${encodeURIComponent(category)}`, {
+      withCredentials: true,
+    });
+    return response;
+  } catch (error) {
+    const serverMessage = error.response?.data?.message || "Failed to delete category";
+    throw new Error(serverMessage);
+  }
+};
+
 export const addNewDetail = async ({ formdata }) => {
   try {
     const response = await axios.post(`${API_URL_Admin}/addNewSpecification`, { formdata }, {
@@ -320,7 +344,9 @@ export const loginFetch = async (email, password) => {
   try {
     const response = await axios.post(`${API_URL_Auth}/adminLogin`, { email, password }, { withCredentials: true });
     const token = response.data.token;
-    Cookies.set("token", token, { expires: 7, secure: true, sameSite: "strict" });
+    const isHttps = typeof window !== "undefined" && window.location.protocol === "https:";
+    Cookies.set("token", token, { expires: 7, secure: isHttps, sameSite: "strict" });
+    localStorage.setItem("adminToken", token);
     return response.data; // Return the response payload
 
   } catch (error) {
@@ -456,27 +482,20 @@ export const searchPromotion = async ({ promo_name }) => {
 };
 export const insertPromotion = async ({ formData }) => {
   try {
-    // Create a new FormData object
-    const formDataObj = new FormData();
+    const payload = {
+      phone_name: formData.phone_name,
+      discount_percent: formData.discount_percent,
+      start_date: formData.start_date,
+      end_date: formData.end_date,
+      promo_name: formData.promo_name,
+      color: formData.Color,
+      storage: formData.storage,
+    };
 
-    // Append individual form fields to FormData
-    formDataObj.append('phone_name', formData.phone_name);
-    formDataObj.append('discount_percent', formData.discount_percent);
-    formDataObj.append('start_date', formData.start_date);
-    formDataObj.append('end_date', formData.end_date);
-    formDataObj.append('promo_name', formData.promo_name);
-    formDataObj.append('color', formData.Color)
-    formDataObj.append('storage', formData.storage)
-    // Append each color from the formData.Color array to FormData
-
-    // Make the API call using axios
-    // console.log(formData);
-
-    const response = await axios.put(`${API_URL_Admin}/offerInsert`, formDataObj, {
+    const response = await axios.put(`${API_URL_Admin}/offerInsert`, payload, {
       withCredentials: true,
       headers: {
-        // No need to manually set Content-Type for FormData
-        'Content-Type': "application/json"  // Optional, but can be used if you need to specify it
+        'Content-Type': "application/json"
       },
     });
 
@@ -484,7 +503,7 @@ export const insertPromotion = async ({ formData }) => {
 
   } catch (error) {
     console.error("Error inserting promotion:", error);
-    return null; // Return null or handle the error based on your needs
+    throw new Error(error.response?.data?.message || "Failed to insert promotion");
   }
 };
 
