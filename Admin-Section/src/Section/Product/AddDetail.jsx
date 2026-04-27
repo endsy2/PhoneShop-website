@@ -1,9 +1,11 @@
-import React, { useState } from "react";
-import { addNewDetail } from "../../Fetch/FetchAPI";
+import React, { useEffect, useState } from "react";
+import { addNewDetail, productData } from "../../Fetch/FetchAPI";
 
 const AddDetail = () => {
     const [product_name, setProductName] = useState("");
-    const [color, setColor] = useState("");
+    const [product_id, setProductID] = useState("");
+    const [productOptions, setProductOptions] = useState([]);
+    const [color, setColor] = useState("#000000");
     const [screen_size, setScreenSize] = useState("");
     const [processor, setProcessor] = useState("");
     const [ram, setRam] = useState("");
@@ -15,13 +17,38 @@ const AddDetail = () => {
     const [error, setError] = useState('');
     const [result, setResult] = useState('');
 
+    useEffect(() => {
+        const loadProductOptions = async () => {
+            try {
+                const response = await productData();
+                const rows = response?.data?.data || response?.data || [];
+                const uniqueProducts = [];
+                const seen = new Set();
+
+                for (const item of rows) {
+                    if (!item?.name) continue;
+                    const key = `${item.phone_id}-${item.name}`;
+                    if (seen.has(key)) continue;
+                    seen.add(key);
+                    uniqueProducts.push({ phone_id: item.phone_id, name: item.name });
+                }
+
+                setProductOptions(uniqueProducts);
+            } catch (err) {
+                console.log(err);
+            }
+        };
+
+        loadProductOptions();
+    }, []);
+
     // Handle form submission
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         // Validate inputs
         if (
-            !product_name ||
+            !product_id ||
             !color ||
             !screen_size ||
             !processor ||
@@ -36,6 +63,7 @@ const AddDetail = () => {
 
         // Prepare data to send
         const formData = {
+            product_id,
             product_name,
             color,
             screen_size,
@@ -67,7 +95,8 @@ const AddDetail = () => {
     // Handle reset
     const handleReset = () => {
         setProductName("");
-        setColor("");
+        setProductID("");
+        setColor("#000000");
         setScreenSize("");
         setProcessor("");
         setRam("");
@@ -92,14 +121,26 @@ const AddDetail = () => {
                     <label className="text-sm font-medium text-primary mb-2">
                         Product Name
                     </label>
-                    <input
-                        type="text"
-                        value={product_name}
-                        onChange={(e) => setProductName(e.target.value)}
-                        placeholder="Enter product name"
+                    <select
+                        value={product_id}
+                        onChange={(e) => {
+                            const selectedId = e.target.value;
+                            setProductID(selectedId);
+                            const selectedProduct = productOptions.find(
+                                (item) => String(item.phone_id) === selectedId
+                            );
+                            setProductName(selectedProduct?.name || "");
+                        }}
                         className="input-style"
                         required
-                    />
+                    >
+                        <option value="">Select product</option>
+                        {productOptions.map((item) => (
+                            <option key={item.phone_id} value={item.phone_id}>
+                                {item.name}
+                            </option>
+                        ))}
+                    </select>
                 </div>
 
                 {/* Color */}

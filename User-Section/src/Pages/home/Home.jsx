@@ -6,10 +6,6 @@ import {
   blackColor,
   silverColor,
   naturalColor,
-  phone1,
-  phone2,
-  phone3,
-  phone4,
 } from "../Assets/image";
 import Card from "./Card";
 import {
@@ -97,7 +93,6 @@ const HomePage = () => {
     }
   }
 
-  const sliderImg = [phone1, phone2, phone3, phone4];
   const uniqueDiscountProducts = Array.from(
     new Map((discountProduct || []).map((item) => [item.phone_id, item])).values()
   );
@@ -171,37 +166,24 @@ const HomePage = () => {
     infinite: uniqueDiscountProducts.length > 5,
   };
 
-
-  const settings2 = {
-    dots: true, // Show navigation dots
-    infinite: true, // Allow infinite scrolling
-    speed: 500, // Transition speed in milliseconds
-    slidesToShow: 1, // Show one slide at a time
-    slidesToScroll: 1, // Scroll one slide at a time
-    arrows: true, // Enable arrows
-    prevArrow: <CustomPrevArrow />, // Custom previous arrow component
-    nextArrow: <CustomNextArrow />, // Custom next arrow component
-  };
-
   return (
     <div>
-      {/* Slider */}
-
-      <div className="slider-container w-full bg-gray-50 px-20 py-5">
-        <Slider {...settings2}>
-          {sliderImg.map((element, index) => (
-            <div
-              key={index}
-              className="flex justify-center items-center mx-[-20px] w-full h-64 rounded-lg  overflow-hidden bg-white"
-            >
-              <img
-                src={element}
-                alt={`Slider ${index + 1}`}
-                className="object-contain w-full h-full"
-              />
-            </div>
-          ))}
-        </Slider>
+      <div className="px-4 py-6 md:px-20">
+        <div className="relative mx-auto overflow-hidden rounded-3xl border-2 border-emerald-300/80 bg-[linear-gradient(130deg,#f7fff9_0%,#ffffff_42%,#ecfdf3_100%)] px-6 py-14 shadow-[0_25px_70px_-35px_rgba(16,185,129,0.35)] md:px-12">
+          <div className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full bg-cyan-200/45 blur-3xl" />
+          <div className="pointer-events-none absolute -left-10 -bottom-14 h-44 w-44 rounded-full bg-emerald-200/45 blur-3xl" />
+          <div className="relative mx-auto flex max-w-3xl flex-col items-center text-center">
+            <span className="mb-5 inline-flex items-center rounded-full border border-slate-200 bg-white/80 px-4 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-600">
+              Genius Store
+            </span>
+            <p className="text-4xl font-extrabold tracking-tight text-slate-900 md:text-6xl">
+              Welcome to Genius Store
+            </p>
+            <p className="mt-4 text-lg font-medium text-slate-600 md:text-2xl">
+              What product are you looking for?
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Popular-brand section */}
@@ -229,15 +211,17 @@ const HomePage = () => {
         </div>
         <Slider {...specialOfferSettings}>
           {uniqueDiscountProducts.map((product) => (
-            <div key={`${product.phone_id}-${product.spec_id || product.promo_id || "offer"}`} className="mt-4 bg-gray-100 p-4 rounded-lg">
-              <ProductCard product={product} />
+            <div key={`${product.phone_id}-${product.spec_id || product.promo_id || "offer"}`} className="mt-4 px-2">
+              <div className="mx-auto w-full max-w-[340px] rounded-lg bg-gray-100 p-4">
+                <ProductCard product={product} />
+              </div>
             </div>
           ))}
         </Slider>
       </div>
 
       {/* New-Arrival section */}
-       <div className="px-8 py-4 bg-gray-100 rounded-lg mb-4">
+      <div className="px-20 py-4 bg-gray-100 rounded-lg mb-4">
         <div className="flex justify-between items-center">
           <h2 className="text-3xl font-extrabold text-gray-900 my-2">
             NEW ARRIVAL
