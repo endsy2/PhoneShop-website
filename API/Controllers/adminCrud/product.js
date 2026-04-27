@@ -530,8 +530,39 @@ export const addVariants = async (req, res) => {
         return res.status(500).json({ message: "Internal server error", error });
     }
 };
+export const getProductOptions = async (req, res) => {
+    const query = `SELECT phone_id, name FROM phones ORDER BY name ASC`;
+
+    try {
+        const [rows] = await pool.promise().query(query);
+
+        return res.status(200).json({
+            message: "Products fetched successfully",
+            data: rows,
+        });
+    } catch (error) {
+        console.error("Error fetching product options:", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            error: error.message,
+        });
+    }
+};
 export const addNewSpecificate = async (req, res) => {
-    const { product_name, color, screen_size, processor, ram, storage, battery, camera, price, stock } = req.body.formdata;
+    const payload = req.body.formdata || req.body;
+    const {
+        product_id,
+        product_name,
+        color,
+        screen_size,
+        processor,
+        ram,
+        storage,
+        battery,
+        camera,
+        price,
+        stock,
+    } = payload;
     // console.log(req.body.formdata);
 
     // Input Validation
@@ -543,13 +574,17 @@ export const addNewSpecificate = async (req, res) => {
     console.log(req.body);
 
     try {
-        // Find Product ID
-        const findProductIDQuery = `SELECT phone_id FROM phones WHERE name=?`;
-        const [productResult] = await pool.promise().query(findProductIDQuery, [product_name]);
-        if (productResult.length === 0) {
-            return res.status(404).json({ message: "Product not found" });
+        let productID = product_id;
+
+        // Backward-compatible fallback for old UI that sends product_name.
+        if (!productID) {
+            const findProductIDQuery = `SELECT phone_id FROM phones WHERE name=?`;
+            const [productResult] = await pool.promise().query(findProductIDQuery, [product_name]);
+            if (productResult.length === 0) {
+                return res.status(404).json({ message: "Product not found" });
+            }
+            productID = productResult[0].phone_id;
         }
-        const productID = productResult[0].phone_id;
 
         // Find Variant ID
         const findVariantsIDQuery = `SELECT idphone_variants FROM phone_variants WHERE phone_id=? AND color=?`;
