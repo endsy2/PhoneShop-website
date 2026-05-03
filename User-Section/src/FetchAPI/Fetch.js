@@ -3,6 +3,50 @@ import axios from "axios";
 const API_URL_COMMON = "http://localhost:3000/common";
 const API_URL_USER = "http://localhost:3000/user";
 
+export const fetchUserInfo = async () => {
+    try {
+        const response = await axios.get(`${API_URL_USER}/userInfo`, {
+            withCredentials: true,
+        });
+
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
+export const updateUserInfo = async (formData) => {
+    try {
+        const response = await axios.put(`${API_URL_USER}/userInfo`, formData, {
+            withCredentials: true,
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
+
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
+export const changePassword = async ({ oldPassword, newPassword }) => {
+    try {
+        const response = await axios.post(
+            `${API_URL_USER}/change-password`,
+            { oldPassword, newPassword },
+            { withCredentials: true }
+        );
+
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
 export const fetchdataProduct = async () => {
     try {
         const response = await axios.get(`${API_URL_COMMON}/getAllProduct`)

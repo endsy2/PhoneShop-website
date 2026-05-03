@@ -88,6 +88,33 @@ export const dashboardHeaderAll = async () => {
     console.log(error);
   }
 }
+
+export const getNotifications = async () => {
+  const response = await axios.get(`${API_URL_COMMON}/notification`, {
+    withCredentials: true,
+  });
+
+  return response.data;
+};
+
+export const createNotification = async ({ title, message }) => {
+  const response = await axios.post(
+    `${API_URL_COMMON}/notification`,
+    { title, message },
+    { withCredentials: true }
+  );
+
+  return response.data;
+};
+
+export const deleteNotification = async (id) => {
+  const response = await axios.delete(`${API_URL_COMMON}/notification/${id}`, {
+    withCredentials: true,
+  });
+
+  return response.data;
+};
+
 export const tableByDate = async (date) => {
 
   try {

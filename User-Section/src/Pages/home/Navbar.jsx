@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { logo, menu, buy, favorite_packages, compare, user } from "../Assets/image";
+import { logo, menu, buy, favorite_packages, compare } from "../Assets/image";
 import { Link, NavLink } from "react-router-dom";
 import { IoIosNotifications } from "react-icons/io";
 import Popup from "reactjs-popup";
@@ -9,6 +9,8 @@ import { useDispatch, useSelector } from "react-redux";
 // import store from "../../store/store";
 import { nav_icon } from "../../Constants";
 import { toggleStatusTab } from "../../store/cart";
+import { fetchUserInfo } from "../../FetchAPI/Fetch";
+import { NETWORK_CONFIG } from "../../network/Network_EndPoint";
 
 const Navbar = ({ token, onLogin, onLogout }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -17,6 +19,7 @@ const Navbar = ({ token, onLogin, onLogout }) => {
   const dispatch = useDispatch();
   const [toggleMenu, setToggleMenu] = useState(false);
   const [searchData, setSearchData] = useState("");
+  const [profile, setProfile] = useState({ username: "", email: "", address: "", phone_number: "", profile_picture: "" });
 
   // Create a reference to the footer
   const footerRef = useRef(null);
@@ -56,6 +59,34 @@ const Navbar = ({ token, onLogin, onLogout }) => {
   const handleOpenTabCart = () => {
     dispatch(toggleStatusTab()); // Dispatch the action to open the cart tab
   };
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (!token) {
+        setProfile({ username: "", email: "", address: "", phone_number: "", profile_picture: "" });
+        return;
+      }
+
+      try {
+        const response = await fetchUserInfo();
+        const userData = response?.data?.[0] || {};
+        setProfile({
+          username: userData.username || "",
+          email: userData.email || "",
+          address: userData.address || "",
+          phone_number: userData.phone_number || "",
+          profile_picture: userData.profile_picture || "",
+        });
+      } catch (error) {
+        setProfile({ username: "", email: "", address: "", phone_number: "", profile_picture: "" });
+      }
+    };
+
+    loadProfile();
+  }, [token]);
+
+  const avatarInitial = (profile.username || profile.email || "U").trim().charAt(0).toUpperCase();
+  const profileImageSrc = profile.profile_picture ? `${NETWORK_CONFIG.apiBaseUrl}/${profile.profile_picture}` : "";
 
   return (
     <nav className="bg-white shadow-md">
@@ -120,12 +151,64 @@ const Navbar = ({ token, onLogin, onLogout }) => {
               )
             )}
             {token ? (
-              <NavLink to='user-profile'>
-                <img
-                  src={user}
-                  className={`w-8 md:block  `}
-                />
-              </NavLink>
+              <Popup
+                trigger={
+                  <button type="button" className="flex items-center gap-2 rounded-full px-2 py-1 hover:bg-gray-100">
+                    {profileImageSrc ? (
+                      <img
+                        src={profileImageSrc}
+                        alt="Profile"
+                        className="h-9 w-9 rounded-full object-cover border border-green-500"
+                      />
+                    ) : (
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-green-600 text-sm font-bold text-white overflow-hidden">
+                        {avatarInitial}
+                      </div>
+                    )}
+                    <div className="hidden min-[1100px]:block text-left leading-tight">
+                      <p className="text-sm font-semibold text-gray-800">
+                        {profile.username || "My Profile"}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {profile.email || "View account details"}
+                      </p>
+                    </div>
+                  </button>
+                }
+                position="bottom right"
+                arrow={false}
+                closeOnDocumentClick
+              >
+                <div className="w-72 rounded-xl bg-white p-4 shadow-lg border border-gray-100">
+                  <div className="flex items-center gap-3">
+                    {profileImageSrc ? (
+                      <img
+                        src={profileImageSrc}
+                        alt="Profile"
+                        className="h-12 w-12 rounded-full object-cover border border-green-500"
+                      />
+                    ) : (
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-600 text-base font-bold text-white">
+                        {avatarInitial}
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-semibold text-gray-900">
+                        {profile.username || "User"}
+                      </p>
+                      <p className="text-sm text-gray-500">{profile.email || "No email found"}</p>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex items-center gap-2">
+                    <Link
+                      to="user-profile"
+                      className="flex-1 rounded-lg bg-green-600 px-3 py-2 text-center text-sm font-medium text-white hover:bg-green-700"
+                    >
+                      View Profile
+                    </Link>
+                  </div>
+                </div>
+              </Popup>
 
             ) : ''}
 
@@ -211,7 +294,7 @@ const Navbar = ({ token, onLogin, onLogout }) => {
       <div className="bg-green-600 max-lg:hidden">
         <div className="flex justify-center space-x-32 py-3 text-white">
           <Link to="/">
-            <span className="hover:text-gray-200">Home</span>
+            <span className="hover:text-gray-200">HOME</span>
           </Link>
           <Link
             to={`/AfterHomePage?page=NEW ARRIVAL`}
@@ -236,7 +319,7 @@ const Navbar = ({ token, onLogin, onLogout }) => {
             className="cursor-pointer hover:text-gray-200"
             href="#contact"
           >
-            Contact Us
+            CONTACT US
           </a>
         </div>
       </div>
@@ -255,7 +338,7 @@ const Navbar = ({ token, onLogin, onLogout }) => {
             <div className="flex flex-col space-y-4 text-green-600  text-lg" onClick={() => setToggleMenu(false)}>
               <Link to="/" className="hover:text-green-700 hover:border-b-2 duration-400 border-green-600">
 
-                Home
+                HOME
               </Link>
               <Link to={`/AfterHomePage?page=NEW ARRIVAL`} className="hover:text-green-700 hover:border-b-2 duration-400 border-green-600 ">
                 NEW ARRIVAL
@@ -272,7 +355,7 @@ const Navbar = ({ token, onLogin, onLogout }) => {
                 className="cursor-pointer hover:text-green-700 hover:border-b-2 duration-400 border-green-600"
                 href="#contact"
               >
-                Contact Us
+                CONTACT US
               </a>
             </div>
           </div>
@@ -351,7 +434,7 @@ const Navbar = ({ token, onLogin, onLogout }) => {
             </Link>
             {/* Other buttons here */}
             <button onClick={scrollToFooter} className="text-gray-800 mb-2">
-              Contact Us
+              CONTACT US
             </button>
           </div>
         </div>
