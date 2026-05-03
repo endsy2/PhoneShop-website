@@ -8,7 +8,7 @@ import {
   telegram_green,
   // buy_green,
   messenger_green,
-  // favorite_green,
+  compare,
   addToCartWhite,
   // telegramWhite,
   // messengerWhite,
@@ -17,11 +17,13 @@ import {
   instagram_green,
 } from "../Assets/image";
 import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 // import Installment_Card from "./Installment_Payment_Card";
 import { fetchdataProduct, fetchProductByName } from "../../FetchAPI/Fetch";
 import { addToCart, toggleStatusTab } from "../../store/cart";
 import { useDispatch, useSelector } from "react-redux";
 import { addtofavorite, removeFromFavorite } from "../../store/favorite";
+import { addToCompare } from "../../store/compare";
 import ProductCard from "./ProductCard";
 
 const ProductDetail = () => {
@@ -34,6 +36,7 @@ const ProductDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const favorite = useSelector((store) => store.favorite.favorite);
   const [product, setProduct] = useState([]);
 
@@ -135,6 +138,15 @@ const ProductDetail = () => {
     }
   };
 
+  const handleCompare = () => {
+    if (!selectedItem?.phone_id) {
+      return;
+    }
+
+    dispatch(addToCompare(selectedItem));
+    navigate("/compare-product");
+  };
+
   const handleStorageChange = (storage) => {
     setSelectedStorage(storage);
     const productByStorage = items.find(
@@ -167,7 +179,7 @@ const ProductDetail = () => {
           <img
             src={`http://localhost:3000/${selectedImage}`}
             alt="Main Product"
-            className="w-[500px] h-96 object-contain mb-4 shadow-lg rounded-lg"
+            className="w-full max-w-[500px] h-auto md:h-96 object-contain mb-4 shadow-lg rounded-lg"
           />
           <div className="flex mt-4 space-x-4">
             {arrayImage.map((image, idx) => (
@@ -276,33 +288,45 @@ const ProductDetail = () => {
               <img src={instagram_green} alt="instagram" className="w-6" />
               Contact on Instagram
             </a>
-            <div className="flex items-center flex-row gap-4 mt-4">
-              <button
-                href="/cart"
-                className="w-[200px] justify-center flex bg-green-600 p-3 px-5 rounded-xl items-center gap-2 text-white font-semibold hover:text-green-800"
-                onClick={() => handleAddToCart()}
-              >
-                <img src={addToCartWhite} alt="Add to Cart" className="w-5" />
-                Add to Cart
-              </button>
-              <button
-                className="w-[200px] flex justify-center gap-2 items-center text-white bg-green-600 p-3 font-semibold rounded-xl hover:text-green-800"
-                onClick={() => handeAddToFavorite(selectedItem.phone_id)}
-              >
-                <img
-                  className="w-6"
-                  src={
-                    favorite.findIndex(
-                      (element) => element === selectedItem.phone_id
-                    ) >= 0
-                      ? heartFill
-                      : heart
-                  }
-                  alt=""
-                />
-                <p className="max-lg:hidden">Add To Favorite</p>
-              </button>
-            </div>
+            <div className="flex flex-col md:flex-row items-center gap-4 mt-4 w-full">
+                <button
+                  href="/cart"
+                  className="w-full md:w-[200px] justify-center flex bg-green-600 p-3 rounded-xl items-center gap-2 text-white font-semibold hover:text-green-800"
+                  onClick={() => handleAddToCart()}
+                >
+                  <img src={addToCartWhite} alt="Add to Cart" className="w-5" />
+                  Add to Cart
+                </button>
+                <button
+                  className="w-full md:w-[200px] flex justify-center gap-2 items-center text-white bg-green-600 p-3 font-semibold rounded-xl hover:text-green-800"
+                  onClick={() => handeAddToFavorite(selectedItem.phone_id)}
+                >
+                  <img
+                    className="w-6"
+                    src={
+                      favorite.findIndex(
+                        (element) => element === selectedItem.phone_id
+                      ) >= 0
+                        ? heartFill
+                        : heart
+                    }
+                    alt=""
+                  />
+                  <p className="max-lg:hidden">Add To Favorite</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCompare}
+                  className="w-full md:w-[200px] flex justify-center gap-2 items-center text-white bg-green-600 p-3 font-semibold rounded-xl hover:text-green-800"
+                >
+                  <img
+                    className="w-6"
+                    src={compare}
+                    alt="Compare"
+                  />
+                  <p className="max-lg:hidden">Compare</p>
+                </button>
+              </div>
           </div>
         </div>
       </div>

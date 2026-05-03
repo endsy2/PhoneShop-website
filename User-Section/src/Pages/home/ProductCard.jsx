@@ -27,6 +27,7 @@ const ProductCard = ({ product }) => {
     dispatch(removeFromFavorite({ productId: product.phone_id }));
   };
 
+
   // Generate the product image URL
   const imageUrl = `http://localhost:3000/${(product.images || "")
     .trim()
@@ -41,7 +42,7 @@ const ProductCard = ({ product }) => {
         </span>
       ) : null}
       <Link to={`/product-detail?phone_name=${product.name}`}>
-        <div className="w-auto h-[200px] flex justify-center items-center  rounded-md overflow-hidden mt-1">
+        <div className="w-full h-48 sm:h-56 md:h-64 flex justify-center items-center rounded-md overflow-hidden mt-1">
           <img
             src={imageUrl}
             alt={product.name}
