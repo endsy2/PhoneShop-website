@@ -1,34 +1,40 @@
 
-// Database for fake notification only ****
+// Database for in-memory notifications only ****
 
 export const fake_notification = [
     {
         id: 1,
+        title: "Flash Sale",
         label: "ទូរស័ព្ទបញ្ចុះតម្លៃម៉ែអាថោកទិញថ្ងៃស្អែកយក១០ឆ្នាំក្រោយ",
         last_upload: "Now",
     },
     {
         id: 2,
+        title: "New Offer",
         label: "ការបញ្ចុះតម្លៃពិសេសសម្រាប់ទូរស័ព្ទថ្មីៗ",
         last_upload: "2-minutes ago",
     },
     {
         id: 3,
+        title: "New Arrival",
         label: "ផលិតផលថ្មីទើបចូល! សូមអញ្ជើញមកមើល",
         last_upload: "10-minutes ago",
     },
     {
         id: 4,
+        title: "Discount Alert",
         label: "ជូនដំណឹង៖ មានការបញ្ចុះតម្លៃ 50% សម្រាប់ទូរស័ព្ទ Vivo",
         last_upload: "1 hour ago",
     },
     {
         id: 5,
+        title: "Promotion",
         label: "ប្រូម៉ូសិនថ្មី! ទូរស័ព្ទទាំងអស់មានការបញ្ចុះតម្លៃ",
         last_upload: "2 hours ago",
     },
     {
         id: 6,
+        title: "Special Deal",
         label: "ការផ្តល់ជូនពិសេស៖ ទូរស័ព្ទ Oppo ការបញ្ចុះតម្លៃ 30%",
         last_upload: "3 hours ago",
     },
