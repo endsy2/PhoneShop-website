@@ -10,8 +10,14 @@ const CartItem = ({ product }) => {
 
     const fetchProductDetail = async (id) => {
         try {
-            const response = await fetchProductByName({ phone_name: product.productName }); // Adjust API call as needed
-            const productDetails = response.data.find(item => item.spec_id === id);
+            const response = await fetchProductByName({
+                phone_id: product.productId,
+                phone_name: product.productName,
+            });
+            const productList = response?.data ?? response;
+            const productDetails = Array.isArray(productList)
+                ? productList.find(item => item.spec_id === id || item.phone_id === id)
+                : null;
             setDetail(productDetails || null);
         } catch (error) {
             console.error('Failed to fetch product details:', error);

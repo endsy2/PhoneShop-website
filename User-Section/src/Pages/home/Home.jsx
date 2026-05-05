@@ -97,6 +97,29 @@ const HomePage = () => {
     new Map((discountProduct || []).map((item) => [item.phone_id, item])).values()
   );
 
+  const trustBenefits = [
+    {
+      title: "Fast Nationwide Delivery",
+      description: "Reliable delivery partners with real-time updates on your order.",
+      icon: "🚚",
+    },
+    {
+      title: "Genuine Products",
+      description: "All devices are quality checked and sourced from trusted suppliers.",
+      icon: "✅",
+    },
+    {
+      title: "Secure Payment",
+      description: "Safe checkout flow with trusted payment options and fraud protection.",
+      icon: "🔒",
+    },
+    {
+      title: "Warranty & Support",
+      description: "Post-purchase support and warranty guidance from our service team.",
+      icon: "🛠️",
+    },
+  ];
+
   useEffect(() => {
     handlefetchProduct();
     handleFetchDiscountProduct();
@@ -183,6 +206,18 @@ const HomePage = () => {
               What product are you looking for?
             </p>
           </div>
+        </div>
+      </div>
+
+      <div className="px-4 pb-4 md:px-20">
+        <div className="grid grid-cols-1 gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-2 xl:grid-cols-4">
+          {trustBenefits.map((benefit) => (
+            <div key={benefit.title} className="rounded-xl border border-slate-100 bg-slate-50 p-4">
+              <p className="text-2xl" aria-hidden="true">{benefit.icon}</p>
+              <h3 className="mt-2 text-base font-bold text-slate-900">{benefit.title}</h3>
+              <p className="mt-1 text-sm text-slate-600">{benefit.description}</p>
+            </div>
+          ))}
         </div>
       </div>
 
