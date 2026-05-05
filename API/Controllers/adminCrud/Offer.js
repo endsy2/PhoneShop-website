@@ -136,11 +136,10 @@ export const offerInsert = async (req, res) => {
 
 export const offerUpdate = async (req, res) => {
     const { offerID } = req.params;
-    const { phone_id } = req.query;
     const { promo_name, discount_percent, start_date, end_date } = req.body;
 
-    if (!offerID || !phone_id || !promo_name || !discount_percent || !start_date || !end_date) {
-        return res.status(500).json({
+    if (!offerID || !promo_name || !discount_percent || !start_date || !end_date) {
+        return res.status(400).json({
             message: "fill all the blank"
         })
     }
@@ -149,31 +148,18 @@ export const offerUpdate = async (req, res) => {
     UPDATE promotions
     SET promo_name=?,
         discount_percentage=?,
-        price_discount=?,
         start_date=?,
         end_date=?,
         status=?
     WHERE promo_id=?
     `
-    const queryFind = `
-    SELECT price
-    FROM phones
-    WHERE phone_id=?
-`;
 
     try {
-        const [phone] = await pool.promise().query(queryFind, [phone_id]);
-        const old_price = phone[0].price
-        console.log(old_price);
-
-        const new_price = old_price * (100 - discount_percent) / 100
         const promotionStatus = getPromotionStatus(start_date, end_date);
-        console.log(new_price);
 
         const value = [
             promo_name,
             discount_percent,
-            new_price,
             start_date,
             end_date,
             promotionStatus,
@@ -194,6 +180,7 @@ export const offerUpdate = async (req, res) => {
         })
     } catch (error) {
         console.log(error);
+        res.status(500).json({ message: "Internal server error" });
     }
 }
 export const offerDelete = async (req, res) => {

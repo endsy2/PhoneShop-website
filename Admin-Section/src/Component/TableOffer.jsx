@@ -164,7 +164,7 @@ const TableOffer = ({ title, items }) => {
                         {Array.isArray(datatable?.data) && datatable.data.length > 0 ? (
                             datatable.data.map((element) => (
                                 <tr
-                                    key={element.phone_id}
+                                    key={element.promo_id}
                                     className="hover:bg-gray-50 transition duration-200 border-b border-gray-200"
                                 >
                                     <td className="table-data flex justify-start items-center px-4 sm:px-6 py-3 sm:py-4">
@@ -175,7 +175,7 @@ const TableOffer = ({ title, items }) => {
                                             className="mr-2 sm:mr-3 h-3 w-3 lg:w-4 lg:h-4 border-1 border-white rounded"
                                         />
                                         <Link
-                                            to={`${element.phone_id}`}
+                                            to={`/dashboard/offer/${element.phone_id}`}
                                             className="text-sm sm:text-base"
                                         >
                                             {element.promo_id}
@@ -183,7 +183,7 @@ const TableOffer = ({ title, items }) => {
                                     </td>
                                     <td className="table-data px-4 sm:px-6 py-3 sm:py-4">
                                         <Link
-                                            to={`${element.phone_id}`}
+                                            to={`/dashboard/offer/${element.phone_id}`}
                                             className="text-sm sm:text-base"
                                         >
                                             {element.name}
@@ -191,7 +191,7 @@ const TableOffer = ({ title, items }) => {
                                     </td>
                                     <td className="table-data px-4 sm:px-6 py-3 sm:py-4 ">
                                         <Link
-                                            to={`${element.phone_id}`}
+                                            to={`/dashboard/offer/${element.phone_id}`}
                                             className="text-sm sm:text-base"
                                         >
                                             {element.promo_name}
@@ -199,7 +199,7 @@ const TableOffer = ({ title, items }) => {
                                     </td>
                                     <td className="table-data px-4 sm:px-6 py-3 sm:py-4">
                                         <Link
-                                            to={`${element.phone_id}`}
+                                            to={`/dashboard/offer/${element.phone_id}`}
                                             className="text-sm sm:text-base"
                                         >
                                             {element.price}
@@ -207,7 +207,7 @@ const TableOffer = ({ title, items }) => {
                                     </td>
                                     <td className="table-data px-4 sm:px-6 py-3 sm:py-4">
                                         <Link
-                                            to={`${element.phone_id}`}
+                                            to={`/dashboard/offer/${element.phone_id}`}
                                             className="text-sm sm:text-base"
                                         >
                                             {element.price_discount}
@@ -215,7 +215,7 @@ const TableOffer = ({ title, items }) => {
                                     </td>
                                     <td className="table-data px-4 sm:px-6 py-3 sm:py-4">
                                         <Link
-                                            to={`${element.phone_id}`}
+                                            to={`/dashboard/offer/${element.phone_id}`}
                                             className="text-sm sm:text-base"
                                         >
                                             {element.discount_percentage}
@@ -223,7 +223,7 @@ const TableOffer = ({ title, items }) => {
                                     </td>
                                     <td className="table-data px-4 sm:px-6 py-3 sm:py-4">
                                         <Link
-                                            to={`${element.phone_id}`}
+                                            to={`/dashboard/offer/${element.phone_id}`}
                                             className="text-sm sm:text-base"
                                         >
                                             {formatDate(element.end_date)}

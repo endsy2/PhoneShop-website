@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import ProductCard from './ProductCard';
+import { NETWORK_CONFIG } from '../network/Network_EndPoint';
 
-const API_URL_COMMON = "http://localhost:3000/common";
+const API_URL_COMMON = `${NETWORK_CONFIG.apiBaseUrl}/common`;
 
 const ProductRecommendations = ({ spec_id, type = "co-viewed" }) => {
     const [products, setProducts] = useState([]);

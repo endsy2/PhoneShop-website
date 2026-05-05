@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { dashboardHeaderAll, dashboardHeaderData, logoutFetch } from "../../Fetch/FetchAPI";
 import { dashBoradMain_item } from "../../Constants";
 import DashBoardMain from "./DashBoardMain";
@@ -26,14 +25,14 @@ const DashBoardHeader = () => {
 
   const handleLogout = async () => {
     try {
-      const response = await logoutFetch();
-      Cookies.remove('token')
-      localStorage.removeItem('adminToken');
-      console.log(response);
-
+      await logoutFetch();
     } catch (error) {
       console.log(error);
-
+    } finally {
+      Cookies.remove('token');
+      Cookies.remove('access-token');
+      localStorage.removeItem('adminToken');
+      window.location.href = '/';
     }
   }
 
@@ -81,13 +80,12 @@ const DashBoardHeader = () => {
 
           </select>
         </div>
-        <Link
-          to="/"
+        <button
           className="red-btn mr-6 max-lg:w-28 max-lg:h-11 max-lg:text-sm"
           onClick={() => handleLogout()}
         >
           LogOut
-        </Link>
+        </button>
       </section>
       <DashBoardMain data={mergedData} selectedDate={selectDate} />
     </>

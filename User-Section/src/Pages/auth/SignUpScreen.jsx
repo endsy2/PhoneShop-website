@@ -189,7 +189,7 @@ const Signup = () => {
 
                         <h2 className='font-semibold'>Already have an account?</h2>
                         <Spacer width={5} />
-                        <Link to="/auth/Login">
+                        <Link to="/auth/login">
                             <h2 className='text-green-600  font-semibold'>Sign In.</h2></Link>
                     </div>
                 </div>

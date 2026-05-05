@@ -118,7 +118,7 @@ const Login = () => {
                     <div className='flex items-center justify-center'>
                         <h2 className='font-semibold'>Don't have account yet?</h2>
                         <Spacer width={5} />
-                        <Link to="/auth/Signup">
+                        <Link to="/auth/signup">
                             <h2 className='text-green-600  font-semibold' >Sign Up.</h2></Link>
                     </div>
                 </div>

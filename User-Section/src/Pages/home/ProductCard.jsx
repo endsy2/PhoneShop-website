@@ -3,6 +3,7 @@ import { useDispatch } from "react-redux";
 import { Link, useLocation } from "react-router-dom";
 import { addToCart, toggleStatusTab } from "../../store/cart";
 import { removeFromFavorite } from "../../store/favorite";
+import { NETWORK_CONFIG } from "../../network/Network_EndPoint";
 
 const ProductCard = ({ product }) => {
   const dispatch = useDispatch();
@@ -46,10 +47,8 @@ const ProductCard = ({ product }) => {
   };
 
   // Generate the product image URL
-  const imageUrl = `http://localhost:3000/${(product.images || "")
-    .trim()
-    .replace(/uploads[\\/]/g, "")
-    .replace(/\s+/g, "")}`;
+  const rawImage = (product.images || "").split(",")[0].trim().replace(/uploads[\\/]/g, "").replace(/\s+/g, "");
+  const imageUrl = rawImage ? `${NETWORK_CONFIG.apiBaseUrl}/${rawImage}` : "https://via.placeholder.com/300x300?text=No+Image";
 
   return (
     <div className="relative bg-white shadow-md rounded-lg p-4 hover:shadow-lg transition-all duration-300 transform hover:scale-105">
@@ -74,6 +73,7 @@ const ProductCard = ({ product }) => {
             src={imageUrl}
             alt={product.name}
             className="object-contain max-w-full max-h-full"
+            onError={(e) => { e.target.src = "https://via.placeholder.com/300x300?text=No+Image"; }}
           />
         </div>
         <h3 className="mt-4 text-center text-lg font-semibold text-gray-800">

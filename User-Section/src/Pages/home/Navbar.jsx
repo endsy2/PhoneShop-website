@@ -253,7 +253,7 @@ const Navbar = ({ token, onLogin, onLogout }) => {
             ) : (
               // Show Login and Sign Up Buttons if no token exists
               <div className="flex justify-center items-center gap-3 ">
-                <Link to="/auth/Login">
+                <Link to="/auth/login">
                   <button
                     className="bg-gray-200 text-gray-800 px-6 py-2 rounded-full hidden lg:block"
                     style={{ borderRadius: "8px" }}
@@ -261,7 +261,7 @@ const Navbar = ({ token, onLogin, onLogout }) => {
                     Log In
                   </button>
                 </Link>
-                <NavLink to="/auth/Signup">
+                <NavLink to="/auth/signup">
                   <button
                     className="bg-green-600 text-white px-6 py-2 rounded-full hidden lg:block"
                     style={{ borderRadius: "8px" }}
@@ -406,7 +406,7 @@ const Navbar = ({ token, onLogin, onLogout }) => {
             </div>
             :
             <div className="flex justify-center items-center gap-3 ">
-              <Link to="/auth/Login">
+              <Link to="/auth/login">
                 <button
                   className="bg-gray-200 text-gray-800 px-6 py-2 rounded-full "
                   style={{ borderRadius: "8px" }}
@@ -414,7 +414,7 @@ const Navbar = ({ token, onLogin, onLogout }) => {
                   Log In
                 </button>
               </Link>
-              <NavLink to="/auth/Signup">
+              <NavLink to="/auth/signup">
                 <button
                   className="bg-green-600 text-white px-6 py-2 rounded-full "
                   style={{ borderRadius: "8px" }}
@@ -422,8 +422,6 @@ const Navbar = ({ token, onLogin, onLogout }) => {
                   Sign Up
                 </button>
               </NavLink>
-
-
             </div>
 
           }

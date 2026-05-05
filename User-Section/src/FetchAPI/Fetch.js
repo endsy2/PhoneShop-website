@@ -152,19 +152,12 @@ export const fetchProductBySpecID = async ({ spec_id }) => {
 export const fetchCheckOut = async (data) => {
     try {
         const response = await axios.post(`${API_URL_USER}/checkout`, data, {
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             withCredentials: true
-        })
-
+        });
         return response;
-        // console.log(data);
-
     } catch (error) {
-        console.log(error);
-        throw error?.response?.data || error;
-
+        // Re-throw with the full axios error so the caller can read error.response.data.message
+        throw error;
     }
-
 }

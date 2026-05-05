@@ -216,6 +216,7 @@ export const getOrderByName = async (req, res) => {
     const queryOrderItems = `SELECT 
     o.order_id,
     c.username,
+    COALESCE(o.recipient_name, c.username) AS display_name,
     o.order_date,
     o.status,
     ot.order_item_id,

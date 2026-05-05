@@ -1,15 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { fetchProductByName, fetchProductBySpecID } from '../FetchAPI/Fetch';
 import { useDispatch, useSelector } from 'react-redux';
-import { syncCartItem } from '../../store/cart';
-import Cookies from 'js-cookie';
+import { syncCartItem } from '../store/cart';
+import { NETWORK_CONFIG } from '../network/Network_EndPoint';
 
 const CheckoutCart = ({ items }) => {
     const [data, setData] = useState([]);
     const [error, setError] = useState(null);
     const cart = useSelector(store => store.cart.items);
     const [totalQuatity, setTotalQuantity] = useState();
-    const [token, setToken] = useState(Cookies.get('access-token'));
     const dispatch = useDispatch();
 
     const handleFetchData = useCallback(async () => {
@@ -64,12 +63,10 @@ const CheckoutCart = ({ items }) => {
                             {/* Product Image and Name */}
                             <div className="flex items-center w-[175px] gap-2">
                                 <img
-                                    src={`http://localhost:3000/${data[0].images?.split(',')[0]
-                                        ?.trim()
-                                        ?.replace(/uploads[\\/]/g, '')
-                                        ?.replace(/\s+/g, '')}`}
+                                    src={`${NETWORK_CONFIG.apiBaseUrl}/${data[0].images?.split(',')[0]?.trim()?.replace(/uploads[\\/]/g, '')?.replace(/\s+/g, '')}`}
                                     className="w-12 h-12 object-cover"
                                     alt={data[0]?.name || "Product"}
+                                    onError={(e) => { e.target.src = "https://via.placeholder.com/48x48?text=No+Image"; }}
                                 />
                                 <p className="text-sm">{data[0]?.name}</p>
                             </div>

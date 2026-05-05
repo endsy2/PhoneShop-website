@@ -10,17 +10,14 @@ export const signIn = async ({ email, password }) => {
   return axios.post(`${API_URL_Auth}/login`, { email, password }, { withCredentials: true });
 };
 export const register = async ({ username, email, password }) => {
-  const formData = new FormData();
-  formData.append("username", username);
-  formData.append("email", email);
-  formData.append("password", password);
-
-  return axios.post(`${API_URL_Auth}/adminRegister`, formData, {
-    headers: {
-      "Content-Type": "application/json",
-    },
-    withCredentials: true
-  });
+  return axios.post(
+    `${API_URL_Auth}/adminRegister`,
+    { username, email, password },
+    {
+      headers: { "Content-Type": "application/json" },
+      withCredentials: true,
+    }
+  );
 };
 export const productData = async () => {
   try {
@@ -181,13 +178,10 @@ export const searchFetchByCategory = async ({ searchData, Category }) => {
 };
 export const searchOrder = async ({ username }) => {
   try {
-    const UserName = `%${username}%`
-    const response = await axios.get(`${API_URL_Admin}/searchTableOrder?username=${UserName}`, { withCredentials: true })
+    const response = await axios.get(`${API_URL_Admin}/searchTableOrder?username=${encodeURIComponent(username)}`, { withCredentials: true })
     return response.data;
-
   } catch (error) {
     console.log(error);
-
   }
 }
 export const addNewProductAPI = async (formdata) => {
@@ -564,8 +558,20 @@ export const updateProductVariants = async (formdata, id) => {
     throw error; // Re-throw the error to allow proper error handling
   }
 };
-export const updateSpec = async (formdata, queryParam) => {
+export const fetchProductVariantsWithSpecs = async (product_id) => {
   try {
+    const response = await axios.get(`${API_URL_Admin}/productVariantsWithSpecs`, {
+      params: { product_id },
+      withCredentials: true,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching product variants with specs:", error);
+    throw error;
+  }
+};
+
+export const updateSpec = async (formdata, queryParam) => {  try {
     const response = await axios.put(`${API_URL_Admin}/updateSpec?variantID=${queryParam.variantID}&oldStorage=${queryParam.oldStorage}`, formdata, {
       headers: {
         "Content-Type": "application/json"

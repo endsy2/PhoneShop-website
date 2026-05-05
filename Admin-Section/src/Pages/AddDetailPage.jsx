@@ -9,11 +9,11 @@ const AddDetailPage = () => {
                 <AddProductHeader
                     btn1="New brand"
                     btn2="New Category"
-                    btn3="New Color"
+                    btn3="New Product"
                     btn4="New Detail"
                     route1="addBrand"
                     route2="addCategory"
-                    route3="addColor"
+                    route3="addProduct"
                     route4="addDetail"
                 />
             </section>

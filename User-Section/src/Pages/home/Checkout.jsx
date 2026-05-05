@@ -67,10 +67,9 @@ const CheckoutPage = () => {
 
     try {
       setSubmitting(true);
-      // Send the data to the server using the `fetchCheckOut` function
       const response = await fetchCheckOut(data);
       if (response) {
-        setResponse("Sucessfully");
+        setResponse("Order placed successfully!");
         setError("");
         setCustomerName("");
         setDelivery("");
@@ -78,13 +77,17 @@ const CheckoutPage = () => {
         setPayment("");
         clearCart();
       } else {
-        setError("Something went wrong");
+        setError("Something went wrong. Please try again.");
         setResponse("");
       }
-      console.log("Checkout response:", response);
     } catch (error) {
       console.error("Error during checkout:", error);
-      setError(error?.message || error?.error || error?.data?.message || "Checkout failed. Please try again.");
+      // Show the server's actual error message if available
+      const serverMsg =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Checkout failed. Please try again.";
+      setError(serverMsg);
       setResponse("");
     } finally {
       setSubmitting(false);
@@ -115,12 +118,12 @@ const CheckoutPage = () => {
                   </h3>
                   <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="flex flex-col w-full col-span-2">
-                      <h4 className="pb-2">CUSTOMER NAME</h4>
+                      <h4 className="pb-2">RECIPIENT NAME <span className="text-xs text-gray-400 font-normal">(who receives the delivery)</span></h4>
                       <input
                         value={customerName}
                         type="text"
                         onChange={(e) => setCustomerName(e.target.value)}
-                        placeholder="Enter your name"
+                        placeholder="Enter recipient name"
                         className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
                       />
                       {fieldErrors.customerName ? (
@@ -184,14 +187,23 @@ const CheckoutPage = () => {
                     </div>
                     <div className="mt-10">
                       {response ? (
-                        <p className="text-green-600 font-bold text-lg ">
+                        <p className="text-green-600 font-bold text-lg">
                           {response}
                         </p>
-                      ) : (
-                        <p className="text-red-600 font-bold text-lg">
-                          {error}
-                        </p>
-                      )}
+                      ) : error ? (
+                        <div>
+                          <p className="text-red-600 font-bold text-lg">{error}</p>
+                          {error.includes("cart items") && (
+                            <button
+                              type="button"
+                              onClick={() => { clearCart(); setError(""); }}
+                              className="mt-2 text-sm underline text-red-500 hover:text-red-700"
+                            >
+                              Clear cart and start fresh
+                            </button>
+                          )}
+                        </div>
+                      ) : null}
                     </div>
                   </form>
                 </div>

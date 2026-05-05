@@ -103,7 +103,7 @@ export const tableHeadProduct = [
 export const tableHeadOrder = [
   "ID",
   "Customer Name",
-  "Address",
+  "Delivery Address",
   "Date",
   "Amount",
 ]
