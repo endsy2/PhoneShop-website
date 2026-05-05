@@ -45,7 +45,7 @@ const AddToCart = () => {
       {/* Cart Panel */}
       <div
         ref={cartRef}
-        className={`fixed top-0 right-0 bg-white shadow-xl w-96 h-full flex flex-col z-50
+        className={`fixed top-0 right-0 bg-white shadow-xl w-full sm:w-96 h-full flex flex-col z-50
         transform transition-transform duration-500
         ${statusTab ? "translate-x-0" : "translate-x-full"}`}
       >
@@ -92,9 +92,9 @@ const AddToCart = () => {
               Close
             </button>
             <Link
-              className="bg-white text-green-600 font-bold py-2 rounded flex justify-center items-center hover:bg-green-500 transition-colors"
-              to="/checkout"
-              onClick={handleCloseTabCart}
+              className={`font-bold py-2 rounded flex justify-center items-center transition-colors ${carts.length === 0 ? "pointer-events-none bg-slate-200 text-slate-500" : "bg-white text-green-600 hover:bg-green-500"}`}
+              to={carts.length === 0 ? "#" : "/checkout"}
+              onClick={carts.length === 0 ? undefined : handleCloseTabCart}
             >
               Checkout
             </Link>

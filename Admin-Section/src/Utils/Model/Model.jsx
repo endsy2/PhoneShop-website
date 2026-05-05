@@ -17,10 +17,6 @@ const Model = ({ open, onClose, id, product_id, value, storage }) => {
       id="wrapper"
       onClick={handleClose}
     >
-      {console.log(product_id)
-      }
-      {console.log(storage)
-      }
       <div
         className="w-[1400px] max-h-[90vh] bg-white p-6 rounded-lg shadow-lg overflow-y-auto"
         style={{ maxHeight: "90vh" }} // Optional inline styling

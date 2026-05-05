@@ -17,10 +17,13 @@ const port = process.env.PORT || 3000; // Capitalized PORT and added a default
 
 app.use(express.json());
 app.use(cookieParser());
+// Serve uploaded images under /uploads path so frontend can access them as http://localhost:3000/uploads/filename
+app.use("/uploads", express.static("uploads"));
+// Also serve from root for backward compatibility with existing image URLs
 app.use(express.static("uploads"));
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:5174"],
+    origin: ["http://localhost:5173", "http://localhost:5174", "http://localhost:5175"],
     credentials: true,
   })
 );
@@ -49,10 +52,10 @@ pool.getConnection((error, connection) => {
 //   })
 // );
 app.use(session({
-  secret: 'crypted key',
+  secret: process.env.SESSION_SECRET || 'fallback_secret_key',
   resave: false,
-  saveUninitialized: true,
-  cookie: { secure: false } // Put true if https
+  saveUninitialized: false,
+  cookie: { secure: process.env.NODE_ENV === "production" }
 }))
 
 app.use("/auth", AuthRouter);

@@ -1,34 +1,57 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { fetchProductBySpecID } from '../FetchAPI/Fetch';
-import { useSelector } from 'react-redux';
-import Cookies from 'js-cookie';
+import { fetchProductByName, fetchProductBySpecID } from '../FetchAPI/Fetch';
+import { useDispatch, useSelector } from 'react-redux';
+import { syncCartItem } from '../store/cart';
+import { NETWORK_CONFIG } from '../network/Network_EndPoint';
 
 const CheckoutCart = ({ items }) => {
     const [data, setData] = useState([]);
     const [error, setError] = useState(null);
     const cart = useSelector(store => store.cart.items);
     const [totalQuatity, setTotalQuantity] = useState();
-    const [token, setToken] = useState(Cookies.get('access-token'));
+    const dispatch = useDispatch();
+
     const handleFetchData = useCallback(async () => {
         if (!items?.productId) return; // Ensure productId exists before fetching
+
+        const extractRows = (response) => response?.data ?? response;
+
         try {
-            const response = await fetchProductBySpecID({ spec_id: items.productId });
-            if (response?.data) {
-                setData(response.data);
+            let productRows = extractRows(await fetchProductBySpecID({ spec_id: items.productId }));
+
+            if (!Array.isArray(productRows) || productRows.length === 0) {
+                const fallbackResponse = await fetchProductByName({
+                    phone_id: items.productId,
+                    phone_name: items.productName,
+                });
+
+                productRows = extractRows(fallbackResponse);
+            }
+
+            if (Array.isArray(productRows) && productRows.length > 0) {
+                const product = productRows[0];
+                const resolvedPrice = product.price_discount || product.price;
+                setData(productRows);
+                setError(null);
+                dispatch(syncCartItem({
+                    productId: items.productId,
+                    productName: product.name,
+                    price: resolvedPrice,
+                }));
             } else {
                 setError('No data returned from API');
             }
         } catch (err) {
             setError(`Error fetching data: ${err.message}`);
         }
-    }, [items?.productId]);
+    }, [items?.productId, dispatch]);
 
     useEffect(() => {
         handleFetchData();
         let total = 0;
         cart.forEach(item => total += item.quantity);
         setTotalQuantity(total);
-    }, [handleFetchData,]);
+    }, [handleFetchData]);
     return (
         <div className='my-3'>
             {error ? (
@@ -40,12 +63,10 @@ const CheckoutCart = ({ items }) => {
                             {/* Product Image and Name */}
                             <div className="flex items-center w-[175px] gap-2">
                                 <img
-                                    src={`http://localhost:3000/${data[0].images?.split(',')[0]
-                                        ?.trim()
-                                        ?.replace(/uploads[\\/]/g, '')
-                                        ?.replace(/\s+/g, '')}`}
+                                    src={`${NETWORK_CONFIG.apiBaseUrl}/${data[0].images?.split(',')[0]?.trim()?.replace(/uploads[\\/]/g, '')?.replace(/\s+/g, '')}`}
                                     className="w-12 h-12 object-cover"
                                     alt={data[0]?.name || "Product"}
+                                    onError={(e) => { e.target.src = "https://via.placeholder.com/48x48?text=No+Image"; }}
                                 />
                                 <p className="text-sm">{data[0]?.name}</p>
                             </div>

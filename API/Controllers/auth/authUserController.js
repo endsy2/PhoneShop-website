@@ -17,35 +17,29 @@ export const handlelogin = async (req, res) => {
 
   try {
     const sql = `SELECT * FROM customers WHERE email=?`;
+    const [rows] = await pool.promise().query(sql, [email]);
 
-    // Wrap pool.query in a promise to handle async/await more easily
-    pool.query(sql, [email], async (error, rows) => {
-      if (error) {
-        return res.status(500).json({ message: "Data query error" });
-      }
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Email not found" });
+    }
 
-      if (rows.length === 0) {
-        return res.status(404).json({ message: "Email not found" });
-      }
+    const user = rows[0];
+    const isPasswordValid = await bcrypt.compare(password, user.password);
 
-      const user = rows[0];
-      const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: "Incorrect password" });
+    }
 
-      if (!isPasswordValid) {
-        return res.status(401).json({ message: "Incorrect password" });
-      }
+    const userPayLoad = { username: user.username, role: 2 };
+    const accessToken = generateAccessToken(userPayLoad);
+    const refreshToken = generateRefreshToken(userPayLoad);
 
-      const userPayLoad = { username: user.username, role: 2 };
-      const accessToken = generateAccessToken(userPayLoad);
-      const refreshToken = generateRefreshToken(userPayLoad);
+    res.cookie('access-token', accessToken, cookieConfig);
+    res.cookie('refresh-token', refreshToken, cookieConfig);
 
-      res.cookie('access-token', accessToken, cookieConfig);
-      res.cookie('refresh-token', refreshToken, cookieConfig);
-
-      res.json({
-        token: accessToken,
-        message: "Logged in successfully",
-      });
+    return res.json({
+      token: accessToken,
+      message: "Logged in successfully",
     });
   } catch (error) {
     console.error("Error:", error.message);
@@ -116,10 +110,10 @@ export const register = async (req, res) => {
 // };
 export const logout = (req, res) => {
   try {
-    // Clear cookies with matching options (path, secure, httpOnly)
-    res.clearCookie('access-token', { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production' });
-    res.clearCookie('refresh-token', { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production' });
-
+    const isProduction = process.env.NODE_ENV === "production";
+    const clearOptions = { path: "/", httpOnly: true, secure: isProduction };
+    res.clearCookie('access-token', clearOptions);
+    res.clearCookie('refresh-token', clearOptions);
     res.status(200).json({ message: "Logout successfully" });
   } catch (error) {
     console.error("Error during logout:", error);

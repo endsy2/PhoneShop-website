@@ -1,7 +1,7 @@
 import { Router } from "express";
 import upload from "../Utils/handleimg.js";
 import { validateToken_refresh_token } from "../Utils/jwt_validation_refresh_token.js";
-import { addNewBrand, addNewCategory, addNewProduct, addNewSpecificate, addVariants, CountHeaderData, deleteBrand, deleteCategory, deleteProduct, deleteSpecification, deleteVariants, getProductOptions, updateProduct, updateProductVariants, UpdateSpecification } from "../Controllers/adminCrud/Product.js";
+import { addNewBrand, addNewCategory, addNewProduct, addNewSpecificate, addVariants, CountHeaderData, deleteBrand, deleteCategory, deleteProduct, deleteSpecification, deleteVariants, getProductOptions, getProductVariantsWithSpecs, updateProduct, updateProductVariants, UpdateSpecification } from "../Controllers/adminCrud/Product.js";
 import { dashboardHeader, dashboardHeaderAll } from "../Controllers/adminCrud/DashBoard.js"
 import { deleteOrder, deleteOrderItems, orderByID, orderTable, OrderTableItemsByID, searchOrder, updateOrderitems } from "../Controllers/adminCrud/Order.js";
 
@@ -23,6 +23,7 @@ adminRouter.delete("/deleteProduct", deleteProduct);
 adminRouter.delete("/deleteVariants", deleteVariants);
 adminRouter.get('/productHead', CountHeaderData)
 adminRouter.get('/productOptions', getProductOptions)
+adminRouter.get('/productVariantsWithSpecs', getProductVariantsWithSpecs)
 adminRouter.get('/dashboardHead', dashboardHeader);
 adminRouter.get('/dashboardHeadAll', dashboardHeaderAll);
 adminRouter.get('/tableOrderItemsByID/:order_id', OrderTableItemsByID);
@@ -35,7 +36,7 @@ adminRouter.delete('/deleleOrder/:DeleteOrderID', deleteOrder);
 adminRouter.delete('/deleleSpec', deleteSpecification);
 adminRouter.delete('/deleteOrderItems/:orderItemsID', deleteOrderItems);
 adminRouter.put('/offerInsert', offerInsert)
-adminRouter.get('/offerUpdate/:offerID', offerUpdate)
+adminRouter.put('/offerUpdate/:offerID', offerUpdate)
 adminRouter.delete('/offerDelete/:offerID', offerDelete)
 adminRouter.put('/updateVariants/:productVariantID', upload.array('productImages', 10), updateProductVariants);
 adminRouter.post('/addNewVariants', upload.array('productImages', 10), addVariants)

@@ -1,10 +1,25 @@
 import pool from "../../db/db_handle.js";
 
+const getPromotionStatus = (startDate, endDate) => {
+    const today = new Date();
+    const now = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+        return "Inactive";
+    }
+
+    const startAt = new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime();
+    const endAt = new Date(end.getFullYear(), end.getMonth(), end.getDate()).getTime();
+
+    return now >= startAt && now <= endAt ? "Active" : "Inactive";
+};
+
 
 export const offerInsert = async (req, res) => {
     const {
         phone_name,
-        promo_name,
         storage,
         discount_percent,
         start_date,
@@ -14,14 +29,12 @@ export const offerInsert = async (req, res) => {
     console.log(req.body);
 
     const normalizedPhoneName = phone_name?.trim();
-    const normalizedPromoName = promo_name?.trim();
     const normalizedStorage = storage?.trim();
     const normalizedColor = color?.trim();
     const normalizedDiscount = Number(String(discount_percent ?? "").replace("%", "").trim());
 
     if (
         !normalizedPhoneName ||
-        !normalizedPromoName ||
         Number.isNaN(normalizedDiscount) ||
         !start_date ||
         !end_date ||
@@ -42,14 +55,15 @@ export const offerInsert = async (req, res) => {
 
     const findExistingPromotion = `SELECT promo_id FROM promotions WHERE spec_id = ? LIMIT 1`;
 
-    const insertPromote = `INSERT INTO promotions (spec_id, promo_name, discount_percentage, start_date, end_date) 
-                           VALUES (?, ?, ?, ?, ?)`;
+    const insertPromote = `INSERT INTO promotions (spec_id, promo_name, discount_percentage, start_date, end_date, status) 
+                           VALUES (?, ?, ?, ?, ?, ?)`;
 
     const updatePromote = `UPDATE promotions
                            SET promo_name = ?,
                                discount_percentage = ?,
                                start_date = ?,
-                               end_date = ?
+                               end_date = ?,
+                               status = ?
                            WHERE promo_id = ?`;
 
     try {
@@ -79,6 +93,9 @@ export const offerInsert = async (req, res) => {
 
         // Step 3: Insert or update promotion for this spec
         const [existingRows] = await pool.promise().query(findExistingPromotion, [spec_id]);
+        const promotionStatus = getPromotionStatus(start_date, end_date);
+
+        const normalizedPromoName = normalizedPhoneName;
 
         let result;
         if (existingRows.length > 0) {
@@ -88,6 +105,7 @@ export const offerInsert = async (req, res) => {
                 normalizedDiscount,
                 start_date,
                 end_date,
+                promotionStatus,
                 promo_id,
             ]);
         } else {
@@ -97,6 +115,7 @@ export const offerInsert = async (req, res) => {
                 normalizedDiscount,
                 start_date,
                 end_date,
+                promotionStatus,
             ]);
         }
 
@@ -117,11 +136,10 @@ export const offerInsert = async (req, res) => {
 
 export const offerUpdate = async (req, res) => {
     const { offerID } = req.params;
-    const { phone_id } = req.query;
     const { promo_name, discount_percent, start_date, end_date } = req.body;
 
-    if (!offerID, !phone_id, !promo_name, !discount_percent, !start_date, !end_date) {
-        return res.status(500).json({
+    if (!offerID || !promo_name || !discount_percent || !start_date || !end_date) {
+        return res.status(400).json({
             message: "fill all the blank"
         })
     }
@@ -130,31 +148,21 @@ export const offerUpdate = async (req, res) => {
     UPDATE promotions
     SET promo_name=?,
         discount_percentage=?,
-        price_discount=?,
         start_date=?,
-        end_date=?
+        end_date=?,
+        status=?
     WHERE promo_id=?
     `
-    const queryFind = `
-    SELECT price
-    FROM phones
-    WHERE phone_id=?
-`;
 
     try {
-        const [phone] = await pool.promise().query(queryFind, [phone_id]);
-        const old_price = phone[0].price
-        console.log(old_price);
-
-        const new_price = old_price * (100 - discount_percent) / 100
-        console.log(new_price);
+        const promotionStatus = getPromotionStatus(start_date, end_date);
 
         const value = [
             promo_name,
             discount_percent,
-            new_price,
             start_date,
             end_date,
+            promotionStatus,
             offerID
         ]
 
@@ -172,6 +180,7 @@ export const offerUpdate = async (req, res) => {
         })
     } catch (error) {
         console.log(error);
+        res.status(500).json({ message: "Internal server error" });
     }
 }
 export const offerDelete = async (req, res) => {

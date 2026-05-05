@@ -1,4 +1,3 @@
-import { query } from "express"
 import pool from "../../db/db_handle.js"
 
 
@@ -63,7 +62,9 @@ GROUP BY
 
 `
 
-    const queryCustomer = `SELECT * FROM orders o
+    const queryCustomer = `SELECT o.*, c.username, c.phone_number, c.address,
+                            COALESCE(o.recipient_name, c.username) AS display_name
+                            FROM orders o
                             INNER JOIN customers c ON 
                             c.customer_id = o.customer_id
                             WHERE o.order_id = ?;`
@@ -124,7 +125,7 @@ export const orderByID = (req, res) => {
         })
 }
 export const orderTable = async (req, res) => {
-    const query = `SELECT * 
+    const query = `SELECT o.*, c.username, COALESCE(o.recipient_name, c.username) AS display_name
                 FROM orders o 
                 INNER JOIN customers c ON 
                 c.customer_id=o.customer_id;`
@@ -136,12 +137,10 @@ export const orderTable = async (req, res) => {
             })
         }).catch((err) => {
             console.log(err);
-
             return res.status(400).json({
                 message: "something went wrong"
             })
         })
-
     } catch (error) {
         console.log(error);
     }
@@ -282,7 +281,7 @@ GROUP BY
         })
     } catch (error) {
         console.log(error);
-        res.status.json({
+        res.status(500).json({
             message: "something went wrong"
         })
     }
@@ -290,16 +289,15 @@ GROUP BY
 export const searchOrder = (req, res) => {
     const { username } = req.query;
 
-
-    const query = `SELECT * 
+    const query = `SELECT o.*, c.username, COALESCE(o.recipient_name, c.username) AS display_name
 FROM orders o
 INNER JOIN customers c 
 ON c.customer_id = o.customer_id
-WHERE c.username LIKE ?;`
+WHERE c.username LIKE ? OR o.recipient_name LIKE ?;`
     if (!username) {
-        return res.status.json({ message: "Enter User name" })
+        return res.status(400).json({ message: "Enter User name" })
     }
-    pool.promise().query(query, [username])
+    pool.promise().query(query, [`%${username}%`, `%${username}%`])
         .then(([rows]) => {
             return res.status(200).json({
                 data: rows,
@@ -312,6 +310,4 @@ WHERE c.username LIKE ?;`
                 error: error
             })
         })
-
-
 }

@@ -20,6 +20,7 @@ import MainOffer from "./Pages/MainOffer";
 
 import AddColorPage from "./Pages/AddColorPage";
 import AddDetailPage from "./Pages/AddDetailPage";
+import Message from "./Pages/Message";
 import NotFound from "./Pages/NotFound"; // Create this component
 
 const router = createBrowserRouter(
@@ -42,6 +43,7 @@ const router = createBrowserRouter(
         <Route path="addDetail" element={<AddDetailPage />} />
         <Route path="offer" element={<MainOffer />} />
         <Route path="offer/:id" element={<Offer />} />
+        <Route path="message" element={<Message />} />
       </Route>
       {/* Wildcard route to handle 404 */}
       <Route path="*" element={<NotFound />} />

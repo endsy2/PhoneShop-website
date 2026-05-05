@@ -18,7 +18,7 @@ const NotificationCard = () => {
     getNotifications()
   }, []);
   return (
-    <div className="w-80 bg-white rounded-lg shadow-md p-4">
+    <div className="w-80 bg-white rounded-lg shadow-md p-4 max-h-[32rem] overflow-y-auto">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">Notifications ({notifications.length})</h2>
       </div>
@@ -34,10 +34,8 @@ const NotificationCard = () => {
                 className="w-10 h-10 rounded-full bg-red-500 mr-3 flex-shrink-0 flex-grow-0"
               ></div>
               <div>
-                <p className="font-semibold text-sm">សារជូនដំណឹង {notification.id}</p>
-                <p className="text-xs text-gray-500">
-                  {notification.label}
-                </p>
+                <p className="font-semibold text-sm">{notification.title || `Notification ${notification.id}`}</p>
+                <p className="text-xs text-gray-500">{notification.label}</p>
               </div>
             </div>
             <div className="text-xs text-gray-400">{notification.last_upload}</div>

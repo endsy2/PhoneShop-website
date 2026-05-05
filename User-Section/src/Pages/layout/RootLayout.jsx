@@ -5,30 +5,37 @@ import Footer from "../home/Footer";
 import { useSelector } from "react-redux";
 import store from "../../store/store";
 import AddToCart from "../home/AddToCart";
+import ChatSupport from "../../Components/ChatSupport";
 import axios from "axios";
+import { NETWORK_CONFIG } from "../../network/Network_EndPoint";
 
 const RootLayout = () => {
-  useEffect(() => {
-    const token = localStorage.getItem("authToken");
-    if (token) {
-      setToken(token)
-    }
-  }, []);
   const [token, setToken] = useState(null);
   const stateTabCart = useSelector(store => store.cart?.statusTab);
 
+  useEffect(() => {
+    const savedToken = localStorage.getItem("authToken");
+    if (savedToken) {
+      setToken(savedToken);
+    }
+  }, []);
+
   const handleLogin = () => {
-    const newToken = "dummy-token"
-    console.log("TOhssadsadsToken" + newToken)
-    setToken(newToken);
+    const savedToken = localStorage.getItem("authToken");
+    setToken(savedToken);
   };
 
-  const handleLogout = () => {
-    setToken(null);
-    localStorage.removeItem("authToken");
-    console.log("TOken have been clear")
-    axios.defaults.withCredentials = false;
-    window.location.href = '/'
+  const handleLogout = async () => {
+    try {
+      await axios.post(`${NETWORK_CONFIG.apiBaseUrl}/auth/logout`, {}, { withCredentials: true });
+    } catch (error) {
+      console.log("Logout API error:", error);
+    } finally {
+      setToken(null);
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("userProfile");
+      window.location.href = '/';
+    }
   };
 
   return (
@@ -47,6 +54,7 @@ const RootLayout = () => {
         <Footer />
       </footer>
       {stateTabCart && <AddToCart />}
+      <ChatSupport />
     </>
   );
 };

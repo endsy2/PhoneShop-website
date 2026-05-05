@@ -10,8 +10,6 @@ const ProductCaterogy = () => {
   const fetchCategory = async () => {
     try {
       const data = await categoryFetch();
-      console.log('here category' + data);
-
       const categories = data?.data || [];
       setCategory(categories);
       if (!select && categories.length > 0) {
@@ -33,8 +31,11 @@ const ProductCaterogy = () => {
   };
   useEffect(() => {
     fetchCategory();
+  }, []);
+
+  useEffect(() => {
     fetchProducts();
-  }, [select])
+  }, [select]);
   return (
     <>
 
@@ -60,8 +61,6 @@ const ProductCaterogy = () => {
 
       </section>
       <TableProduct title="All Product" items={items} category={select} />
-      {console.log("here is your items")
-      }
     </>
   );
 };

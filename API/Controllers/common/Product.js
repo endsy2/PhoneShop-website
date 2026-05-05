@@ -306,10 +306,11 @@ WHERE ranked.row_num = 1;
 };
 export const getProduct = async (req, res) => {
     const { phone_name } = req.query;
+    const { phone_id } = req.query;
 
-    if (!phone_name) {
+    if (!phone_name && !phone_id) {
         return res.status(400).json({
-            message: "fill phone_name"
+            message: "fill phone_name or phone_id"
         })
     }
 
@@ -322,7 +323,7 @@ export const getProduct = async (req, res) => {
     pv.color,
     pv.stock AS color_stock,
     CASE
-        WHEN pmt.status = "Active" THEN ROUND(s.price * (100 - pmt.discount_percentage) / 100, 2)
+        WHEN CURDATE() BETWEEN DATE(pmt.start_date) AND DATE(pmt.end_date) THEN ROUND(s.price * (100 - pmt.discount_percentage) / 100, 2)
         ELSE NULL
     END AS price_discount,
     GROUP_CONCAT(DISTINCT pm.image SEPARATOR ', ') AS images,
@@ -340,7 +341,11 @@ INNER JOIN phone_variants pv ON pv.phone_id = p.phone_id
 LEFT JOIN productimage pm ON pm.phone_variant_id = pv.idphone_variants
 INNER JOIN specifications s ON s.phone_variant_id = pv.idphone_variants
 LEFT JOIN promotions pmt ON pmt.spec_id = s.spec_id
-WHERE p.name = ?
+WHERE (
+    (? IS NOT NULL AND p.phone_id = ?)
+    OR
+    (? IS NOT NULL AND TRIM(LOWER(p.name)) = TRIM(LOWER(?)))
+)
 GROUP BY 
     p.phone_id,
     p.name,
@@ -364,7 +369,12 @@ GROUP BY
 
 
 `
-    const [rows] = await pool.promise().query(query, phone_name);
+    const [rows] = await pool.promise().query(query, [
+        phone_id || null,
+        phone_id || null,
+        phone_name || null,
+        phone_name || null,
+    ]);
     if (rows.length === 0) {
         return res.json({
             message: "something went wrong"
@@ -387,7 +397,7 @@ export const getOneItemBySpecID = async (req, res) => {
     pv.color,
     pv.stock AS color_stock,
     CASE
-        WHEN pmt.status = "Active" THEN ROUND(s.price * (100 - pmt.discount_percentage) / 100, 2)
+        WHEN CURDATE() BETWEEN DATE(pmt.start_date) AND DATE(pmt.end_date) THEN ROUND(s.price * (100 - pmt.discount_percentage) / 100, 2)
         ELSE NULL
     END AS price_discount,
     GROUP_CONCAT(DISTINCT pm.image SEPARATOR ', ') AS images,

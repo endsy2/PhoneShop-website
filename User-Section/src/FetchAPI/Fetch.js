@@ -3,6 +3,50 @@ import axios from "axios";
 const API_URL_COMMON = "http://localhost:3000/common";
 const API_URL_USER = "http://localhost:3000/user";
 
+export const fetchUserInfo = async () => {
+    try {
+        const response = await axios.get(`${API_URL_USER}/userInfo`, {
+            withCredentials: true,
+        });
+
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
+export const updateUserInfo = async (formData) => {
+    try {
+        const response = await axios.put(`${API_URL_USER}/userInfo`, formData, {
+            withCredentials: true,
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
+
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
+export const changePassword = async ({ oldPassword, newPassword }) => {
+    try {
+        const response = await axios.post(
+            `${API_URL_USER}/change-password`,
+            { oldPassword, newPassword },
+            { withCredentials: true }
+        );
+
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
 export const fetchdataProduct = async () => {
     try {
         const response = await axios.get(`${API_URL_COMMON}/getAllProduct`)
@@ -11,9 +55,19 @@ export const fetchdataProduct = async () => {
         console.log(error);
     }
 }
-export const fetchProductByName = async ({ phone_name }) => {
+export const fetchProductByName = async ({ phone_name, phone_id }) => {
     try {
-        const response = await axios.get(`${API_URL_COMMON}/getProduct?phone_name=${phone_name}`)
+        const params = new URLSearchParams();
+
+        if (phone_id) {
+            params.set("phone_id", phone_id);
+        }
+
+        if (phone_name) {
+            params.set("phone_name", phone_name);
+        }
+
+        const response = await axios.get(`${API_URL_COMMON}/getProduct?${params.toString()}`)
         // console.log({ phone_name });
 
         return response.data;
@@ -98,18 +152,12 @@ export const fetchProductBySpecID = async ({ spec_id }) => {
 export const fetchCheckOut = async (data) => {
     try {
         const response = await axios.post(`${API_URL_USER}/checkout`, data, {
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             withCredentials: true
-        })
-
+        });
         return response;
-        // console.log(data);
-
     } catch (error) {
-        console.log(error);
-
+        // Re-throw with the full axios error so the caller can read error.response.data.message
+        throw error;
     }
-
 }

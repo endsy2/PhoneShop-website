@@ -20,6 +20,7 @@ export const nav_bar = [
   { img: product, label: "Product", path: "product" },
   { img: addGreen, label: "Add Product", path: "addProduct" },
   { img: offer, label: "Promotion", path: "offer" },
+  { img: pending, label: "Message", path: "message" },
 ];
 export const inventory_title = [
   { title: "Total Product" },
@@ -102,7 +103,7 @@ export const tableHeadProduct = [
 export const tableHeadOrder = [
   "ID",
   "Customer Name",
-  "Address",
+  "Delivery Address",
   "Date",
   "Amount",
 ]
@@ -213,7 +214,6 @@ export const order_header = [
 ];
 export const offer_header = [
   { label: "Product Name", dbLabel: "phone_name" },
-  { label: "Promotion Name", dbLabel: "promo_name" },
   { label: "Storage", dbLabel: "storage" },
   { label: "Discount Percentage", dbLabel: "discount_percent" },
   { label: "Start Date", dbLabel: "start_date" },
