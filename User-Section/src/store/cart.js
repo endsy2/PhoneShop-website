@@ -47,6 +47,22 @@ const cartSlice = createSlice({
                 localStorage.setItem("carts", JSON.stringify(state.items));
             }
         },
+        syncCartItem(state, action) {
+            const { productId, productName, price } = action.payload;
+            const indexProductId = state.items.findIndex((item) => item.productId === productId);
+
+            if (indexProductId >= 0) {
+                if (productName) {
+                    state.items[indexProductId].productName = productName;
+                }
+
+                if (price !== undefined && price !== null && price !== "") {
+                    state.items[indexProductId].price = Number(price);
+                }
+
+                localStorage.setItem("carts", JSON.stringify(state.items));
+            }
+        },
         removeFromCart(state, action) {
             const { productId } = action.payload;
 
@@ -67,5 +83,5 @@ const cartSlice = createSlice({
     },
 });
 
-export const { addToCart, changeQuantity, removeFromCart, toggleStatusTab, removeAllCart } = cartSlice.actions;
+export const { addToCart, changeQuantity, syncCartItem, removeFromCart, toggleStatusTab, removeAllCart } = cartSlice.actions;
 export default cartSlice.reducer;

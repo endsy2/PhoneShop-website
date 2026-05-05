@@ -35,7 +35,7 @@ export const offerDisplay = async (req, res) => {
     LEFT JOIN specifications s ON s.phone_variant_id = pv.idphone_variants
     INNER JOIN promotions pm ON pm.spec_id = s.spec_id -- Corrected join condition
     LEFT JOIN productimage pi ON pi.phone_variant_id = pv.idphone_variants -- Join for product images
-    WHERE pm.status = "Active"
+    WHERE CURDATE() BETWEEN DATE(pm.start_date) AND DATE(pm.end_date)
     GROUP BY 
         pm.promo_id, 
         p.phone_id, 
@@ -165,7 +165,7 @@ export const offerDisplayByID = async (req, res) => {
     LEFT JOIN specifications s ON s.phone_variant_id = pv.idphone_variants
     INNER JOIN promotions pm ON pm.spec_id = s.spec_id-- Corrected join condition
     LEFT JOIN productimage pi ON pi.phone_variant_id = pv.idphone_variants -- Join for product images
-    WHERE pm.status = "Active"
+    WHERE CURDATE() BETWEEN DATE(pm.start_date) AND DATE(pm.end_date)
     GROUP BY 
         pm.promo_id, 
         p.phone_id, 
@@ -205,3 +205,4 @@ WHERE RankedPhones.phone_id=?
             })
         })
 }
+

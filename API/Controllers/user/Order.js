@@ -8,13 +8,27 @@ const resolveUsername = (req) => {
     return tokenPayload.username || tokenPayload.name || "";
 };
 
+const normalizeUsername = (value) => value?.trim().replace(/\s+/g, " ") || "";
+
+const findCustomerIdByUsername = async (username) => {
+    const queryFindCustomerID = `
+        SELECT customer_id
+        FROM customers
+        WHERE LOWER(TRIM(username)) = LOWER(TRIM(?))
+        LIMIT 1
+    `;
+
+    const [customerRows] = await pool.promise().query(queryFindCustomerID, [username]);
+    return customerRows;
+};
+
 export const checkout = async (req, res) => {
     try {
         const { items, delivery, payment, location, customerName } = req.body;
         const fallbackUserName = resolveUsername(req);
 
         // Prefer the name entered at checkout; otherwise fall back to token payload.
-        let userName = customerName?.trim() || fallbackUserName || "";
+        let userName = normalizeUsername(customerName) || normalizeUsername(fallbackUserName);
 
 
 
@@ -26,18 +40,13 @@ export const checkout = async (req, res) => {
         }
 
 
-        // Find the customer ID
-        const queryFindCustomerID = `SELECT customer_id FROM customers WHERE username = ?`;
-        let [customerRows] = await pool.promise().query(queryFindCustomerID, [userName]);
+        // Find the customer ID using a normalized username match first.
+        let customerRows = await findCustomerIdByUsername(userName);
 
-        // If the entered name does not exist, use the authenticated account username.
-        if (
-            customerRows.length === 0 &&
-            fallbackUserName &&
-            userName !== fallbackUserName
-        ) {
-            userName = fallbackUserName;
-            [customerRows] = await pool.promise().query(queryFindCustomerID, [userName]);
+        // If the entered name does not exist, try the authenticated account username.
+        if (customerRows.length === 0 && fallbackUserName) {
+            userName = normalizeUsername(fallbackUserName);
+            customerRows = await findCustomerIdByUsername(userName);
         }
 
         if (customerRows.length === 0) {

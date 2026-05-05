@@ -55,9 +55,19 @@ export const fetchdataProduct = async () => {
         console.log(error);
     }
 }
-export const fetchProductByName = async ({ phone_name }) => {
+export const fetchProductByName = async ({ phone_name, phone_id }) => {
     try {
-        const response = await axios.get(`${API_URL_COMMON}/getProduct?phone_name=${phone_name}`)
+        const params = new URLSearchParams();
+
+        if (phone_id) {
+            params.set("phone_id", phone_id);
+        }
+
+        if (phone_name) {
+            params.set("phone_name", phone_name);
+        }
+
+        const response = await axios.get(`${API_URL_COMMON}/getProduct?${params.toString()}`)
         // console.log({ phone_name });
 
         return response.data;
@@ -153,6 +163,7 @@ export const fetchCheckOut = async (data) => {
 
     } catch (error) {
         console.log(error);
+        throw error?.response?.data || error;
 
     }
 

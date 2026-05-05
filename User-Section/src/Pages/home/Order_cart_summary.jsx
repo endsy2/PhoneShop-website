@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-const OrderSummary = ({ items, shipping, total, onApplyPromo }) => {
+const OrderSummary = ({ items, shipping, total }) => {
   return (
     <div className="p-4 bg-gray-100 rounded-lg">
       <h2 className="text-lg font-semibold mb-8">Order Summary</h2>
@@ -15,19 +15,6 @@ const OrderSummary = ({ items, shipping, total, onApplyPromo }) => {
         <select className="border p-1 rounded fo">
           <option>Standard Delivery - $5.00</option>
         </select>
-      </div>
-      <div className="mb-8">
-        <input
-          type="text"
-          placeholder="Enter promo code"
-          className="border p-2 w-full rounded mb-8"
-        />
-        <button
-          onClick={onApplyPromo}
-          className="bg-green-400 text-white w-full py-2 rounded hover:bg-green-500"
-        >
-          APPLY NOW
-        </button>
       </div>
       <hr className="mb-8 border-gray-500" />
       <div className="flex justify-between font-semibold">

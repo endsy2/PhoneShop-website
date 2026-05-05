@@ -514,7 +514,6 @@ export const insertPromotion = async ({ formData }) => {
       discount_percent: formData.discount_percent,
       start_date: formData.start_date,
       end_date: formData.end_date,
-      promo_name: formData.promo_name,
       color: formData.Color,
       storage: formData.storage,
     };

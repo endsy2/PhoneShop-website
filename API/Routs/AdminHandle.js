@@ -35,7 +35,7 @@ adminRouter.delete('/deleleOrder/:DeleteOrderID', deleteOrder);
 adminRouter.delete('/deleleSpec', deleteSpecification);
 adminRouter.delete('/deleteOrderItems/:orderItemsID', deleteOrderItems);
 adminRouter.put('/offerInsert', offerInsert)
-adminRouter.get('/offerUpdate/:offerID', offerUpdate)
+adminRouter.put('/offerUpdate/:offerID', offerUpdate)
 adminRouter.delete('/offerDelete/:offerID', offerDelete)
 adminRouter.put('/updateVariants/:productVariantID', upload.array('productImages', 10), updateProductVariants);
 adminRouter.post('/addNewVariants', upload.array('productImages', 10), addVariants)

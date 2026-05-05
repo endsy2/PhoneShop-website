@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { fetchProductBySpecID } from '../FetchAPI/Fetch';
-import { useSelector } from 'react-redux';
+import { fetchProductByName, fetchProductBySpecID } from '../FetchAPI/Fetch';
+import { useDispatch, useSelector } from 'react-redux';
+import { syncCartItem } from '../../store/cart';
 import Cookies from 'js-cookie';
 
 const CheckoutCart = ({ items }) => {
@@ -9,26 +10,49 @@ const CheckoutCart = ({ items }) => {
     const cart = useSelector(store => store.cart.items);
     const [totalQuatity, setTotalQuantity] = useState();
     const [token, setToken] = useState(Cookies.get('access-token'));
+    const dispatch = useDispatch();
+
     const handleFetchData = useCallback(async () => {
         if (!items?.productId) return; // Ensure productId exists before fetching
+
+        const extractRows = (response) => response?.data ?? response;
+
         try {
-            const response = await fetchProductBySpecID({ spec_id: items.productId });
-            if (response?.data) {
-                setData(response.data);
+            let productRows = extractRows(await fetchProductBySpecID({ spec_id: items.productId }));
+
+            if (!Array.isArray(productRows) || productRows.length === 0) {
+                const fallbackResponse = await fetchProductByName({
+                    phone_id: items.productId,
+                    phone_name: items.productName,
+                });
+
+                productRows = extractRows(fallbackResponse);
+            }
+
+            if (Array.isArray(productRows) && productRows.length > 0) {
+                const product = productRows[0];
+                const resolvedPrice = product.price_discount || product.price;
+                setData(productRows);
+                setError(null);
+                dispatch(syncCartItem({
+                    productId: items.productId,
+                    productName: product.name,
+                    price: resolvedPrice,
+                }));
             } else {
                 setError('No data returned from API');
             }
         } catch (err) {
             setError(`Error fetching data: ${err.message}`);
         }
-    }, [items?.productId]);
+    }, [items?.productId, dispatch]);
 
     useEffect(() => {
         handleFetchData();
         let total = 0;
         cart.forEach(item => total += item.quantity);
         setTotalQuantity(total);
-    }, [handleFetchData,]);
+    }, [handleFetchData]);
     return (
         <div className='my-3'>
             {error ? (

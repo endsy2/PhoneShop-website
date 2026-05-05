@@ -1,10 +1,30 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { fetchProductByName } from "../../FetchAPI/Fetch";
 import { NETWORK_CONFIG, USERENDPOINT } from "../../network/Network_EndPoint";
+import { addToCompare } from "../../store/compare";
 
 const MyOrderPage = () => {
   const [listOrderState, setListOrderState] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const handleCompareOrderItem = async (item) => {
+    try {
+      const response = await fetchProductByName({ phone_name: item.name });
+      const productData = response?.data?.[0];
+
+      if (productData) {
+        dispatch(addToCompare(productData));
+        navigate("/compare-product");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const getOrder = async () => {
     const orderUrl = `${NETWORK_CONFIG.apiBaseUrl}${USERENDPOINT.GET_ORDER}`;
@@ -67,7 +87,7 @@ const MyOrderPage = () => {
             <OrderCard
               key={order.orderNumber}
               order={order}
-              onViewDetail={setSelectedOrder}
+                onViewDetail={setSelectedOrder}
             />
           ))
         ) : (
@@ -75,7 +95,7 @@ const MyOrderPage = () => {
         )}
       </div>
 
-      {selectedOrder ? <ReceiptModal order={selectedOrder} onClose={() => setSelectedOrder(null)} /> : null}
+      {selectedOrder ? <ReceiptModal order={selectedOrder} onClose={() => setSelectedOrder(null)} onCompareItem={handleCompareOrderItem} /> : null}
     </div>
   );
 };
@@ -129,7 +149,7 @@ export const OrderCard = ({ order, onViewDetail }) => {
   );
 };
 
-const ReceiptModal = ({ order, onClose }) => {
+const ReceiptModal = ({ order, onClose, onCompareItem }) => {
   const subtotal = order.items.reduce((total, item) => total + item.price * item.quantity, 0);
 
   return (
@@ -175,6 +195,13 @@ const ReceiptModal = ({ order, onClose }) => {
               <div style={styles.receiptAmounts}>
                 <span>Qty {item.quantity}</span>
                 <span>${item.price.toFixed(2)}</span>
+                <button
+                  type="button"
+                  style={styles.compareButton}
+                  onClick={() => onCompareItem(item)}
+                >
+                  Compare
+                </button>
               </div>
             </div>
           ))}
@@ -274,6 +301,7 @@ const styles = {
   receiptItemLeft: { display: "flex", alignItems: "center", gap: "12px", minWidth: 0 },
   receiptItemImage: { width: "56px", height: "56px", objectFit: "cover", borderRadius: "12px", border: "1px solid #e5e7eb", backgroundColor: "#f8fafc", flexShrink: 0 },
   receiptAmounts: { display: "grid", justifyItems: "end", gap: "4px", color: "#374151", fontWeight: 700 },
+  compareButton: { border: "1px solid #16a34a", backgroundColor: "#fff", color: "#16a34a", padding: "6px 12px", borderRadius: "999px", fontSize: "12px", fontWeight: 700, cursor: "pointer" },
   receiptTotals: { display: "grid", gap: "10px", paddingTop: "8px", borderTop: "1px dashed #d1d5db" },
   receiptTotalRow: { display: "flex", justifyContent: "space-between", fontSize: "16px", fontWeight: 700, color: "#111827" },
 };

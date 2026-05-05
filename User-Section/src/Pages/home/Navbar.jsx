@@ -90,12 +90,12 @@ const Navbar = ({ token, onLogin, onLogout }) => {
 
   return (
     <nav className="bg-white shadow-md">
-      <div className="w-full  px-5 mx-auto">
+      <div className="w-full max-w-7xl px-5 mx-auto">
         <div className="flex justify-between items-center h-20">
           {/* Logo and Name */}
           <div className="flex items-center">
             <Link to="/">
-              <img src={logo} alt="Phone Shop Logo" className="h-40 w-65" />
+              <img src={logo} alt="Phone Shop Logo" className="h-10 md:h-12 lg:h-14 w-auto" />
             </Link>
             {/* <Link to="/">             
                 <span className="text-green-600 text-4xl font-bold ml-2 font-poppins tracking-wider">
@@ -321,16 +321,22 @@ const Navbar = ({ token, onLogin, onLogout }) => {
           >
             CONTACT US
           </a>
+          <Link
+            to="/compare-product"
+            className="hover:text-gray-200"
+          >
+            COMPARE
+          </Link>
         </div>
       </div>
 
       {/* Mobile Navigation */}
-      <div
-        className={`fixed inset-0 z-40 flex flex-col bg-gray-800 bg-opacity-50 lg:hidden transition-transform transform ${toggleMenu ? "translate-x-0" : "-translate-x-full"}`}
+        <div
+          className={`fixed inset-0 z-40 flex flex-col bg-gray-800 bg-opacity-50 lg:hidden transition-transform transform ${toggleMenu ? "translate-x-0" : "-translate-x-full"}`}
         onClick={() => setToggleMenu(false)} // Close menu on overlay click
       >
         <div
-          className="w-96 bg-white h-full shadow-lg overflow-y-auto"
+          className="w-80 bg-white h-full shadow-lg overflow-y-auto"
           onClick={(e) => e.stopPropagation()} // Prevent closing on content click
         >
           {/* Navigation Links */}
@@ -357,6 +363,10 @@ const Navbar = ({ token, onLogin, onLogout }) => {
               >
                 CONTACT US
               </a>
+
+              <Link to="/compare-product" className="hover:text-green-700 hover:border-b-2 duration-400 border-green-600">
+                COMPARE
+              </Link>
             </div>
           </div>
 

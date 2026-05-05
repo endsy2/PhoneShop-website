@@ -10,9 +10,11 @@ const CheckoutPage = () => {
   const [totalQuatity, setTotalQuantity] = useState();
   const [token, setToken] = useState("ad");
   const [customerName, setCustomerName] = useState("");
-  const [delivery, setDelivery] = useState();
-  const [payment, setPayment] = useState();
-  const [location, setLocation] = useState();
+  const [delivery, setDelivery] = useState("");
+  const [payment, setPayment] = useState("");
+  const [location, setLocation] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
   const [response, setResponse] = useState();
   const [error, setError] = useState();
 
@@ -20,9 +22,33 @@ const CheckoutPage = () => {
   const clearCart = () => {
     dispatch(removeAllCart());
   };
+
+  const subtotal = cart.reduce(
+    (total, item) => total + Number(item.price) * Number(item.quantity),
+    0
+  );
+
+  const finalTotal = subtotal;
+
+  const validateForm = () => {
+    const nextErrors = {};
+
+    if (!customerName?.trim()) nextErrors.customerName = "Customer name is required";
+    if (!delivery) nextErrors.delivery = "Please select delivery type";
+    if (!payment) nextErrors.payment = "Please select payment method";
+    if (!location?.trim()) nextErrors.location = "Delivery location is required";
+    if (!cart.length) nextErrors.cart = "Your cart is empty";
+
+    setFieldErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
+  const isFormReady =
+    customerName.trim() && delivery && payment && location.trim() && cart.length > 0;
+
   const handleSubmit = async () => {
-    if (!customerName?.trim()) {
-      setError("Please enter customer name");
+    if (!validateForm()) {
+      setError("Please complete all required fields");
       setResponse("");
       return;
     }
@@ -40,6 +66,7 @@ const CheckoutPage = () => {
     };
 
     try {
+      setSubmitting(true);
       // Send the data to the server using the `fetchCheckOut` function
       const response = await fetchCheckOut(data);
       if (response) {
@@ -57,6 +84,10 @@ const CheckoutPage = () => {
       console.log("Checkout response:", response);
     } catch (error) {
       console.error("Error during checkout:", error);
+      setError(error?.message || error?.error || error?.data?.message || "Checkout failed. Please try again.");
+      setResponse("");
+    } finally {
+      setSubmitting(false);
     }
   };
   useEffect(() => {
@@ -65,6 +96,7 @@ const CheckoutPage = () => {
     setTotalQuantity(total);
     setToken(localStorage.getItem('authToken'))
   }, [cart]);
+
 
   return (
     <>
@@ -91,6 +123,9 @@ const CheckoutPage = () => {
                         placeholder="Enter your name"
                         className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
                       />
+                      {fieldErrors.customerName ? (
+                        <p className="mt-1 text-sm text-red-600">{fieldErrors.customerName}</p>
+                      ) : null}
                     </div>
                     <div className="col-span-1 md:col-span-2">
                       <h4 className="pb-2">Delivery Express</h4>
@@ -99,10 +134,13 @@ const CheckoutPage = () => {
                         onChange={(e) => setDelivery(e.target.value)}
                         className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
                       >
-                        <option>Select Delivery Type</option>
-                        <option>Delivery</option>
-                        <option>Pick up</option>
+                        <option value="">Select Delivery Type</option>
+                        <option value="Delivery">Delivery</option>
+                        <option value="Pick up">Pick up</option>
                       </select>
+                      {fieldErrors.delivery ? (
+                        <p className="mt-1 text-sm text-red-600">{fieldErrors.delivery}</p>
+                      ) : null}
                     </div>
                     <div className="col-span-1 md:col-span-2">
                       <h4 className="pb-2">PAY METHOD</h4>
@@ -111,10 +149,13 @@ const CheckoutPage = () => {
                         onChange={(e) => setPayment(e.target.value)}
                         className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
                       >
-                        <option>Select Delivery Type</option>
-                        <option>By Delivery</option>
-                        <option>Paid</option>
+                        <option value="">Select Payment Method</option>
+                        <option value="By Delivery">By Delivery</option>
+                        <option value="Paid">Paid</option>
                       </select>
+                      {fieldErrors.payment ? (
+                        <p className="mt-1 text-sm text-red-600">{fieldErrors.payment}</p>
+                      ) : null}
                     </div>
                     <div className="flex flex-col w-full col-span-2">
                       <h4 className="pb-2">LOCATION</h4>
@@ -125,6 +166,9 @@ const CheckoutPage = () => {
                         placeholder="Village"
                         className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
                       />
+                      {fieldErrors.location ? (
+                        <p className="mt-1 text-sm text-red-600">{fieldErrors.location}</p>
+                      ) : null}
                     </div>
                     <div className="flex items-center justify-center pt-6 col-span-2">
                       <button
@@ -132,9 +176,10 @@ const CheckoutPage = () => {
                           e.preventDefault();
                           handleSubmit();
                         }}
-                        className="w-[300px] p-2 bg-green-400 hover:bg-green-500 text-white rounded transition-all duration-300"
+                        disabled={submitting || !isFormReady}
+                        className={`w-[300px] p-2 text-white rounded transition-all duration-300 ${submitting || !isFormReady ? "cursor-not-allowed bg-slate-400" : "bg-green-400 hover:bg-green-500"}`}
                       >
-                        Pay Now
+                        {submitting ? "Processing..." : "Pay Now"}
                       </button>
                     </div>
                     <div className="mt-10">
@@ -164,24 +209,26 @@ const CheckoutPage = () => {
                   <p>Price</p>
                 </div>
                 <div className=" border-t pt-4 py-4">
-                  {cart.map((element, index) => (
-                    <CheckoutCart items={element} />
+                  {fieldErrors.cart ? (
+                    <p className="pb-2 text-sm text-red-600">{fieldErrors.cart}</p>
+                  ) : null}
+                  {cart.map((element) => (
+                    <CheckoutCart key={element.productId} items={element} />
                   ))}
+
                   <p className="flex justify-between py-2 mt-5">
                     <span>Amount Quantity:</span>{" "}
                     <span>{totalQuatity | 0}</span>
+                  </p>
+                  <p className="flex justify-between py-1 text-sm text-slate-700">
+                    <span>Subtotal:</span>
+                    <span>${subtotal.toFixed(2)}</span>
                   </p>
                   <hr className="my-4 border-gray-300" />
                   <p className="flex justify-between font-semibold text-red-600 text-lg pt-2">
                     <span>Total Payment:</span>
                     <span>
-                      $
-                      {cart
-                        .reduce(
-                          (total, item) => total + item.price * item.quantity,
-                          0
-                        )
-                        .toFixed(2)}
+                      ${finalTotal.toFixed(2)}
                     </span>
                   </p>
                 </div>
