@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { NETWORK_CONFIG } from "../../network/Network_EndPoint";
 
 const Card = ({ data, page = "Default Page" }) => {
   const [Page, setPage] = useState("");
@@ -26,13 +27,10 @@ const Card = ({ data, page = "Default Page" }) => {
       <Link to={`/Sort?brand=${data.brand_name}`}>
         <div className="flex items-center w-[200px] h-[70px] gap-4 p-3 bg-gray-100 hover:bg-gray-200 transition rounded-lg cursor-pointer shadow-md hover:scale-105 transition-all transform duration-300">
           <img
-            src={`http://localhost:3000/${data.img
-              ?.split(",")[0]
-              .trim()
-              .replace(/uploads[\\/]/g, "")
-              .replace(/\s+/g, "")}`}
+            src={`${NETWORK_CONFIG.apiBaseUrl}/${data.img?.split(",")[0].trim().replace(/uploads[\\/]/g, "").replace(/\s+/g, "")}`}
             alt={data.brand_name}
             className="w-16 h-10 object-cover rounded-lg"
+            onError={(e) => { e.target.src = "https://via.placeholder.com/64x40?text=Brand"; }}
           />
           <div>
             <p className="font-semibold text-lg text-gray-800">

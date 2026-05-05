@@ -17,8 +17,8 @@ const UpdateSpec = ({ product_id, storage }) => {
 
     useEffect(() => {
         setID(product_id);
-        setOldStorage(storage)
-    }, [product_id]);
+        setOldStorage(storage);
+    }, [product_id, storage]);
 
     const handleUpdate = async (e) => {
         e.preventDefault();

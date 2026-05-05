@@ -148,7 +148,7 @@ const TableOrder = ({ title, items }) => {
                         {Array.isArray(datatable?.data) && datatable.data.length > 0 ? (
                             datatable.data.map((element) => (
                                 <tr
-                                    key={element.phone_id}
+                                    key={element.order_id}
                                     className="hover:bg-gray-50 transition duration-200 border-b border-gray-200"
                                 >
                                     <td className="table-data px-4 sm:px-6 py-3 sm:py-4">
@@ -171,7 +171,7 @@ const TableOrder = ({ title, items }) => {
                                             to={`/dashboard/order/${element.order_id}`}
                                             className="hover:underline text-sm sm:text-base"
                                         >
-                                            {element.username}
+                                            {element.display_name || element.recipient_name || element.username}
                                         </Link>
                                     </td>
                                     <td className="table-data px-4 sm:px-6 py-3 sm:py-4">

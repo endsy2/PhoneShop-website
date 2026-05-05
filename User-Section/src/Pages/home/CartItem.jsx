@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { changeQuantity, removeFromCart } from '../../store/cart';
-import { fetchdataProduct, fetchProductByName } from '../../FetchAPI/Fetch';
+import { fetchProductByName } from '../../FetchAPI/Fetch';
+import { NETWORK_CONFIG } from '../../network/Network_EndPoint';
 
 const CartItem = ({ product }) => {
     const { productId, quantity } = product;
@@ -48,11 +49,8 @@ const CartItem = ({ product }) => {
         return <div className='p-2 text-white'>Loading...</div>;
     }
 
-    const imageUrl = `http://localhost:3000/${detail.images
-        ?.split(',')[0]
-        .trim()
-        .replace(/uploads[\\/]/g, '')
-        .replace(/\s+/g, '')}`;
+    const rawImage = (detail.images || "").split(',')[0].trim().replace(/uploads[\\/]/g, '').replace(/\s+/g, '');
+    const imageUrl = rawImage ? `${NETWORK_CONFIG.apiBaseUrl}/${rawImage}` : "https://via.placeholder.com/96x96?text=No+Image";
 
     return (
         <div className='flex flex-col sm:flex-row items-start sm:items-center bg-green-600 text-white p-4 border-b border-gray-700 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200'>

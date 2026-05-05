@@ -1,292 +1,370 @@
 import React, { useEffect, useState } from "react";
-import { addNewDetail, productData } from "../../Fetch/FetchAPI";
+import { addNewDetail, fetchProductVariantsWithSpecs, updateSpec } from "../../Fetch/FetchAPI";
+import axios from "axios";
+
+const EMPTY_FORM = {
+    screen_size: "",
+    processor: "",
+    ram: "",
+    storage: "",
+    battery: "",
+    camera: "",
+    price: "",
+    stock: "",
+};
+
+const API_URL_Admin = "http://localhost:3000/admin";
+
+// Fetch all products for the dropdown
+const fetchAllProducts = async () => {
+    const response = await axios.get(`${API_URL_Admin}/productOptions`, { withCredentials: true });
+    return response.data?.data || [];
+};
 
 const AddDetail = () => {
-    const [product_name, setProductName] = useState("");
-    const [product_id, setProductID] = useState("");
+    // Step 1 — product selection
     const [productOptions, setProductOptions] = useState([]);
-    const [color, setColor] = useState("#000000");
-    const [screen_size, setScreenSize] = useState("");
-    const [processor, setProcessor] = useState("");
-    const [ram, setRam] = useState("");
-    const [storage, setStorage] = useState("");
-    const [battery, setBattery] = useState("");
-    const [camera, setCamera] = useState("");
-    const [price, setPrice] = useState("");
-    const [stock, setStock] = useState("");
-    const [error, setError] = useState('');
-    const [result, setResult] = useState('');
+    const [selectedProductId, setSelectedProductId] = useState("");
+    const [selectedProductName, setSelectedProductName] = useState("");
 
+    // Step 2 — variant + spec selection
+    const [variantsWithSpecs, setVariantsWithSpecs] = useState([]);
+    const [selectedVariantId, setSelectedVariantId] = useState("");
+    const [selectedSpecStorage, setSelectedSpecStorage] = useState(""); // "__new__" = add new spec
+
+    // Step 3 — form fields
+    const [form, setForm] = useState(EMPTY_FORM);
+
+    // UI state
+    const [loading, setLoading] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState("");
+    const [success, setSuccess] = useState("");
+
+    // Load product list on mount
     useEffect(() => {
-        const loadProductOptions = async () => {
-            try {
-                const response = await productData();
-                const rows = response?.data?.data || response?.data || [];
-                const uniqueProducts = [];
-                const seen = new Set();
-
-                for (const item of rows) {
-                    if (!item?.name) continue;
-                    const key = `${item.phone_id}-${item.name}`;
-                    if (seen.has(key)) continue;
-                    seen.add(key);
-                    uniqueProducts.push({ phone_id: item.phone_id, name: item.name });
-                }
-
-                setProductOptions(uniqueProducts);
-            } catch (err) {
-                console.log(err);
-            }
-        };
-
-        loadProductOptions();
+        fetchAllProducts()
+            .then(setProductOptions)
+            .catch(() => setError("Failed to load products."));
     }, []);
 
-    // Handle form submission
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
-        // Validate inputs
-        if (
-            !product_id ||
-            !color ||
-            !screen_size ||
-            !processor ||
-            !ram ||
-            !storage ||
-            !battery ||
-            !camera
-        ) {
-            alert("Please fill in all fields.");
+    // When product changes, load its variants + specs
+    useEffect(() => {
+        if (!selectedProductId) {
+            setVariantsWithSpecs([]);
+            setSelectedVariantId("");
+            setSelectedSpecStorage("");
+            setForm(EMPTY_FORM);
             return;
         }
 
-        // Prepare data to send
-        const formData = {
-            product_id,
-            product_name,
-            color,
-            screen_size,
-            processor,
-            ram,
-            storage,
-            battery,
-            camera,
-            price,
-            stock
-        };
+        setLoading(true);
+        setError("");
+        fetchProductVariantsWithSpecs(selectedProductId)
+            .then((data) => {
+                setVariantsWithSpecs(data?.data || []);
+                setSelectedVariantId("");
+                setSelectedSpecStorage("");
+                setForm(EMPTY_FORM);
+            })
+            .catch(() => setError("Failed to load product variants."))
+            .finally(() => setLoading(false));
+    }, [selectedProductId]);
+
+    // When variant changes, reset spec selection
+    useEffect(() => {
+        setSelectedSpecStorage("");
+        setForm(EMPTY_FORM);
+    }, [selectedVariantId]);
+
+    // When spec storage is selected, pre-fill the form with existing data
+    useEffect(() => {
+        if (!selectedSpecStorage || selectedSpecStorage === "__new__") {
+            setForm(EMPTY_FORM);
+            return;
+        }
+
+        const spec = variantsWithSpecs.find(
+            (row) =>
+                String(row.idphone_variants) === String(selectedVariantId) &&
+                row.storage === selectedSpecStorage
+        );
+
+        if (spec) {
+            setForm({
+                screen_size: spec.screen_size || "",
+                processor: spec.processor || "",
+                ram: spec.ram || "",
+                storage: spec.storage || "",
+                battery: spec.battery || "",
+                camera: spec.camera || "",
+                price: spec.price || "",
+                stock: spec.stock || "",
+            });
+        }
+    }, [selectedSpecStorage, selectedVariantId, variantsWithSpecs]);
+
+    // Unique colors for the selected product
+    const uniqueColors = [
+        ...new Map(
+            variantsWithSpecs.map((row) => [row.idphone_variants, row.color])
+        ).entries(),
+    ].map(([id, color]) => ({ id, color }));
+
+    // Existing specs for the selected variant
+    const specsForVariant = variantsWithSpecs.filter(
+        (row) =>
+            String(row.idphone_variants) === String(selectedVariantId) &&
+            row.spec_id !== null
+    );
+
+    const handleFormChange = (e) => {
+        const { name, value } = e.target;
+        setForm((prev) => ({ ...prev, [name]: value }));
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError("");
+        setSuccess("");
+
+        if (!selectedProductId || !selectedVariantId) {
+            setError("Please select a product and a color variant.");
+            return;
+        }
+
+        setSubmitting(true);
 
         try {
-            const data = await addNewDetail({ formdata: formData });
-            console.log("Response:", data);
-            if (data.length !== 0) {
-                setResult("Add New Spec Success")
+            const isUpdate = selectedSpecStorage && selectedSpecStorage !== "__new__";
+
+            if (isUpdate) {
+                // UPDATE existing spec
+                const queryParam = {
+                    variantID: selectedVariantId,
+                    oldStorage: selectedSpecStorage,
+                };
+                const formdata = {
+                    newStorage: form.storage,
+                    screen_size: form.screen_size,
+                    processor: form.processor,
+                    ram: form.ram,
+                    battery: form.battery,
+                    camera: form.camera,
+                    stock: form.stock,
+                    price: form.price,
+                };
+                await updateSpec(formdata, queryParam);
+                setSuccess("Spec updated successfully! Changes are now live on the user page.");
+            } else {
+                // INSERT new spec
+                const selectedVariant = variantsWithSpecs.find(
+                    (row) => String(row.idphone_variants) === String(selectedVariantId)
+                );
+                const formdata = {
+                    product_id: selectedProductId,
+                    product_name: selectedProductName,
+                    color: selectedVariant?.color || "",
+                    ...form,
+                };
+                await addNewDetail({ formdata });
+                setSuccess("New spec added successfully! It is now visible on the user page.");
             }
-            // Clear fields on successful submission
-            setError('')
-            handleReset();
-        } catch (error) {
-            console.error("Error:", error);
-            setResult('')
-            setError('Something went wrong')
+
+            // Refresh variants to show updated data
+            const refreshed = await fetchProductVariantsWithSpecs(selectedProductId);
+            setVariantsWithSpecs(refreshed?.data || []);
+            setSelectedSpecStorage("");
+            setForm(EMPTY_FORM);
+        } catch (err) {
+            setError(err?.response?.data?.message || err?.message || "Something went wrong.");
+        } finally {
+            setSubmitting(false);
         }
     };
 
-    // Handle reset
     const handleReset = () => {
-        setProductName("");
-        setProductID("");
-        setColor("#000000");
-        setScreenSize("");
-        setProcessor("");
-        setRam("");
-        setStorage("");
-        setBattery("");
-        setCamera("");
-        setStorage("");
-        setPrice("");
+        setForm(EMPTY_FORM);
+        setSelectedSpecStorage("");
+        setError("");
+        setSuccess("");
     };
+
+    const isUpdate = selectedSpecStorage && selectedSpecStorage !== "__new__";
 
     return (
         <div className="bg-white border-gray-300 border p-8 rounded-lg w-full max-w-4xl mx-auto mt-12 shadow-lg">
-            <h1 className="text-center text-3xl text-primary font-bold mb-8">
-                Add New Detail
+            <h1 className="text-center text-3xl text-primary font-bold mb-2">
+                {isUpdate ? "Edit Spec" : "Add New Spec"}
             </h1>
-            <form
-                onSubmit={handleSubmit}
-                className="grid grid-cols-1 md:grid-cols-2 md:items-center gap-6"
-            >
-                {/* Product Name */}
-                <div className="flex flex-col">
-                    <label className="text-sm font-medium text-primary mb-2">
-                        Product Name
+            <p className="text-center text-sm text-gray-500 mb-8">
+                Select a product and variant, then edit an existing spec or add a new one.
+            </p>
+
+            {/* ── Step 1: Select Product ── */}
+            <div className="mb-6">
+                <label className="block text-sm font-semibold text-primary mb-2">
+                    1. Select Product
+                </label>
+                <select
+                    value={selectedProductId}
+                    onChange={(e) => {
+                        const id = e.target.value;
+                        setSelectedProductId(id);
+                        const found = productOptions.find((p) => String(p.phone_id) === id);
+                        setSelectedProductName(found?.name || "");
+                    }}
+                    className="input-style w-full"
+                >
+                    <option value="">— Choose a product —</option>
+                    {productOptions.map((p) => (
+                        <option key={p.phone_id} value={p.phone_id}>
+                            {p.name}
+                        </option>
+                    ))}
+                </select>
+            </div>
+
+            {/* ── Step 2: Select Color Variant ── */}
+            {selectedProductId && (
+                <div className="mb-6">
+                    <label className="block text-sm font-semibold text-primary mb-2">
+                        2. Select Color Variant
                     </label>
-                    <select
-                        value={product_id}
-                        onChange={(e) => {
-                            const selectedId = e.target.value;
-                            setProductID(selectedId);
-                            const selectedProduct = productOptions.find(
-                                (item) => String(item.phone_id) === selectedId
-                            );
-                            setProductName(selectedProduct?.name || "");
-                        }}
-                        className="input-style"
-                        required
-                    >
-                        <option value="">Select product</option>
-                        {productOptions.map((item) => (
-                            <option key={item.phone_id} value={item.phone_id}>
-                                {item.name}
-                            </option>
+                    {loading ? (
+                        <p className="text-sm text-gray-400">Loading variants…</p>
+                    ) : uniqueColors.length === 0 ? (
+                        <p className="text-sm text-red-500">No color variants found for this product.</p>
+                    ) : (
+                        <div className="flex flex-wrap gap-3">
+                            {uniqueColors.map(({ id, color }) => (
+                                <button
+                                    key={id}
+                                    type="button"
+                                    onClick={() => setSelectedVariantId(String(id))}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 font-medium text-sm transition ${
+                                        String(selectedVariantId) === String(id)
+                                            ? "border-green-600 bg-green-50 text-green-700"
+                                            : "border-gray-300 bg-white text-gray-700 hover:border-green-400"
+                                    }`}
+                                >
+                                    <span
+                                        className="w-5 h-5 rounded-full border border-gray-300 inline-block flex-shrink-0"
+                                        style={{ backgroundColor: color }}
+                                    />
+                                    {color}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* ── Step 3: Select Spec to Edit or Add New ── */}
+            {selectedVariantId && (
+                <div className="mb-8">
+                    <label className="block text-sm font-semibold text-primary mb-2">
+                        3. Select Spec to Edit — or Add New
+                    </label>
+                    <div className="flex flex-wrap gap-3">
+                        {specsForVariant.map((spec) => (
+                            <button
+                                key={spec.spec_id}
+                                type="button"
+                                onClick={() => setSelectedSpecStorage(spec.storage)}
+                                className={`px-4 py-2 rounded-lg border-2 font-medium text-sm transition ${
+                                    selectedSpecStorage === spec.storage
+                                        ? "border-blue-600 bg-blue-50 text-blue-700"
+                                        : "border-gray-300 bg-white text-gray-700 hover:border-blue-400"
+                                }`}
+                            >
+                                {spec.storage} — ${spec.price}
+                            </button>
                         ))}
-                    </select>
+                        <button
+                            type="button"
+                            onClick={() => setSelectedSpecStorage("__new__")}
+                            className={`px-4 py-2 rounded-lg border-2 font-medium text-sm transition ${
+                                selectedSpecStorage === "__new__"
+                                    ? "border-green-600 bg-green-50 text-green-700"
+                                    : "border-dashed border-gray-400 bg-white text-gray-500 hover:border-green-500"
+                            }`}
+                        >
+                            + Add New Spec
+                        </button>
+                    </div>
                 </div>
+            )}
 
-                {/* Color */}
-                <div className="flex flex-col">
-                    <label className="text-sm font-medium text-primary mb-2">Color</label>
-                    <input
-                        type="color"
-                        value={color}
-                        onChange={(e) => setColor(e.target.value)}
-                        placeholder="Enter color"
-                        className="input-style h-10"
-                        required
-                    />
-                </div>
-                {/*price*/}
-                <div className="flex flex-col">
-                    <label className="text-sm font-medium text-primary mb-2">Price</label>
-                    <input
-                        type="text"
-                        value={price}
-                        onChange={(e) => setPrice(e.target.value)}
-                        placeholder="Enter Price"
-                        className="input-style"
-                        required
-                    />
-                </div>
+            {/* ── Step 4: Fill in the Form ── */}
+            {selectedVariantId && selectedSpecStorage && (
+                <>
+                    <div className="border-t border-gray-200 pt-6 mb-4">
+                        <p className="text-sm font-semibold text-gray-600 mb-4">
+                            {isUpdate
+                                ? `Editing spec: ${selectedSpecStorage}`
+                                : "Adding a new spec for this variant"}
+                        </p>
+                    </div>
 
-                <div className="flex flex-col">
-                    <label className="text-sm font-medium text-primary mb-2">Stock</label>
-                    <input
-                        type="text"
-                        value={stock}
-                        onChange={(e) => setStock(e.target.value)}
-                        placeholder="Enter Price"
-                        className="input-style"
-                        required
-                    />
-                </div>
-
-                {/* Screen Size */}
-                <div className="flex flex-col">
-                    <label className="text-sm font-medium text-primary mb-2">
-                        Screen Size
-                    </label>
-                    <input
-                        type="text"
-                        value={screen_size}
-                        onChange={(e) => setScreenSize(e.target.value)}
-                        placeholder="Enter screen size"
-                        className="input-style"
-                        required
-                    />
-                </div>
-
-                {/* Processor */}
-                <div className="flex flex-col">
-                    <label className="text-sm font-medium text-primary mb-2">
-                        Processor
-                    </label>
-                    <input
-                        type="text"
-                        value={processor}
-                        onChange={(e) => setProcessor(e.target.value)}
-                        placeholder="Enter processor type"
-                        className="input-style"
-                        required
-                    />
-                </div>
-
-                {/* RAM */}
-                <div className="flex flex-col">
-                    <label className="text-sm font-medium text-primary mb-2">RAM</label>
-                    <input
-                        type="text"
-                        value={ram}
-                        onChange={(e) => setRam(e.target.value)}
-                        placeholder="Enter RAM size"
-                        className="input-style"
-                        required
-                    />
-                </div>
-
-                {/* Storage */}
-                <div className="flex flex-col">
-                    <label className="text-sm font-medium text-primary mb-2">
-                        Storage
-                    </label>
-                    <input
-                        type="text"
-                        value={storage}
-                        onChange={(e) => setStorage(e.target.value)}
-                        placeholder="Enter storage capacity"
-                        className="input-style"
-                        required
-                    />
-                </div>
-
-                {/* Battery */}
-                <div className="flex flex-col">
-                    <label className="text-sm font-medium text-primary mb-2">
-                        Battery
-                    </label>
-                    <input
-                        type="text"
-                        value={battery}
-                        onChange={(e) => setBattery(e.target.value)}
-                        placeholder="Enter battery capacity"
-                        className="input-style"
-                        required
-                    />
-                </div>
-
-                {/* Camera */}
-                <div className="flex flex-col">
-                    <label className="text-sm font-medium text-primary mb-2">Camera</label>
-                    <input
-                        type="text"
-                        value={camera}
-                        onChange={(e) => setCamera(e.target.value)}
-                        placeholder="Enter camera specifications"
-                        className="input-style"
-                        required
-                    />
-                </div>
-
-                {/* Buttons */}
-                <div className="md:col-span-2 flex justify-center items-center gap-4 mt-4">
-                    <button
-                        type="submit"
-                        className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded-lg transition"
+                    <form
+                        onSubmit={handleSubmit}
+                        className="grid grid-cols-1 md:grid-cols-2 gap-6"
                     >
-                        Submit
-                    </button>
-                    <button
-                        onClick={handleReset}
-                        type="reset"
-                        className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-2 rounded-lg transition"
-                    >
-                        Reset
-                    </button>
-                </div>
-            </form>
-            {error && <p className="text-red-500">{error}</p>}
-            {result && <p className="text-primary">{result}</p>}
+                        <Field label="Storage" name="storage" value={form.storage} onChange={handleFormChange} placeholder="e.g. 128GB" required />
+                        <Field label="Price ($)" name="price" value={form.price} onChange={handleFormChange} placeholder="e.g. 699" type="number" required />
+                        <Field label="Stock" name="stock" value={form.stock} onChange={handleFormChange} placeholder="e.g. 50" type="number" required />
+                        <Field label="Screen Size" name="screen_size" value={form.screen_size} onChange={handleFormChange} placeholder="e.g. 6.1 inch" required />
+                        <Field label="Processor" name="processor" value={form.processor} onChange={handleFormChange} placeholder="e.g. A17 Pro" required />
+                        <Field label="RAM" name="ram" value={form.ram} onChange={handleFormChange} placeholder="e.g. 8GB" required />
+                        <Field label="Battery" name="battery" value={form.battery} onChange={handleFormChange} placeholder="e.g. 4000mAh" required />
+                        <Field label="Camera" name="camera" value={form.camera} onChange={handleFormChange} placeholder="e.g. 48MP" required />
+
+                        <div className="md:col-span-2 flex justify-center gap-4 mt-2">
+                            <button
+                                type="submit"
+                                disabled={submitting}
+                                className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-semibold px-8 py-2 rounded-lg transition"
+                            >
+                                {submitting ? "Saving…" : isUpdate ? "Update Spec" : "Add Spec"}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleReset}
+                                className="bg-red-600 hover:bg-red-700 text-white font-semibold px-8 py-2 rounded-lg transition"
+                            >
+                                Reset
+                            </button>
+                        </div>
+                    </form>
+                </>
+            )}
+
+            {/* Feedback */}
+            {error && (
+                <p className="mt-4 text-center text-red-600 font-medium">{error}</p>
+            )}
+            {success && (
+                <p className="mt-4 text-center text-green-600 font-medium">{success}</p>
+            )}
         </div>
     );
 };
+
+const Field = ({ label, name, value, onChange, placeholder, type = "text", required }) => (
+    <div className="flex flex-col">
+        <label className="text-sm font-medium text-primary mb-2">{label}</label>
+        <input
+            type={type}
+            name={name}
+            value={value}
+            onChange={onChange}
+            placeholder={placeholder}
+            className="input-style"
+            required={required}
+            min={type === "number" ? "0" : undefined}
+        />
+    </div>
+);
 
 export default AddDetail;

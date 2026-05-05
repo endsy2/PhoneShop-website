@@ -29,7 +29,6 @@ export default function App() {
         <Route path="/" element={<RootLayout />}>
           <Route index element={<Home />} />
           <Route path="product-detail" element={<ProductDetail />} />
-          <Route path="product-detail" element={<ProductDetail />} />
           <Route path="Sort" element={<Category />} />
           <Route path="compare-product" element={<Compare />} />
           <Route path="add-to-favorite" element={<Add_to_favorite />} />

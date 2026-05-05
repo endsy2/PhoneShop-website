@@ -67,8 +67,8 @@ const AddColor = () => {
 
         try {
             const response = await addNewColorFetch(formData);
-            handleClear(); // Clear form after successful submission
-            if (response.length !== 0) {
+            handleClear();
+            if (response?.status >= 200 && response?.status < 300) {
                 setResult('Successfully added the new color.');
             }
             setError('');

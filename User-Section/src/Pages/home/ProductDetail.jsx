@@ -1,30 +1,22 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  // desertColor,
-  // blackColor,
-  // silverColor,
-  // naturalColor,
-  // call_green,
   telegram_green,
-  // buy_green,
   messenger_green,
   compare,
   addToCartWhite,
-  // telegramWhite,
-  // messengerWhite,
   heartFill,
   heart,
   instagram_green,
 } from "../Assets/image";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-// import Installment_Card from "./Installment_Payment_Card";
 import { fetchdataProduct, fetchProductByName } from "../../FetchAPI/Fetch";
 import { addToCart, toggleStatusTab } from "../../store/cart";
 import { useDispatch, useSelector } from "react-redux";
 import { addtofavorite, removeFromFavorite } from "../../store/favorite";
 import { addToCompare } from "../../store/compare";
 import ProductCard from "./ProductCard";
+import { NETWORK_CONFIG } from "../../network/Network_EndPoint";
 
 const RECENTLY_VIEWED_KEY = "recentlyViewedProducts";
 
@@ -278,18 +270,20 @@ const ProductDetail = () => {
         {/* Product Images */}
         <div className="flex flex-col items-center">
           <img
-            src={`http://localhost:3000/${selectedImage}`}
+            src={`${NETWORK_CONFIG.apiBaseUrl}/${selectedImage}`}
             alt="Main Product"
             className="w-full max-w-[500px] h-auto md:h-96 object-contain mb-4 shadow-lg rounded-lg"
+            onError={(e) => { e.target.src = "https://via.placeholder.com/500x400?text=No+Image"; }}
           />
           <div className="flex mt-4 space-x-4">
             {arrayImage.map((image, idx) => (
               <img
                 key={idx}
-                src={`http://localhost:3000/${image}`}
+                src={`${NETWORK_CONFIG.apiBaseUrl}/${image}`}
                 alt={`Thumbnail ${idx + 1}`}
                 className="w-20 h-20 transition-transform duration-300 ease-in-out rounded-lg hover:scale-110 cursor-pointer"
                 onClick={() => handleImageClick(image)}
+                onError={(e) => { e.target.src = "https://via.placeholder.com/80x80?text=No+Image"; }}
               />
             ))}
           </div>

@@ -126,8 +126,6 @@ const HeadMainOffer = () => {
                 <h1 className="green-title mb-20 green-text font-semibold text-center">
                     Offer Discount
                 </h1>
-                {console.log(formData)
-                }
                 <form
                     className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
                     onSubmit={handleSubmit}

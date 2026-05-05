@@ -1,7 +1,4 @@
-import { query } from "express";
 import pool from "../../db/db_handle.js";
-import { reject } from "bcrypt/promises.js";
-import { deleteOrder } from "./Order.js";
 
 
 export const addNewProduct = async (req, res) => {
@@ -425,53 +422,30 @@ export const CountHeaderData = (req, res) => {
 };
 export const updateProductVariants = async (req, res) => {
     const { color } = req.body;
-    // console.log(req.user.user.username.name);
-    // const { name } = req.user.user.username;
-    // console.log(name);
-
-
-    const File = req.files;
-    const productImages = [];
-    for (let file of File) {
-        productImages.push(file.path)
-    }
-
     const { productVariantID } = req.params;
 
+    const files = req.files || [];
+    const productImages = files.map((file) => file.filename); // store only filename, not full path
 
-    const queryUpdateVariants = `UPDATE phone_variants
-                                    SET color=?
-                                    WHERE idphone_variants=?`
-    const queryDeleteImage = `DELETE FROM productimage
-                            WHERE phone_variant_id=?`
-    const queryInsertImage = `INSERT INTO productimage(phone_variant_id,image)
-                            VALUES(?,?)`
+    const queryUpdateVariants = `UPDATE phone_variants SET color=? WHERE idphone_variants=?`
+    const queryDeleteImage = `DELETE FROM productimage WHERE phone_variant_id=?`
+    const queryInsertImage = `INSERT INTO productimage(phone_variant_id,image) VALUES(?,?)`
+
     try {
-        const [variantsRow] = await pool.promise().query(queryUpdateVariants, [color, productVariantID])
-        const [DeleteRow] = await pool.promise().query(queryDeleteImage, [productVariantID])
+        await pool.promise().query(queryUpdateVariants, [color, productVariantID]);
+        await pool.promise().query(queryDeleteImage, [productVariantID]);
+
         for (let image of productImages) {
-            const [InsertRow] = await pool.promise().query(queryInsertImage, [productVariantID, image])
-            if (!InsertRow.length === 0) {
-                return res.status(400).json({
-                    message: "something went wrong"
-                })
-            }
+            await pool.promise().query(queryInsertImage, [productVariantID, image]);
         }
-        if (!variantsRow.length === 0, !DeleteRow.length === 0) {
-            return res.status(400).json({
-                message: "something went wrong"
-            })
-        }
-        return res.status(200).json({
-            message: "sucessfully"
-        })
+
+        return res.status(200).json({ message: "successfully" });
     } catch (error) {
         console.log(error);
-
         return res.status(400).json({
             message: "something went wrong",
-            error: error
-        })
+            error: error.message
+        });
     }
 }
 
@@ -546,6 +520,42 @@ export const getProductOptions = async (req, res) => {
             message: "Internal server error",
             error: error.message,
         });
+    }
+};
+
+// Get all variants and their existing specs for a product — used by the Add/Edit Detail form
+export const getProductVariantsWithSpecs = async (req, res) => {
+    const { product_id } = req.query;
+
+    if (!product_id) {
+        return res.status(400).json({ message: "product_id is required" });
+    }
+
+    const query = `
+        SELECT
+            pv.idphone_variants,
+            pv.color,
+            s.spec_id,
+            s.storage,
+            s.screen_size,
+            s.processor,
+            s.ram,
+            s.battery,
+            s.camera,
+            s.price,
+            s.stock
+        FROM phone_variants pv
+        LEFT JOIN specifications s ON s.phone_variant_id = pv.idphone_variants
+        WHERE pv.phone_id = ?
+        ORDER BY pv.idphone_variants, s.storage
+    `;
+
+    try {
+        const [rows] = await pool.promise().query(query, [product_id]);
+        return res.status(200).json({ message: "success", data: rows });
+    } catch (error) {
+        console.error("Error fetching product variants with specs:", error);
+        return res.status(500).json({ message: "Internal server error", error: error.message });
     }
 };
 export const addNewSpecificate = async (req, res) => {

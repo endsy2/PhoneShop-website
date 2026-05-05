@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import { fetchOfferByID, productByID, removeOffer, removeSpec, removeVariants } from "../Fetch/FetchAPI";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Model from "../Utils/Model/Model";
-import { Bold } from "react-feather";
 
 const Offer = () => {
   const [items, setItems] = useState([]);
@@ -138,6 +137,7 @@ const Offer = () => {
                 src={`http://localhost:3000/${selectedImage}`}
                 alt="Product"
                 className="w-full h-96 object-contain rounded-lg shadow-md transition-transform transform hover:scale-105"
+                onError={(e) => { e.target.src = "https://via.placeholder.com/400x400?text=No+Image"; }}
               />
             )}
             <div className="flex gap-3 mt-4 overflow-x-auto">
@@ -149,6 +149,7 @@ const Offer = () => {
                   className={`w-20 h-20 object-cover rounded-md cursor-pointer ${selectedImage === image ? "ring-2 ring-green-500" : ""
                     }`}
                   onClick={() => handleImageClick(image)}
+                  onError={(e) => { e.target.src = "https://via.placeholder.com/80x80?text=No+Image"; }}
                 />
               ))}
             </div>

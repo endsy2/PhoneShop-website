@@ -2,6 +2,7 @@ import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { clearCompare, removeFromCompare } from "../../store/compare";
+import { NETWORK_CONFIG } from "../../network/Network_EndPoint";
 
 const compareFields = [
   { label: "Color", key: "color" },
@@ -16,12 +17,8 @@ const compareFields = [
 
 const imageUrlFromProduct = (product) => {
   const imagePath = (product?.images || "").split(",")[0] || "";
-
-  if (!imagePath) {
-    return "";
-  }
-
-  return `http://localhost:3000/${imagePath.trim().replace(/uploads[\\/]/g, "").replace(/\s+/g, "")}`;
+  if (!imagePath) return "";
+  return `${NETWORK_CONFIG.apiBaseUrl}/${imagePath.trim().replace(/uploads[\\/]/g, "").replace(/\s+/g, "")}`;
 };
 
 const formatValue = (value, fieldKey) => {

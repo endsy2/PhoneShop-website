@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import { NETWORK_CONFIG } from '../network/Network_EndPoint';
 
-const API_URL_COMMON = "http://localhost:3000/common";
+const API_URL_COMMON = `${NETWORK_CONFIG.apiBaseUrl}/common`;
 
 const ProductReviews = ({ spec_id }) => {
     const [reviews, setReviews] = useState([]);
@@ -142,7 +143,7 @@ const ProductReviews = ({ spec_id }) => {
                             className="w-full p-2 border rounded"
                         >
                             {[1,2,3,4,5].map(r => (
-                                <option key={r} value={r}>{r} Star{'s' if r > 1 else ''}</option>
+                                <option key={r} value={r}>{r} Star{r > 1 ? 's' : ''}</option>
                             ))}
                         </select>
                     </div>

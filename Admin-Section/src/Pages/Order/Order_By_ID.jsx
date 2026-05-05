@@ -68,7 +68,7 @@ const Order_By_ID = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
                 <p className="text-gray-600">Customer Name</p>
-                <p className="text-black font-semibold">{orders[0]?.username || "N/A"}</p>
+                <p className="text-black font-semibold">{orders[0]?.display_name || orders[0]?.username || "N/A"}</p>
               </div>
               <div>
                 <p className="text-gray-600">Phone</p>
@@ -111,14 +111,12 @@ const Order_By_ID = () => {
                       <img
                         src={
                           item.images
-                            ? `http://localhost:3000/${item.images
-                              .split(",")[0]
-                              .replace(/\\/g, "/")
-                              .replace("uploads/", "")}`
+                            ? `http://localhost:3000/${item.images.split(",")[0].trim().replace(/\\/g, "/").replace(/^uploads\//, "")}`
                             : "http://localhost:3000/fallback.jpg"
                         }
-                        alt={item.name || "Product Image"}
+                        alt={item.phone_name || "Product Image"}
                         className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-md"
+                        onError={(e) => { e.target.src = "https://via.placeholder.com/64x64?text=No+Image"; }}
                       />
                       <p className="truncate">{item.phone_name}</p>
                     </div>
@@ -170,19 +168,26 @@ const Order_By_ID = () => {
             <div className="flex justify-between md:justify-end gap-8">
               <p className="text-gray-500">Subtotal</p>
               <p className="text-black font-semibold">
-                {ordersItems.reduce((total, item) => total + parseFloat(item.amount_per_total_orderItem), 0)}$
+                {ordersItems.reduce((total, item) => total + parseFloat(item.amount_per_total_orderItem || 0), 0).toFixed(2)}$
               </p>
             </div>
             <div className="flex justify-between md:justify-end gap-8">
               <p className="text-gray-500">Discount</p>
               <p className="text-black font-semibold">
-                {ordersItems.reduce((total, item) => total + parseFloat(item.discount_price_per_unit) * item.quantity, 0).toFixed(2)}$
+                {ordersItems.reduce((total, item) => {
+                  const discounted = parseFloat(item.discount_price_per_unit || item.price_per_unit || 0);
+                  const original = parseFloat(item.price_per_unit || 0);
+                  return total + (original - discounted) * item.quantity;
+                }, 0).toFixed(2)}$
               </p>
             </div>
             <div className="flex justify-between md:justify-end gap-8 text-xl font-bold">
               <p className="text-gray-600">Total</p>
               <p className="text-black font-semibold">
-                {ordersItems.reduce((total, item) => total + parseFloat(item.discount_price_per_unit) * item.quantity, 0).toFixed(2)}$
+                {ordersItems.reduce((total, item) => {
+                  const price = parseFloat(item.discount_price_per_unit || item.price_per_unit || 0);
+                  return total + price * item.quantity;
+                }, 0).toFixed(2)}$
               </p>
             </div>
           </div>
