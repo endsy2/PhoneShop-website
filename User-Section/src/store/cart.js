@@ -1,11 +1,23 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-const initialState = {
-    items: localStorage.getItem("carts")
-        ? JSON.parse(localStorage.getItem("carts"))
-        : [], // Fallback to an empty array
-    statusTab: false,
+const CART_VERSION = "v2"; // bump this to force a cart reset
 
+const initialState = {
+    items: (() => {
+        try {
+            // If cart version doesn't match, clear old stale cart
+            if (localStorage.getItem("carts_version") !== CART_VERSION) {
+                localStorage.removeItem("carts");
+                localStorage.setItem("carts_version", CART_VERSION);
+                return [];
+            }
+            const stored = localStorage.getItem("carts");
+            return stored ? JSON.parse(stored) : [];
+        } catch {
+            return [];
+        }
+    })(),
+    statusTab: false,
 };
 
 const cartSlice = createSlice({
