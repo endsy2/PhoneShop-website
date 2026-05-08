@@ -69,7 +69,11 @@ const CheckoutPage = () => {
       setSubmitting(true);
       const response = await fetchCheckOut(data);
       if (response) {
-        setResponse("Order placed successfully!");
+        const skipped = response.data?.skippedItems || 0;
+        const msg = skipped > 0
+          ? `Order placed! ${skipped} item(s) were skipped — please re-add them from the product detail page.`
+          : "Order placed successfully!";
+        setResponse(msg);
         setError("");
         setCustomerName("");
         setDelivery("");
@@ -82,7 +86,6 @@ const CheckoutPage = () => {
       }
     } catch (error) {
       console.error("Error during checkout:", error);
-      // Show the server's actual error message if available
       const serverMsg =
         error?.response?.data?.message ||
         error?.message ||

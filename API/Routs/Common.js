@@ -9,6 +9,8 @@ import { reserveInventory, releaseInventory, confirmInventory, getInventoryStatu
 import { trackBrowsing, getCoViewedProducts, getSimilarPriceProducts, getTopRatedInCategory, getPersonalizedRecommendations } from "../Controllers/common/recommendations.js";
 import { advancedSearch, getFilterOptions } from "../Controllers/common/filtering.js";
 
+import { validateToken_refresh_token } from "../Utils/jwt_validation_refresh_token.js";
+
 const commonRouter = Router();
 
 // Existing product routes
@@ -34,11 +36,11 @@ commonRouter.delete("/notification/:id", deleteNotification);
 
 // ===== NEW FEATURE ROUTES =====
 
-// 1. Product Reviews Routes
+// Reviews — GET is public, write routes require auth
 commonRouter.get("/reviews/:spec_id", getProductReviews);
-commonRouter.post("/reviews", addProductReview);
-commonRouter.post("/reviews/vote", voteReview);
-commonRouter.delete("/reviews/:review_id", deleteReview);
+commonRouter.post("/reviews", validateToken_refresh_token, addProductReview);
+commonRouter.post("/reviews/vote", validateToken_refresh_token, voteReview);
+commonRouter.delete("/reviews/:review_id", validateToken_refresh_token, deleteReview);
 
 // 2. Chat Support Routes
 commonRouter.post("/chat/start", startChat);

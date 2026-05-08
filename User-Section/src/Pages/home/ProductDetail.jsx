@@ -17,6 +17,7 @@ import { addtofavorite, removeFromFavorite } from "../../store/favorite";
 import { addToCompare } from "../../store/compare";
 import ProductCard from "./ProductCard";
 import { NETWORK_CONFIG } from "../../network/Network_EndPoint";
+import ProductReviews from "../../Components/ProductReviews";
 
 const RECENTLY_VIEWED_KEY = "recentlyViewedProducts";
 
@@ -71,6 +72,7 @@ const ProductDetail = () => {
   const [recentlyViewed, setRecentlyViewed] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showReviewForm, setShowReviewForm] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const favorite = useSelector((store) => store.favorite.favorite);
@@ -416,20 +418,19 @@ const ProductDetail = () => {
             </a>
             <div className="flex flex-col md:flex-row items-center gap-4 mt-4 w-full">
                 <button
-                  href="/cart"
-                  className={`w-full md:w-[200px] justify-center flex p-3 rounded-xl items-center gap-2 text-white font-semibold ${isOutOfStock ? "cursor-not-allowed bg-slate-400" : "bg-green-600 hover:text-green-800"}`}
+                  className={`w-full md:w-[180px] h-[52px] justify-center flex p-3 rounded-xl items-center gap-2 text-white font-semibold whitespace-nowrap ${isOutOfStock ? "cursor-not-allowed bg-slate-400" : "bg-green-600 hover:bg-green-700"}`}
                   onClick={() => handleAddToCart()}
                   disabled={isOutOfStock}
                 >
-                  <img src={addToCartWhite} alt="Add to Cart" className="w-5" />
-                  Add to Cart
+                  <img src={addToCartWhite} alt="Add to Cart" className="w-5 flex-shrink-0" />
+                  <span>Add to Cart</span>
                 </button>
                 <button
-                  className="w-full md:w-[200px] flex justify-center gap-2 items-center text-white bg-green-600 p-3 font-semibold rounded-xl hover:text-green-800"
+                  className="w-full md:w-[180px] h-[52px] flex justify-center gap-2 items-center text-white bg-green-600 p-3 font-semibold rounded-xl hover:bg-green-700 whitespace-nowrap"
                   onClick={() => handeAddToFavorite(selectedItem.phone_id)}
                 >
                   <img
-                    className="w-6"
+                    className="w-5 flex-shrink-0"
                     src={
                       favorite.findIndex(
                         (element) => element === selectedItem.phone_id
@@ -439,19 +440,28 @@ const ProductDetail = () => {
                     }
                     alt=""
                   />
-                  <p className="max-lg:hidden">Add To Favorite</p>
+                  <span>Add to Favorite</span>
                 </button>
                 <button
                   type="button"
                   onClick={handleCompare}
-                  className="w-full md:w-[200px] flex justify-center gap-2 items-center text-white bg-green-600 p-3 font-semibold rounded-xl hover:text-green-800"
+                  className="w-full md:w-[180px] h-[52px] flex justify-center gap-2 items-center text-white bg-green-600 p-3 font-semibold rounded-xl hover:bg-green-700 whitespace-nowrap"
                 >
-                  <img
-                    className="w-6"
-                    src={compare}
-                    alt="Compare"
-                  />
-                  <p className="max-lg:hidden">Compare</p>
+                  <img className="w-5 flex-shrink-0" src={compare} alt="Compare" />
+                  <span>Compare</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowReviewForm(true);
+                    setTimeout(() => {
+                      document.getElementById("review-section")?.scrollIntoView({ behavior: "smooth" });
+                    }, 100);
+                  }}
+                  className="w-full md:w-[180px] h-[52px] flex justify-center gap-2 items-center text-white bg-green-600 p-3 font-semibold rounded-xl hover:bg-green-700 whitespace-nowrap"
+                >
+                  <span className="flex-shrink-0">⭐</span>
+                  <span>Write Review</span>
                 </button>
               </div>
           </div>
@@ -491,26 +501,12 @@ const ProductDetail = () => {
         </div>
       </div>
 
-      <div className="mt-10 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h3 className="text-2xl font-semibold text-slate-900">Customer Reviews</h3>
-          <div className="text-right">
-            <p className="text-2xl font-extrabold text-amber-600">{ratingMeta.score}/5</p>
-            <p className="text-sm text-slate-500">{ratingMeta.reviewCount} verified reviews</p>
-          </div>
-        </div>
-        <p className="mt-2 text-sm font-medium text-emerald-700">
-          {ratingMeta.recommendPercent}% of buyers recommend this product.
-        </p>
-        <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-3">
-          {ratingMeta.reviews.map((review) => (
-            <div key={review.id} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-sm font-bold text-slate-900">{review.title}</p>
-              <p className="mt-2 text-sm text-slate-600">{review.text}</p>
-              <p className="mt-3 text-xs font-semibold text-slate-500">By {review.author}</p>
-            </div>
-          ))}
-        </div>
+      <div id="review-section" className="mt-10 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <ProductReviews
+          spec_id={selectedItem?.spec_id || items[0]?.spec_id}
+          openForm={showReviewForm}
+          onFormClose={() => setShowReviewForm(false)}
+        />
       </div>
 
       {recentlyViewed.length > 0 ? (
