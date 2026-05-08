@@ -10,13 +10,6 @@ const ProductCard = ({ product }) => {
   const location = useLocation();
   const stock = Number(product?.stock ?? product?.spec_stock ?? product?.available_stock ?? 0);
   const inStock = stock > 0;
-  
-  // Use real rating if available, otherwise generate seed-based rating
-  const rating = product?.avg_rating 
-    ? Number(product.avg_rating).toFixed(1)
-    : (4 + ((Number(product?.phone_id || 0) || String(product?.name || "").length) % 11) / 20).toFixed(1);
-  
-  const reviewCount = product?.review_count || 0;
 
   // Get stock status
   const getStockStatus = () => {
@@ -79,16 +72,6 @@ const ProductCard = ({ product }) => {
         <h3 className="mt-4 text-center text-lg font-semibold text-gray-800">
           {product.name}
         </h3>
-
-        {/* Rating */}
-        <div className="flex justify-center items-center gap-1 mt-2">
-          <div className="flex">
-            {[...Array(5)].map((_, i) => (
-              <span key={i} className={`text-sm ${i < Math.round(rating) ? 'text-yellow-400' : 'text-gray-300'}`}>★</span>
-            ))}
-          </div>
-          <span className="text-xs text-gray-600">({reviewCount})</span>
-        </div>
 
         {/* Price */}
         <div className="flex justify-center items-center gap-2 mt-2">
