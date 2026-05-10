@@ -161,3 +161,31 @@ export const fetchCheckOut = async (data) => {
         throw error;
     }
 }
+
+// ─── Bakong KHQR Payment ──────────────────────────────────────────────────────
+export const generateBakongQR = async ({ amount, currency = "USD", items, delivery, location, customerName }) => {
+    const response = await axios.post(`${API_URL_USER}/bakong/generate-qr`, {
+        amount,
+        currency,
+        items,
+        delivery,
+        location,
+        customerName
+    }, { withCredentials: true });
+    return response.data;
+};
+
+export const checkBakongPayment = async ({ md5Hash, orderId }) => {
+    const response = await axios.post(`${API_URL_USER}/bakong/check-payment`, {
+        md5Hash,
+        orderId
+    }, { withCredentials: true });
+    return response.data;
+};
+
+export const generateBakongToken = async () => {
+    const response = await axios.post(`${API_URL_USER}/bakong/generate-token`, {}, {
+        withCredentials: true
+    });
+    return response.data;
+};

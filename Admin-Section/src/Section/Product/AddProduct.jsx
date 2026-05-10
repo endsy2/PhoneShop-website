@@ -269,14 +269,16 @@ const AddProduct = ({ product_id }) => {
 
         {/* Price */}
         <div className="flex flex-col">
-          <label className="text-sm font-medium text-primary mb-2">Price</label>
+          <label className="text-sm font-medium text-primary mb-2">Price ($)</label>
           <input
             type="number"
             name="price"
-            placeholder="Enter product price"
+            placeholder="e.g. 999.99"
             value={price}
             className="input-style"
             onChange={(e) => setPrice(e.target.value)}
+            min="0"
+            step="0.01"
             required
           />
         </div>
