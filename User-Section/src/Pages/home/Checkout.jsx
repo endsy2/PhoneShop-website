@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { removeAllCart } from "../../store/cart";
 import CheckoutCart from "../../Conponents/CheckoutCart";
 import { fetchCheckOut } from "../../FetchAPI/Fetch";
+import BakongQR from "../../Components/BakongQR";
 
 const CheckoutPage = () => {
   const cart = useSelector((store) => store.cart.items);
@@ -17,6 +18,8 @@ const CheckoutPage = () => {
   const [fieldErrors, setFieldErrors] = useState({});
   const [response, setResponse] = useState();
   const [error, setError] = useState();
+  const [showBakongQR, setShowBakongQR] = useState(false);
+  const [pendingOrderData, setPendingOrderData] = useState(null);
 
   const dispatch = useDispatch();
   const clearCart = () => {
@@ -67,6 +70,14 @@ const CheckoutPage = () => {
 
     try {
       setSubmitting(true);
+
+      // If Bakong QR selected — show QR first, place order after payment confirmed
+      if (payment === "Bakong QR") {
+        setPendingOrderData(data);
+        setShowBakongQR(true);
+        setSubmitting(false);
+        return;
+      }
       const response = await fetchCheckOut(data);
       if (response) {
         const skipped = response.data?.skippedItems || 0;
@@ -156,8 +167,9 @@ const CheckoutPage = () => {
                         className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
                       >
                         <option value="">Select Payment Method</option>
-                        <option value="By Delivery">By Delivery</option>
+                        <option value="By Delivery">By Delivery (Cash on Delivery)</option>
                         <option value="Paid">Paid</option>
+                        <option value="Bakong QR">🏦 Bakong QR (Online Payment)</option>
                       </select>
                       {fieldErrors.payment ? (
                         <p className="mt-1 text-sm text-red-600">{fieldErrors.payment}</p>
@@ -210,10 +222,9 @@ const CheckoutPage = () => {
                     </div>
                   </form>
                 </div>
-                {/* <CreditCard /> */}
               </div>
             </div>
-            <div className="w-full  lg:w-1/2 mt-8 lg:mt-0 lg:ml-6 bg-white p-6 rounded-lg shadow-md">
+            <div className="w-full lg:w-1/2 mt-8 lg:mt-0 lg:ml-6 bg-white p-6 rounded-lg shadow-md">
               <div>
                 <h3 className="text-xl font-semibold mb-4 text-center">
                   ORDER SUMMARY
@@ -223,16 +234,15 @@ const CheckoutPage = () => {
                   <p>Quantity</p>
                   <p>Price</p>
                 </div>
-                <div className=" border-t pt-4 py-4">
+                <div className="border-t pt-4 py-4">
                   {fieldErrors.cart ? (
                     <p className="pb-2 text-sm text-red-600">{fieldErrors.cart}</p>
                   ) : null}
                   {cart.map((element) => (
                     <CheckoutCart key={element.productId} items={element} />
                   ))}
-
                   <p className="flex justify-between py-2 mt-5">
-                    <span>Amount Quantity:</span>{" "}
+                    <span>Amount Quantity:</span>
                     <span>{totalQuatity | 0}</span>
                   </p>
                   <p className="flex justify-between py-1 text-sm text-slate-700">
@@ -242,18 +252,39 @@ const CheckoutPage = () => {
                   <hr className="my-4 border-gray-300" />
                   <p className="flex justify-between font-semibold text-red-600 text-lg pt-2">
                     <span>Total Payment:</span>
-                    <span>
-                      ${finalTotal.toFixed(2)}
-                    </span>
+                    <span>${finalTotal.toFixed(2)}</span>
                   </p>
-                </div>
-
-                <div>
-                  <div className="flex items-center py-4"></div>
                 </div>
               </div>
             </div>
           </div>
+
+          {/* Bakong QR Modal Overlay — inside the token block */}
+          {showBakongQR && pendingOrderData && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 px-4">
+              <div className="w-full max-w-sm">
+                <BakongQR
+                  amount={subtotal}
+                  orderData={pendingOrderData}
+                  onPaymentSuccess={({ orderId }) => {
+                    setShowBakongQR(false);
+                    setPendingOrderData(null);
+                    setResponse(`Payment confirmed! Order #${orderId} placed successfully.`);
+                    setError("");
+                    setCustomerName("");
+                    setDelivery("");
+                    setLocation("");
+                    setPayment("");
+                    clearCart();
+                  }}
+                  onCancel={() => {
+                    setShowBakongQR(false);
+                    setPendingOrderData(null);
+                  }}
+                />
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div className="flex flex-wrap gap-20 justify-center items-center py-36">

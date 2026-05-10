@@ -312,7 +312,20 @@ const AddDetail = () => {
                         className="grid grid-cols-1 md:grid-cols-2 gap-6"
                     >
                         <Field label="Storage" name="storage" value={form.storage} onChange={handleFormChange} placeholder="e.g. 128GB" required />
-                        <Field label="Price ($)" name="price" value={form.price} onChange={handleFormChange} placeholder="e.g. 699" type="number" required />
+                        <div className="flex flex-col">
+                        <label className="text-sm font-medium text-primary mb-2">Price ($)</label>
+                        <input
+                            type="number"
+                            name="price"
+                            value={form.price}
+                            onChange={handleFormChange}
+                            placeholder="e.g. 999.99"
+                            className="input-style"
+                            required
+                            min="0"
+                            step="0.01"
+                        />
+                    </div>
                         <Field label="Stock" name="stock" value={form.stock} onChange={handleFormChange} placeholder="e.g. 50" type="number" required />
                         <Field label="Screen Size" name="screen_size" value={form.screen_size} onChange={handleFormChange} placeholder="e.g. 6.1 inch" required />
                         <Field label="Processor" name="processor" value={form.processor} onChange={handleFormChange} placeholder="e.g. A17 Pro" required />
