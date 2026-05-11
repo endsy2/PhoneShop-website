@@ -425,10 +425,29 @@ const AddProduct = ({ product_id }) => {
           </button>
         </div>
       </form >
-      <div className="mt-16">
-        {error && <p className="text-red-500">{error}</p>}
-        {result && <p className="text-primary">{result}</p>}
-      </div>
+      {/* Success/Error Messages */}
+      {(error || result) && (
+        <div className="mt-6">
+          {result && (
+            <div className="flex items-center gap-3 p-4 bg-green-50 border-2 border-green-200 rounded-xl shadow-md animate-fade-in">
+              <span className="text-3xl">✅</span>
+              <div>
+                <p className="text-green-800 font-bold text-lg">{result}</p>
+                <p className="text-green-600 text-sm">Product has been added successfully!</p>
+              </div>
+            </div>
+          )}
+          {error && (
+            <div className="flex items-center gap-3 p-4 bg-red-50 border-2 border-red-200 rounded-xl shadow-md animate-fade-in">
+              <span className="text-3xl">❌</span>
+              <div>
+                <p className="text-red-800 font-bold text-lg">{error}</p>
+                <p className="text-red-600 text-sm">Please try again or contact support.</p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div >
   );
 };

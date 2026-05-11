@@ -188,12 +188,21 @@ export const checkout = async (req, res) => {
             });
         }
 
-        // Determine if this is a Bakong payment
+        // Determine payment verification status based on payment method
         const isBakongPayment = payment === "Bakong QR" && md5Hash;
+        
+        // Payment verification logic:
+        // - Bakong QR: Start as 0 (unverified), verify after polling
+        // - Cash on Delivery (By Delivery): Start as 0 (unverified), admin confirms after delivery
+        // - All others: Start as 1 (verified)
+        let payment_verified = 0; // Default to unverified
+        
+        if (!isBakongPayment && payment !== "By Delivery") {
+            payment_verified = 1; // Only verify if not Bakong and not Cash on Delivery
+        }
 
         // Insert order with payment_verified flag
         const recipientName = customerName?.trim() || tokenUsername;
-        const payment_verified = isBakongPayment ? 0 : 1; // Bakong starts as unverified
 
         const [ordersRows] = await pool.promise().query(
             `INSERT INTO orders (customer_id, recipient_name, delivery, payment, payment_verified, location) VALUES (?, ?, ?, ?, ?, ?)`,
@@ -210,7 +219,7 @@ export const checkout = async (req, res) => {
             );
         }
 
-        console.log(`📦 Order created: #${order_id} (${isBakongPayment ? 'Bakong - pending payment' : 'confirmed'})`);
+        console.log(`📦 Order created: #${order_id} (Payment: ${payment}, Verified: ${payment_verified})`);
 
         // If Bakong payment, poll for payment confirmation
         if (isBakongPayment) {
@@ -254,10 +263,13 @@ export const checkout = async (req, res) => {
         }
 
         // Non-Bakong payment - immediate success
+        // Note: Cash on Delivery orders are created with payment_verified=0
+        // Admin will confirm payment after delivery
         res.status(201).json({ 
             message: "Order placed successfully", 
             orderId: order_id,
-            paid: true
+            paid: payment_verified === 1, // Only true if payment method is pre-verified
+            paymentPending: payment_verified === 0 // True for Cash on Delivery
         });
 
     } catch (error) {

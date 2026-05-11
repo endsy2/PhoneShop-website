@@ -106,6 +106,8 @@ export const tableHeadOrder = [
   "Delivery Address",
   "Date",
   "Amount",
+  "Payment Status",
+  "Order Status"
 ]
 
 export const tableInfor = [

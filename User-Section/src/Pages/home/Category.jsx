@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { fetchProductByBrand, fetchProductByCategory } from '../../FetchAPI/Fetch';
 import ProductCard from './ProductCard';
+import Breadcrumb from '../../Components/Breadcrumb';
 
 const Category = () => {
     const search = window.location.search;
@@ -78,6 +79,12 @@ const Category = () => {
     return (
         <div className='w-full bg-gray-50 px-4 py-6 sm:px-6 lg:px-12'>
             <div className='mx-auto max-w-7xl'>
+                {/* Breadcrumb */}
+                <Breadcrumb 
+                    items={[
+                        { label: category || brand || "Products" }
+                    ]}
+                />
             <h1 className='font-bold my-3 text-2xl text-green-600'>{category || brand}</h1>
 
             <div className='sticky top-2 z-30 mb-4 md:hidden'>

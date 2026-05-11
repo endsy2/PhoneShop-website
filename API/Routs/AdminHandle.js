@@ -4,7 +4,10 @@ import { validateToken_refresh_token } from "../Utils/jwt_validation_refresh_tok
 import { addNewBrand, addNewCategory, addNewProduct, addNewSpecificate, addVariants, CountHeaderData, deleteBrand, deleteCategory, deleteProduct, deleteSpecification, deleteVariants, getProductOptions, getProductVariantsWithSpecs, updateProduct, updateProductVariants, UpdateSpecification } from "../Controllers/adminCrud/Product.js";
 import { dashboardHeader, dashboardHeaderAll } from "../Controllers/adminCrud/DashBoard.js"
 import { deleteOrder, deleteOrderItems, orderByID, orderTable, OrderTableItemsByID, searchOrder, updateOrderitems } from "../Controllers/adminCrud/Order.js";
-
+import { updateOrderStatus } from "../Controllers/adminCrud/updateOrderStatus.js";
+import { confirmPayment } from "../Controllers/adminCrud/confirmPayment.js";
+import { cancelPayment } from "../Controllers/adminCrud/cancelPayment.js";
+import { cancelOrder } from "../Controllers/adminCrud/cancelOrder.js";
 import { offerDelete, offerInsert, offerUpdate } from "../Controllers/adminCrud/Offer.js";
 import { headerOrder } from "../Controllers/adminCrud/Order.js";
 
@@ -31,6 +34,10 @@ adminRouter.get('/orderByID/:order_id', orderByID);
 adminRouter.get('/tableOrder', orderTable);
 adminRouter.get('/searchTableOrder', searchOrder);
 adminRouter.get('/headerOrder', headerOrder);
+adminRouter.put('/updateOrderStatus/:order_id', updateOrderStatus);
+adminRouter.put('/confirmPayment/:order_id', confirmPayment);
+adminRouter.put('/cancelPayment/:order_id', cancelPayment);
+adminRouter.put('/cancelOrder/:order_id', cancelOrder);
 adminRouter.put('/UpdateOrderItems', updateOrderitems);
 adminRouter.delete('/deleleOrder/:DeleteOrderID', deleteOrder);
 adminRouter.delete('/deleleSpec', deleteSpecification);

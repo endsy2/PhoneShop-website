@@ -19,6 +19,7 @@ export const offerDisplay = async (req, res) => {
         pm.discount_percentage,
         pm.end_date,
         pi.image AS images,
+        s.spec_id,
         s.screen_size,
         s.processor,
         s.ram,
@@ -27,6 +28,8 @@ export const offerDisplay = async (req, res) => {
         s.camera,
         b.brand_name,
         b.img AS brand_img,
+        ROUND(AVG(pr.rating), 1) AS avg_rating,
+        COUNT(pr.review_id) AS review_count,
         ROW_NUMBER() OVER (PARTITION BY p.phone_id ORDER BY s.price DESC) AS row_num
     FROM phones p
     INNER JOIN brands b ON p.brand_id = b.brand_id
@@ -35,6 +38,7 @@ export const offerDisplay = async (req, res) => {
     LEFT JOIN specifications s ON s.phone_variant_id = pv.idphone_variants
     INNER JOIN promotions pm ON pm.spec_id = s.spec_id -- Corrected join condition
     LEFT JOIN productimage pi ON pi.phone_variant_id = pv.idphone_variants -- Join for product images
+    LEFT JOIN product_reviews pr ON pr.spec_id = s.spec_id
     WHERE CURDATE() BETWEEN DATE(pm.start_date) AND DATE(pm.end_date)
     GROUP BY 
         pm.promo_id, 
@@ -43,6 +47,7 @@ export const offerDisplay = async (req, res) => {
         pm.promo_name, 
         c.category_name, 
         p.description, 
+        s.spec_id,
         s.price, 
         p.stock, 
         p.release_date, 
@@ -148,6 +153,7 @@ export const offerDisplayByID = async (req, res) => {
         pm.discount_percentage,
         pm.end_date,
         GROUP_CONCAT(DISTINCT pi.image SEPARATOR ', ') AS images, -- Combines distinct images into a single string
+        s.spec_id,
         s.screen_size,
         s.processor,
         s.ram,
@@ -157,6 +163,8 @@ export const offerDisplayByID = async (req, res) => {
         s.stock AS spec_stock,
         b.brand_name,
         b.img AS brand_img,
+        ROUND(AVG(pr.rating), 1) AS avg_rating,
+        COUNT(pr.review_id) AS review_count,
         ROW_NUMBER() OVER (PARTITION BY p.phone_id ORDER BY s.price DESC) AS row_num
     FROM phones p
     INNER JOIN brands b ON p.brand_id = b.brand_id
@@ -165,6 +173,7 @@ export const offerDisplayByID = async (req, res) => {
     LEFT JOIN specifications s ON s.phone_variant_id = pv.idphone_variants
     INNER JOIN promotions pm ON pm.spec_id = s.spec_id-- Corrected join condition
     LEFT JOIN productimage pi ON pi.phone_variant_id = pv.idphone_variants -- Join for product images
+    LEFT JOIN product_reviews pr ON pr.spec_id = s.spec_id
     WHERE CURDATE() BETWEEN DATE(pm.start_date) AND DATE(pm.end_date)
     GROUP BY 
         pm.promo_id, 
@@ -173,6 +182,7 @@ export const offerDisplayByID = async (req, res) => {
         pm.promo_name, 
         c.category_name, 
         p.description, 
+        s.spec_id,
         s.price, 
         p.stock, 
         p.release_date, 

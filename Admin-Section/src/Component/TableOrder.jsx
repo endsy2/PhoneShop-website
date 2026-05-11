@@ -198,6 +198,40 @@ const TableOrder = ({ title, items }) => {
                                             {element.total_amount}
                                         </Link>
                                     </td>
+                                    <td className="table-data px-4 sm:px-6 py-3 sm:py-4">
+                                        <Link
+                                            to={`/dashboard/order/${element.order_id}`}
+                                            className="flex justify-center"
+                                        >
+                                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                                                element.payment_verified === 1 
+                                                    ? 'bg-green-100 text-green-700' 
+                                                    : 'bg-yellow-100 text-yellow-700'
+                                            }`}>
+                                                {element.payment_verified === 1 ? '✓ Paid' : '⏳ Pending'}
+                                            </span>
+                                        </Link>
+                                    </td>
+                                    <td className="table-data px-4 sm:px-6 py-3 sm:py-4">
+                                        <Link
+                                            to={`/dashboard/order/${element.order_id}`}
+                                            className="flex justify-center"
+                                        >
+                                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                                                element.status?.toLowerCase() === 'delivered' ? 'bg-green-100 text-green-700' :
+                                                element.status?.toLowerCase() === 'shipping' ? 'bg-blue-100 text-blue-700' :
+                                                element.status?.toLowerCase() === 'completed' ? 'bg-purple-100 text-purple-700' :
+                                                element.status?.toLowerCase() === 'canceled' ? 'bg-red-100 text-red-700' :
+                                                'bg-yellow-100 text-yellow-700'
+                                            }`}>
+                                                {element.status?.toLowerCase() === 'delivered' ? '✅ Delivered' :
+                                                 element.status?.toLowerCase() === 'shipping' ? '🚚 Shipping' :
+                                                 element.status?.toLowerCase() === 'completed' ? '✓ Completed' :
+                                                 element.status?.toLowerCase() === 'canceled' ? '❌ Canceled' :
+                                                 '⏳ Pending'}
+                                            </span>
+                                        </Link>
+                                    </td>
                                     <td className="table-data flex justify-center gap-2 sm:gap-4 px-4 sm:px-6 py-3 sm:py-4">
                                         <button
                                             onClick={() => handleRemove(element.order_id)}
@@ -214,7 +248,7 @@ const TableOrder = ({ title, items }) => {
                             ))
                         ) : (
                             <tr>
-                                <td colSpan={7} className="text-center text-sm sm:text-base py-6">
+                                <td colSpan={8} className="text-center text-sm sm:text-base py-6">
                                     No data available
                                 </td>
                             </tr>

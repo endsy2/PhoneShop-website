@@ -104,7 +104,7 @@ const Message = () => {
             />
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-3">
             <button
               type="submit"
               disabled={loading}
@@ -112,9 +112,33 @@ const Message = () => {
             >
               {loading ? "Sending..." : "Send Message"}
             </button>
-            {statusMessage ? (
-              <span className="text-sm text-gray-600">{statusMessage}</span>
-            ) : null}
+            
+            {/* Success/Error Messages */}
+            {statusMessage && (
+              <div className={`flex items-center gap-3 p-4 rounded-xl shadow-md animate-fade-in ${
+                statusMessage.includes("Failed") || statusMessage.includes("error")
+                  ? "bg-red-50 border-2 border-red-200"
+                  : "bg-green-50 border-2 border-green-200"
+              }`}>
+                <span className="text-3xl">{statusMessage.includes("Failed") || statusMessage.includes("error") ? "❌" : "✅"}</span>
+                <div>
+                  <p className={`font-bold text-lg ${
+                    statusMessage.includes("Failed") || statusMessage.includes("error")
+                      ? "text-red-800"
+                      : "text-green-800"
+                  }`}>{statusMessage}</p>
+                  <p className={`text-sm ${
+                    statusMessage.includes("Failed") || statusMessage.includes("error")
+                      ? "text-red-600"
+                      : "text-green-600"
+                  }`}>
+                    {statusMessage.includes("Failed") || statusMessage.includes("error")
+                      ? "Please try again or contact support."
+                      : "Users will see this in their notification bell."}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </form>
       </section>
