@@ -9,9 +9,12 @@ FROM (
         c.category_name, 
         b.brand_name,
         pv.idphone_variants,
+        s.spec_id,
         s.price, 
         pv.color,
         pm.image AS images,
+        ROUND(AVG(pr.rating), 1) AS avg_rating,
+        COUNT(pr.review_id) AS review_count,
         ROW_NUMBER() OVER (PARTITION BY p.phone_id ORDER BY s.price DESC) AS row_num
         
     FROM phones p
@@ -20,6 +23,10 @@ FROM (
     INNER JOIN phone_variants pv ON pv.phone_id = p.phone_id
     LEFT JOIN productimage pm ON pm.phone_variant_id=pv.idphone_variants
     LEFT JOIN specifications s ON s.phone_variant_id=pv.idphone_variants
+    LEFT JOIN product_reviews pr ON pr.spec_id = s.spec_id
+    GROUP BY p.phone_id, p.name, p.description, p.release_date, p.category_id, 
+             c.category_name, b.brand_name, pv.idphone_variants, s.spec_id, s.price, 
+             pv.color, pm.image
 ) AS ranked
 WHERE row_num = 1;
 `
@@ -48,9 +55,12 @@ export const displayAllProductByName = (req, res) => {
                 c.category_name, 
                 b.brand_name,
                 pv.idphone_variants,
+                s.spec_id,
                 s.price, 
                 pv.color,
                 pm.image AS images,
+                ROUND(AVG(pr.rating), 1) AS avg_rating,
+                COUNT(pr.review_id) AS review_count,
                 ROW_NUMBER() OVER (PARTITION BY p.phone_id ORDER BY s.price DESC) AS row_num
             FROM phones p
             INNER JOIN categories c ON c.category_id = p.category_id
@@ -58,6 +68,10 @@ export const displayAllProductByName = (req, res) => {
             INNER JOIN phone_variants pv ON pv.phone_id = p.phone_id
             LEFT JOIN productimage pm ON pm.phone_variant_id = pv.idphone_variants
             LEFT JOIN specifications s ON s.phone_variant_id = pv.idphone_variants
+            LEFT JOIN product_reviews pr ON pr.spec_id = s.spec_id
+            GROUP BY p.phone_id, p.name, p.description, p.release_date, p.category_id, 
+                     c.category_name, b.brand_name, pv.idphone_variants, s.spec_id, s.price, 
+                     pv.color, pm.image
         ) AS ranked
         WHERE row_num = 1 AND name LIKE ?
     `;
@@ -112,9 +126,12 @@ FROM (
         c.category_name, 
         b.brand_name,
         pv.idphone_variants,
+        s.spec_id,
         s.price, 
         pv.color,
         pm.image AS images,
+        ROUND(AVG(pr.rating), 1) AS avg_rating,
+        COUNT(pr.review_id) AS review_count,
          ROW_NUMBER() OVER (PARTITION BY p.phone_id ORDER BY s.price DESC) AS row_num
     FROM phones p
     INNER JOIN categories c ON c.category_id = p.category_id
@@ -122,6 +139,10 @@ FROM (
     INNER JOIN phone_variants pv ON pv.phone_id = p.phone_id
     LEFT JOIN specifications s ON s.phone_variant_id=pv.idphone_variants
     LEFT JOIN productimage pm ON pm.phone_variant_id=pv.idphone_variants
+    LEFT JOIN product_reviews pr ON pr.spec_id = s.spec_id
+    GROUP BY p.phone_id, p.name, p.description, p.release_date, p.category_id, 
+             c.category_name, b.brand_name, pv.idphone_variants, s.spec_id, s.price, 
+             pv.color, pm.image
     ORDER BY phone_id
 ) AS ranked
 WHERE row_num = 1 AND category_name=?;
@@ -147,9 +168,12 @@ FROM (
         c.category_name, 
         b.brand_name,
         pv.idphone_variants,
+        s.spec_id,
         s.price, 
         pv.color,
         pm.image AS images,
+        ROUND(AVG(pr.rating), 1) AS avg_rating,
+        COUNT(pr.review_id) AS review_count,
          ROW_NUMBER() OVER (PARTITION BY p.phone_id ORDER BY s.price DESC) AS row_num
     FROM phones p
     INNER JOIN categories c ON c.category_id = p.category_id
@@ -157,6 +181,10 @@ FROM (
     INNER JOIN phone_variants pv ON pv.phone_id = p.phone_id
     LEFT JOIN specifications s ON s.phone_variant_id=pv.idphone_variants
     LEFT JOIN productimage pm ON pm.phone_variant_id=pv.idphone_variants
+    LEFT JOIN product_reviews pr ON pr.spec_id = s.spec_id
+    GROUP BY p.phone_id, p.name, p.description, p.release_date, p.category_id, 
+             c.category_name, b.brand_name, pv.idphone_variants, s.spec_id, s.price, 
+             pv.color, pm.image
     ORDER BY phone_id
 ) AS ranked
 WHERE row_num = 1 AND brand_name=?;
@@ -190,9 +218,12 @@ FROM (
         c.category_name, 
         b.brand_name,
         pv.idphone_variants,
+        s.spec_id,
         s.price, 
         pv.color,
         pm.image,
+        ROUND(AVG(pr.rating), 1) AS avg_rating,
+        COUNT(pr.review_id) AS review_count,
         ROW_NUMBER() OVER (PARTITION BY p.phone_id ORDER BY s.price DESC) AS row_num
     FROM phones p
     INNER JOIN categories c ON c.category_id = p.category_id
@@ -200,6 +231,10 @@ FROM (
     INNER JOIN phone_variants pv ON pv.phone_id = p.phone_id
     LEFT JOIN specifications s ON s.phone_variant_id=pv.idphone_variants
     LEFT JOIN productimage pm ON pm.phone_variant_id=pv.idphone_variants
+    LEFT JOIN product_reviews pr ON pr.spec_id = s.spec_id
+    GROUP BY p.phone_id, p.name, p.description, p.release_date, p.category_id, 
+             c.category_name, b.brand_name, pv.idphone_variants, s.spec_id, s.price, 
+             pv.color, pm.image
     ORDER BY phone_id
 ) AS ranked
 WHERE row_num = 1 AND ranked.name LIKE ? AND ranked.category_name=?;

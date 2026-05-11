@@ -61,15 +61,16 @@ const DashBoardHeader = () => {
 
   return (
     <>
-      <section className="flex justify-between">
-        <div className="flex gap-16">
-          <h1 className="green-txt text-4xl max-lg:text-2xl">
-            Listing OrderView
+      <section className="flex justify-between items-center mb-8 flex-wrap gap-4">
+        <div className="flex gap-6 items-center flex-wrap">
+          <h1 className="text-3xl md:text-4xl font-extrabold text-primary flex items-center gap-2">
+            <span className="text-2xl">📊</span>
+            Dashboard Overview
           </h1>
           <select
             name="date"
             id="date"
-            className="p-2 px-4 text-lg max-lg:p-1 max-lg:px-2 max-lg:text-sm border-gray-300 border focus:right-0 text-primary rounded-xl"
+            className="p-3 px-5 text-base border-2 border-gray-300 focus:border-primary focus:ring-2 focus:ring-green-200 text-primary rounded-xl bg-white shadow-sm hover:border-primary transition-all"
             onChange={(e) => setSelectDate(e.target.value)}
           >
             <option value="ALL">ALL</option>
@@ -77,14 +78,14 @@ const DashBoardHeader = () => {
             <option value="2">Last 2 months</option>
             <option value="3">Last 3 months</option>
             <option value="6">Last 6 months</option>
-
           </select>
         </div>
         <button
-          className="red-btn mr-6 max-lg:w-28 max-lg:h-11 max-lg:text-sm"
+          className="bg-red-600 hover:bg-red-700 text-white font-bold px-8 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 flex items-center gap-2"
           onClick={() => handleLogout()}
         >
-          LogOut
+          <span>🚪</span>
+          <span>LogOut</span>
         </button>
       </section>
       <DashBoardMain data={mergedData} selectedDate={selectDate} />

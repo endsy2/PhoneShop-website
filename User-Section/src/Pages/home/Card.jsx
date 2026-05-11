@@ -9,34 +9,29 @@ const Card = ({ data, page = "Default Page" }) => {
   });
   return data ? (
     Page === "Categories" ? (
-      <div className="flex flex-col items-center px-8 py-3 w-[250px] bg-gray-50 hover:bg-gray-100 rounded-lg shadow-md hover:shadow-lg hover:scale-105 transition-all transform duration-300">
-        <div className="text-5xl text-blue-500">
-          <i className="fas fa-mobile-alt"></i>
-        </div>
-        <h2 className="text-xl font-semibold text-gray-800 mb-2">
+      <div className="flex flex-col items-center justify-center p-6 bg-gradient-to-br from-gray-50 to-white hover:from-green-50 hover:to-emerald-50 rounded-xl shadow-sm hover:shadow-md border border-gray-100 hover:border-green-200 transition-all duration-300 group">
+        <h2 className="text-lg font-bold text-gray-800 mb-2 text-center group-hover:text-green-600 transition-colors">
           {data.category_name}
         </h2>
         <Link
           to={`/Sort?category=${data.category_name}`}
-          className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors duration-200"
+          className="text-sm font-semibold text-green-600 hover:text-green-700 transition-colors duration-200"
         >
-          View more &rarr;
+          View more →
         </Link>
       </div>
     ) : (
       <Link to={`/Sort?brand=${data.brand_name}`}>
-        <div className="flex items-center w-[200px] h-[70px] gap-4 p-3 bg-gray-100 hover:bg-gray-200 transition rounded-lg cursor-pointer shadow-md hover:scale-105 transition-all transform duration-300">
+        <div className="flex items-center gap-3 p-4 bg-gradient-to-br from-gray-50 to-white hover:from-green-50 hover:to-emerald-50 rounded-xl border border-gray-100 hover:border-green-200 transition-all duration-300 shadow-sm hover:shadow-md group">
           <img
             src={`${NETWORK_CONFIG.apiBaseUrl}/${data.img?.split(",")[0].trim().replace(/uploads[\\/]/g, "").replace(/\s+/g, "")}`}
             alt={data.brand_name}
-            className="w-16 h-10 object-cover rounded-lg"
-            onError={(e) => { e.target.src = "https://via.placeholder.com/64x40?text=Brand"; }}
+            className="w-12 h-12 object-contain rounded-lg group-hover:scale-110 transition-transform duration-300"
+            onError={(e) => { e.target.src = "https://via.placeholder.com/48x48?text=Brand"; }}
           />
-          <div>
-            <p className="font-semibold text-lg text-gray-800">
-              {data.brand_name}
-            </p>
-          </div>
+          <p className="font-semibold text-base text-gray-800 group-hover:text-green-600 transition-colors">
+            {data.brand_name}
+          </p>
         </div>
       </Link>
     )

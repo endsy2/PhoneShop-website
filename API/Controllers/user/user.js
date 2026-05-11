@@ -219,6 +219,10 @@ export const getOrderByName = async (req, res) => {
     COALESCE(o.recipient_name, c.username) AS display_name,
     o.order_date,
     o.status,
+    o.payment,
+    o.delivery,
+    o.location,
+    o.payment_verified,
     ot.order_item_id,
     ot.quantity,
     ot.amount AS amount_per_total_orderItem,
@@ -260,6 +264,10 @@ GROUP BY
     o.order_id, 
     o.order_date,
     o.status,
+    o.payment,
+    o.delivery,
+    o.location,
+    o.payment_verified,
     ot.order_item_id,
     ot.quantity,
     ot.amount,
@@ -273,15 +281,14 @@ GROUP BY
     o.total_amount
 `
     try {
-
         const [response] = await pool.promise().query(queryOrderItems, [username]);
-        console.log(response);
         return res.status(200).json({
             message: "successfully",
             data: response
         })
     } catch (error) {
         console.error(error);
+        return res.status(500).json({ message: "Internal server error" });
     }
 
 }
