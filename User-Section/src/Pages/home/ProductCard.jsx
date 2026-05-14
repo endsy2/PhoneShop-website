@@ -43,6 +43,8 @@ const ProductCard = ({ product }) => {
         productName: product.name,
         quantity: 1,
         price: finalPrice,
+        image: product.images || product.image || "",
+        color: product.color || "",
       })
     );
     dispatch(toggleStatusTab());
