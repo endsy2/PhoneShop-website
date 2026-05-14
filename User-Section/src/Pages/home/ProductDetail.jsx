@@ -100,6 +100,8 @@ const ProductDetail = () => {
         productName: selectedItem.name,
         quantity: finalQuantity,
         price: selectedItem.price_discount || selectedItem.price,
+        image: selectedItem.images || selectedItem.image || "",
+        color: selectedItem.color || "",
       })
     );
     dispatch(toggleStatusTab());

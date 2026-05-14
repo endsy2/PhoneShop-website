@@ -108,8 +108,6 @@ const Order_By_ID = () => {
               >
                 <option value="pending">Pending</option>
                 <option value="completed">Completed</option>
-                <option value="shipping">Shipping</option>
-                <option value="delivered">Delivered</option>
               </select>
             </div>
           </div>

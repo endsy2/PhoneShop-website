@@ -392,7 +392,7 @@ export const checkPayment = async (req, res) => {
                 // ── Payment CONFIRMED ──────────────────────────────────────────
                 if (bakongRes.data?.data && bakongRes.data?.responseCode === 0) {
                     await pool.promise().query(
-                        `UPDATE orders SET payment_verified = 1, status = 'Completed' WHERE order_id = ?`,
+                        `UPDATE orders SET payment_verified = 1 WHERE order_id = ?`,
                         [orderId]
                     );
                     console.log(`✅ Payment confirmed for order #${orderId} after ${attempts} attempts (${Math.round((Date.now() - startTime) / 1000)}s)`);

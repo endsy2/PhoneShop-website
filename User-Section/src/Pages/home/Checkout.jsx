@@ -5,6 +5,7 @@ import { removeAllCart } from "../../store/cart";
 import CheckoutCart from "../../Conponents/CheckoutCart";
 import { fetchCheckOut } from "../../FetchAPI/Fetch";
 import BakongQR from "../../Components/BakongQR";
+import { NETWORK_CONFIG } from "../../network/Network_EndPoint";
 
 const CheckoutPage = () => {
   const cart = useSelector((store) => store.cart.items);
@@ -20,6 +21,7 @@ const CheckoutPage = () => {
   const [error, setError] = useState();
   const [showBakongQR, setShowBakongQR] = useState(false);
   const [pendingOrderData, setPendingOrderData] = useState(null);
+  const [paymentReceipt, setPaymentReceipt] = useState(null); // holds receipt data after success
 
   const dispatch = useDispatch();
   const clearCart = () => {
@@ -334,7 +336,16 @@ const CheckoutPage = () => {
                   onPaymentSuccess={({ orderId }) => {
                     setShowBakongQR(false);
                     setPendingOrderData(null);
-                    setResponse(`Payment confirmed! Order #${orderId} placed successfully.`);
+                    // Show receipt popup with order details
+                    setPaymentReceipt({
+                      orderId,
+                      items: pendingOrderData.items,
+                      cartItems: cart,
+                      total: subtotal,
+                      customerName: pendingOrderData.customerName,
+                      delivery: pendingOrderData.delivery,
+                      location: pendingOrderData.location,
+                    });
                     setError("");
                     setCustomerName("");
                     setDelivery("");
@@ -347,6 +358,109 @@ const CheckoutPage = () => {
                     setPendingOrderData(null);
                   }}
                 />
+              </div>
+            </div>
+          )}
+
+          {/* Payment Success Receipt Modal */}
+          {paymentReceipt && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 px-4 backdrop-blur-sm">
+              <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
+                {/* Success Header */}
+                <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-6 text-center">
+                  <div className="text-5xl mb-2">✅</div>
+                  <h2 className="text-2xl font-bold text-white">Payment Successful!</h2>
+                  <p className="text-green-100 text-sm mt-1">Your Bakong payment was confirmed</p>
+                </div>
+
+                {/* Receipt Body */}
+                <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+                  {/* Order ID */}
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span className="text-gray-500 text-sm">Order ID</span>
+                    <span className="font-bold text-gray-900">#{paymentReceipt.orderId}</span>
+                  </div>
+
+                  {/* Customer */}
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span className="text-gray-500 text-sm">Recipient</span>
+                    <span className="font-semibold text-gray-900">{paymentReceipt.customerName}</span>
+                  </div>
+
+                  {/* Delivery */}
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span className="text-gray-500 text-sm">Delivery</span>
+                    <span className="font-semibold text-gray-900">{paymentReceipt.delivery}</span>
+                  </div>
+
+                  {/* Location */}
+                  <div className="flex justify-between items-start py-2 border-b border-gray-100">
+                    <span className="text-gray-500 text-sm">Address</span>
+                    <span className="font-semibold text-gray-900 text-right max-w-[60%]">{paymentReceipt.location}</span>
+                  </div>
+
+                  {/* Payment Method */}
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span className="text-gray-500 text-sm">Payment</span>
+                    <span className="font-semibold text-green-600">✓ Bakong QR (Paid)</span>
+                  </div>
+
+                  {/* Products */}
+                  <div className="py-2">
+                    <p className="text-gray-500 text-sm mb-3">Items Ordered</p>
+                    <div className="space-y-3">
+                      {paymentReceipt.cartItems.map((item, i) => (
+                        <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                          {item.image ? (
+                            <img
+                              src={`${NETWORK_CONFIG.apiBaseUrl}/${String(item.image).split(",")[0].trim().replace(/\\/g, "/").replace(/^uploads\//, "")}`}
+                              alt={item.name}
+                              className="w-12 h-12 object-cover rounded-lg border border-gray-200"
+                              onError={(e) => { e.target.src = "https://via.placeholder.com/48x48?text=?"; }}
+                            />
+                          ) : (
+                            <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center text-gray-400 text-xs">?</div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-gray-900 text-sm truncate">{item.productName || item.name}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span
+                                className="w-3 h-3 rounded-full border border-gray-300 inline-block"
+                                style={{ background: item.color }}
+                              />
+                              <span className="text-xs text-gray-500">Qty {item.quantity}</span>
+                            </div>
+                          </div>
+                          <span className="font-bold text-gray-900 text-sm">${(Number(item.price) * item.quantity).toFixed(2)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Total */}
+                  <div className="flex justify-between items-center py-3 border-t-2 border-gray-200">
+                    <span className="font-bold text-gray-900 text-lg">Total Paid</span>
+                    <span className="font-bold text-green-600 text-xl">${paymentReceipt.total.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                {/* Close Button */}
+                <div className="p-4 border-t border-gray-100 flex gap-3">
+                  <button
+                    onClick={() => setPaymentReceipt(null)}
+                    className="flex-1 py-3 bg-white hover:bg-gray-50 text-gray-700 font-bold rounded-xl border-2 border-gray-300 transition-all duration-300"
+                  >
+                    Close
+                  </button>
+                  <Link to="/myorder" className="flex-1">
+                    <button
+                      onClick={() => setPaymentReceipt(null)}
+                      className="w-full py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl transition-all duration-300"
+                    >
+                      View Order
+                    </button>
+                  </Link>
+                </div>
               </div>
             </div>
           )}
