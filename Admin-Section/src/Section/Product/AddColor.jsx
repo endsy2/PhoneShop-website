@@ -67,14 +67,18 @@ const AddColor = () => {
 
         try {
             const response = await addNewColorFetch(formData);
-            handleClear();
             if (response?.status >= 200 && response?.status < 300) {
                 setResult('Successfully added the new color.');
+                setError('');
+                handleClear();
+            } else {
+                setError('Failed to add the new color. Please try again.');
+                setResult('');
             }
-            setError('');
         } catch (err) {
             console.error(err);
-            setError('Failed to add the new color. Please try again.');
+            const msg = err?.response?.data?.message || 'Failed to add the new color. Please try again.';
+            setError(msg);
             setResult('');
         }
     };
@@ -91,7 +95,7 @@ const AddColor = () => {
     return (
         <div className="bg-white border-gray-300 border p-8 rounded-lg w-full max-w-4xl mx-auto mt-12 shadow-lg">
             <h1 className="text-center text-3xl text-primary font-bold mb-8">Add New Color</h1>
-            <form className="grid grid-cols-1 md:grid-cols-2 md:items-center gap-6">
+            <form className="grid grid-cols-1 md:grid-cols-2 md:items-center gap-6" onSubmit={handleSubmit}>
                 {/* Product Name */}
                 <div className="flex flex-col">
                     <label className="text-sm font-medium text-primary mb-2">Product Name</label>
@@ -170,13 +174,12 @@ const AddColor = () => {
                 <div className="md:col-span-2 flex justify-center items-center gap-4 mt-4">
                     <button
                         type="submit"
-                        onClick={handleSubmit}
                         className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded-lg transition"
                     >
                         Submit
                     </button>
                     <button
-                        type="reset"
+                        type="button"
                         onClick={handleClear}
                         className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-2 rounded-lg transition"
                     >

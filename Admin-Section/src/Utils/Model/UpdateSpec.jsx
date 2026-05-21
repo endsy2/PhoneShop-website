@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
-import { updateProductVariants, updateSpec } from "../../Fetch/FetchAPI";
+import { updateSpec } from "../../Fetch/FetchAPI";
 
 const UpdateSpec = ({ product_id, storage }) => {
-    const location = useLocation();
     const [id, setID] = useState("");
     const [oldStorage, setOldStorage] = useState("");
     const [newStorage, setNewStorage] = useState("");
@@ -11,9 +9,11 @@ const UpdateSpec = ({ product_id, storage }) => {
     const [ram, setRam] = useState("");
     const [battery, setBattery] = useState("");
     const [camera, setCamera] = useState("");
-    const [screen_size, setScreen_size] = useState("")
+    const [screen_size, setScreen_size] = useState("");
     const [price, setPrice] = useState("");
     const [stock, setStock] = useState("");
+    const [result, setResult] = useState("");
+    const [error, setError] = useState("");
 
     useEffect(() => {
         setID(product_id);
@@ -22,34 +22,25 @@ const UpdateSpec = ({ product_id, storage }) => {
 
     const handleUpdate = async (e) => {
         e.preventDefault();
-        const formdata = {
-            newStorage,
-            processor,
-            ram,
-            battery,
-            camera,
-            price,
-            stock,
-            screen_size,
-        };
-        const queryParam = {
-            variantID: id,
-            oldStorage
-        }
+        const formdata = { newStorage, processor, ram, battery, camera, price, stock, screen_size };
+        const queryParam = { variantID: id, oldStorage };
         try {
             const result = await updateSpec(formdata, queryParam);
-            window.location.reload();
-            console.log(result);
-            // console.log(formdata);
-            // console.log(queryParam);
-
+            if (result?.status >= 200 && result?.status < 300) {
+                setResult("Spec updated successfully!");
+                setError("");
+                window.location.reload();
+            } else {
+                setError(result?.data?.message || "Update failed. Please try again.");
+            }
         } catch (error) {
+            const msg = error?.response?.data?.message || "Update failed. Please try again.";
+            setError(msg);
             console.log(error);
         }
     };
 
     const handleClear = () => {
-        setOldStorage("");
         setNewStorage("");
         setProcessor("");
         setRam("");
@@ -57,6 +48,9 @@ const UpdateSpec = ({ product_id, storage }) => {
         setCamera("");
         setPrice("");
         setStock("");
+        setScreen_size("");
+        setResult("");
+        setError("");
     };
 
     return (
@@ -175,7 +169,7 @@ const UpdateSpec = ({ product_id, storage }) => {
                     <input
                         type="submit"
                         value="Submit"
-                        className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded-lg transition"
+                        className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded-lg transition cursor-pointer"
                     />
                     <button
                         type="button"
@@ -186,6 +180,8 @@ const UpdateSpec = ({ product_id, storage }) => {
                     </button>
                 </div>
             </form>
+            {result && <p className="mt-4 text-green-600 font-semibold text-center">{result}</p>}
+            {error && <p className="mt-4 text-red-600 font-semibold text-center">{error}</p>}
         </div>
     );
 };

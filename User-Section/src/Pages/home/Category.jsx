@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { fetchProductByBrand, fetchProductByCategory } from '../../FetchAPI/Fetch';
 import ProductCard from './ProductCard';
 import Breadcrumb from '../../Components/Breadcrumb';
@@ -18,16 +18,16 @@ const Category = () => {
     const handleData = useCallback(async () => {
         try {
             const response = await fetchProductByCategory({ category: category });
-            setData(response.data);
+            setData(response?.data || []);
         } catch (error) {
             console.error(error);
-
         }
     }, [category])
+
     const handlebrand = useCallback(async () => {
         try {
             const response = await fetchProductByBrand({ brand: brand });
-            setData(response.data);
+            setData(response?.data || []);
         } catch (error) {
             console.error(error);
         }

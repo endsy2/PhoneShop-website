@@ -52,20 +52,49 @@ const Offer = () => {
   }, [query, index, location.pathname, param]);
 
   const handleDelete = async (deleteId) => {
+    if (!window.confirm("Delete this color variant and all its images? This cannot be undone.")) return;
     try {
       await removeVariants({ deleteid: deleteId });
-      setItems((prevItems) => prevItems.filter((item) => item.idphone_variants !== deleteId));
+      const remaining = items.filter((item) => item.idphone_variants !== deleteId);
+      setItems(remaining);
+      // Reset selection to first remaining item
+      if (remaining.length > 0) {
+        const first = remaining[0];
+        setSelectedColor(first.color);
+        setSelectedStorage(first.storage);
+        setSelectedSpec({ idphone_variants: first.idphone_variants, storage: first.storage });
+        const images = first.images?.split(",").map((img) => img.trim().replaceAll("uploads\\", "").replace(/\s+/g, ""));
+        setArrayImage(images || []);
+        setSelectedImage(images?.[0] || "");
+      } else {
+        navigate(-1); // no variants left, go back
+      }
     } catch (error) {
-      console.error("Error deleting item:", error);
+      alert("Failed to delete color: " + (error?.response?.data?.message || error.message));
     }
   };
 
   const handleDeleteSpec = async (variant_id, storage) => {
+    if (!variant_id || !storage) {
+      alert("Please select a storage option first.");
+      return;
+    }
+    if (!window.confirm(`Delete spec "${storage}" for this color? This cannot be undone.`)) return;
     try {
       await removeSpec(variant_id, storage);
-      window.location.reload(); // Reload page after deleting
+      // Remove deleted spec from items and update selection
+      const remaining = items.filter(
+        (item) => !(item.idphone_variants === variant_id && item.storage === storage)
+      );
+      setItems(remaining);
+      if (remaining.length > 0) {
+        const first = remaining[0];
+        setSelectedColor(first.color);
+        setSelectedStorage(first.storage);
+        setSelectedSpec({ idphone_variants: first.idphone_variants, storage: first.storage });
+      }
     } catch (error) {
-      console.log("Error deleting spec:", error);
+      alert("Failed to delete spec: " + (error?.response?.data?.message || error.message));
     }
   };
   const handleDeletePromotion = async ({ promo_id }) => {
@@ -83,22 +112,25 @@ const Offer = () => {
     setSelectedImage(image);
   };
 
+  const handleStorageChange = (storage, spec) => {
+    setSelectedStorage(storage);
+    setSelectedSpec({ idphone_variants: spec.idphone_variants, storage: spec.storage });
+  };
+
   const handleColorChange = (color) => {
     setSelectedColor(color);
     const firstItemWithColor = items.find((item) => item.color === color);
-
-    // Update storage and images based on color selection
-    setSelectedStorage(firstItemWithColor?.storage || null);
-    const images = firstItemWithColor?.images
+    if (!firstItemWithColor) return;
+    setSelectedStorage(firstItemWithColor.storage);
+    setSelectedSpec({
+      idphone_variants: firstItemWithColor.idphone_variants,
+      storage: firstItemWithColor.storage,
+    });
+    const images = firstItemWithColor.images
       ?.split(",")
       .map((image) => image.trim().replaceAll("uploads\\", "").replace(/\s+/g, ""));
     setArrayImage(images || []);
     setSelectedImage(images?.[0] || "");
-  };
-
-  const handleStorageChange = (storage, spec) => {
-    setSelectedStorage(storage);
-    setSelectedSpec({ idphone_variants: spec.idphone_variants, storage: spec.storage });
   };
 
   const formatDate = (dateString) => {
@@ -114,6 +146,8 @@ const Offer = () => {
   useEffect(() => {
     if (items.length > 0) {
       const defaultItem = items[0];
+      setSelectedColor(defaultItem.color);
+      setSelectedStorage(defaultItem.storage);
       setSelectedSpec({
         idphone_variants: defaultItem.idphone_variants,
         storage: defaultItem.storage,
@@ -127,140 +161,173 @@ const Offer = () => {
     filteredItemsByColor.find((item) => item.storage === selectedStorage) || items[index];
 
   return (
-    <div className="container mx-auto bg-white rounded-lg shadow-lg max-w-7xl mt-10 p-8">
-      {items.length > 0 && selectedItem ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Image Gallery */}
-          <div className="flex flex-col items-center lg:items-start gap-6">
-            {selectedImage && (
-              <img
-                src={`http://localhost:3000/${selectedImage}`}
-                alt="Product"
-                className="w-full h-96 object-contain rounded-lg shadow-md transition-transform transform hover:scale-105"
-                onError={(e) => { e.target.src = "https://via.placeholder.com/400x400?text=No+Image"; }}
-              />
-            )}
-            <div className="flex gap-3 mt-4 overflow-x-auto">
-              {arrayImage.map((image, idx) => (
-                <img
-                  key={idx}
-                  src={`http://localhost:3000/${image}`}
-                  alt={`Thumbnail ${idx + 1}`}
-                  className={`w-20 h-20 object-cover rounded-md cursor-pointer ${selectedImage === image ? "ring-2 ring-green-500" : ""
-                    }`}
-                  onClick={() => handleImageClick(image)}
-                  onError={(e) => { e.target.src = "https://via.placeholder.com/80x80?text=No+Image"; }}
-                />
-              ))}
-            </div>
-          </div>
+    <div className="min-h-screen bg-gray-50 py-8 px-4">
+      <div className="max-w-6xl mx-auto">
 
-          {/* Product Details */}
-          <div className="space-y-6">
-            <h1 className="text-3xl font-semibold text-gray-800">{selectedItem.phone_name}</h1>
-            <p className="text-gray-600">
-              <strong>Product Code:</strong> {selectedItem.phone_id}
-            </p>
-            <p className="text-gray-600">
-              <strong>Product Code:</strong> {selectedItem.name}
-            </p>
-            <p className="text-gray-600 flex gap-x-3">
-              <strong>Price:</strong> {selectedItem.price_discount !== null ? (
-                <s>{selectedItem.price}</s>
-              ) : (
-                <p>{selectedItem.price}</p>
-              )}
-              {selectedItem.price_discount && <p className="font-bold">{selectedItem.price_discount}</p>}
-            </p>
+        {/* Back Button */}
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 mb-6 text-gray-600 hover:text-green-600 font-semibold transition-colors"
+        >
+          <span className="text-xl">←</span> Back
+        </button>
+        {items.length > 0 && selectedItem ? (
+          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-2">
 
-            {/* Colors */}
-            <div>
-              <p className="text-gray-600 mb-4"><strong>Colors ID: {selectedItem.idphone_variants}</strong></p>
-              <p className="text-gray-600 mb-2"><strong>Colors:</strong></p>
-              <div className="flex gap-3">
-                {uniqueColors.map((color, idx) => (
-                  <div
-                    key={idx}
-                    className={`w-6 h-6 rounded-full cursor-pointer border ${selectedColor === color ? "ring-2 ring-green-500" : "border-gray-300"
-                      }`}
-                    style={{ backgroundColor: color }}
-                    onClick={() => handleColorChange(color)}
+              {/* ── Left: Image Gallery ── */}
+              <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-8 flex flex-col items-center gap-4">
+                <div className="w-full aspect-square max-w-sm bg-white rounded-2xl shadow-md flex items-center justify-center overflow-hidden">
+                  <img
+                    src={`http://localhost:3000/${selectedImage}`}
+                    alt="Product"
+                    className="w-full h-full object-contain p-4 transition-transform duration-300 hover:scale-105"
+                    onError={(e) => { e.target.src = "https://via.placeholder.com/400x400?text=No+Image"; }}
                   />
-                ))}
-              </div>
-            </div>
-
-            {/* Storage Options */}
-            <div>
-              <p className="text-gray-600 mb-2"><strong>Storage Options:</strong></p>
-              <div className="flex gap-3">
-                {filteredItemsByColor.map((item, idx) => (
-                  <button
-                    key={idx}
-                    className={`px-4 py-2 rounded-lg ${selectedStorage === item.storage
-                      ? "bg-green-500 text-white"
-                      : "bg-gray-200 text-gray-800"
+                </div>
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {arrayImage.map((image, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => handleImageClick(image)}
+                      className={`flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${
+                        selectedImage === image ? "border-green-500 shadow-md scale-105" : "border-gray-200 hover:border-green-300"
                       }`}
-                    onClick={() => handleStorageChange(item.storage, item)} // Passing the correct item
-                  >
-                    {item.storage}
-                  </button>
-                ))}
+                    >
+                      <img
+                        src={`http://localhost:3000/${image}`}
+                        alt={`Thumb ${idx + 1}`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => { e.target.src = "https://via.placeholder.com/80x80?text=No+Image"; }}
+                      />
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            {/* Specifications */}
-            <div className="bg-gray-100 p-4 rounded-lg shadow-sm">
-              <h2 className="text-xl font-medium text-gray-700 mb-3">Specifications</h2>
-              <p><strong>Spec ID:</strong> {selectedItem.spec_id || "N/A"}</p>
-              <p><strong>Processor:</strong> {selectedItem.processor || "N/A"}</p>
-              <p><strong>RAM:</strong> {selectedItem.ram || "N/A"}</p>
-              <p><strong>Battery:</strong> {selectedItem.battery || "N/A"}</p>
-              <p><strong>Camera:</strong> {selectedItem.camera || "N/A"}</p>
-              <p><strong>Screen Size:</strong> {selectedItem.screen_size || "N/A"}</p>
-              <p><strong>Release Date:</strong> {formatDate(selectedItem.release_date)}</p>
-            </div>
+              {/* ── Right: Product Details ── */}
+              <div className="p-8 flex flex-col gap-5">
 
-            {/* Actions */}
-            <div className="flex gap-4">
-              <button
-                className={`bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600 ${location.pathname === `/dashboard/offer/${param.id}` && "hidden"}`}
-                onClick={() => setOpenColor(true)}
-              >
-                Update Color
-              </button>
-              <button
-                className={`bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600 ${location.pathname === `/dashboard/offer/${param.id}` && "hidden"}`}
-                onClick={() => setOpenSpec(true)}
-              >
-                Update Spec
-              </button>
-              <button
-                className={`bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600 ${location.pathname === `/dashboard/offer/${param.id}` && "hidden"}`}
-                onClick={() => handleDelete(selectedItem.idphone_variants)}
-              >
-                Delete Color
-              </button>
-              <button
-                className="bg-red-500 text-white px-4 py-2 rounded-lg shadow hover:bg-red-600"
-                onClick={
-                  location.pathname === `/dashboard/offer/${param.id}` ? () => handleDeletePromotion({ promo_id: selectedItem.promo_id }) :
-                    () => handleDeleteSpec(selectedSpec.idphone_variants, selectedSpec.storage)
+                {/* Title & IDs */}
+                <div>
+                  <h1 className="text-2xl font-extrabold text-gray-900 mb-1">{selectedItem.name || selectedItem.phone_name}</h1>
+                  <div className="flex gap-4 text-sm text-gray-500">
+                    <span>ID: <span className="font-semibold text-gray-700">{selectedItem.phone_id}</span></span>
+                    <span>Variant ID: <span className="font-semibold text-gray-700">{selectedItem.idphone_variants}</span></span>
+                    <span>Spec ID: <span className="font-semibold text-gray-700">{selectedItem.spec_id || "N/A"}</span></span>
+                  </div>
+                </div>
 
-                }
-              >
-                {location.pathname === `/dashboard/offer/${param.id}` ? 'Delete Promotion' : 'Delete Spec'}
-              </button>
+                {/* Price */}
+                <div className="flex items-baseline gap-3 bg-green-50 border border-green-100 rounded-xl px-4 py-3">
+                  <span className="text-sm font-medium text-gray-500">Price</span>
+                  {selectedItem.price_discount ? (
+                    <>
+                      <span className="text-2xl font-extrabold text-green-600">${selectedItem.price_discount}</span>
+                      <span className="text-base text-gray-400 line-through">${selectedItem.price}</span>
+                    </>
+                  ) : (
+                    <span className="text-2xl font-extrabold text-green-600">${selectedItem.price}</span>
+                  )}
+                </div>
 
+                {/* Colors */}
+                <div>
+                  <p className="text-sm font-semibold text-gray-600 mb-2">Color</p>
+                  <div className="flex gap-2">
+                    {uniqueColors.map((color, idx) => (
+                      <button
+                        key={idx}
+                        title={color}
+                        onClick={() => handleColorChange(color)}
+                        className={`w-8 h-8 rounded-full border-2 transition-all ${
+                          selectedColor === color ? "border-green-500 scale-110 shadow-md" : "border-gray-300 hover:border-green-400"
+                        }`}
+                        style={{ backgroundColor: color }}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Storage */}
+                <div>
+                  <p className="text-sm font-semibold text-gray-600 mb-2">Storage</p>
+                  <div className="flex flex-wrap gap-2">
+                    {filteredItemsByColor.map((item, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => handleStorageChange(item.storage, item)}
+                        className={`px-4 py-2 rounded-lg text-sm font-semibold border transition-all ${
+                          selectedStorage === item.storage
+                            ? "bg-green-600 text-white border-green-600 shadow"
+                            : "bg-white text-gray-700 border-gray-300 hover:border-green-400"
+                        }`}
+                      >
+                        {item.storage}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Specifications */}
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                  <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-3">Specifications</h2>
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-sm">
+                    {[
+                      ["Processor", selectedItem.processor],
+                      ["RAM", selectedItem.ram],
+                      ["Battery", selectedItem.battery],
+                      ["Camera", selectedItem.camera],
+                      ["Screen Size", selectedItem.screen_size],
+                      ["Release Date", formatDate(selectedItem.release_date)],
+                    ].map(([label, value]) => (
+                      <div key={label} className="flex gap-1">
+                        <span className="font-semibold text-gray-600">{label}:</span>
+                        <span className="text-gray-800">{value || "N/A"}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className={`flex gap-3 pt-2 ${location.pathname === `/dashboard/offer/${param.id}` ? "" : ""}`}>
+                  {location.pathname !== `/dashboard/offer/${param.id}` && (
+                    <>
+                      <button
+                        onClick={() => setOpenSpec(true)}
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 rounded-xl transition shadow"
+                      >
+                        ✏️ Update Spec
+                      </button>
+                      <button
+                        onClick={() => handleDelete(selectedItem.idphone_variants)}
+                        className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-2.5 rounded-xl transition shadow"
+                      >
+                        🗑️ Delete Color
+                      </button>
+                    </>
+                  )}
+                  {location.pathname === `/dashboard/offer/${param.id}` && (
+                    <button
+                      onClick={() => handleDeletePromotion({ promo_id: selectedItem.promo_id })}
+                      className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-2.5 rounded-xl transition shadow"
+                    >
+                      🗑️ Delete Promotion
+                    </button>
+                  )}
+                </div>
+
+              </div>
             </div>
           </div>
-        </div>
-      ) : (
-        <div className="text-center text-gray-500">No data available</div>
-      )
-      }
+        ) : (
+          <div className="flex items-center justify-center h-64 bg-white rounded-2xl shadow text-gray-400 text-lg">
+            No product data available
+          </div>
+        )}
+      </div>
 
-      {/* Modal */}
+      {/* Modals */}
       <Model
         open={openColor}
         onClose={() => setOpenColor(false)}
@@ -271,10 +338,10 @@ const Offer = () => {
         open={openSpec}
         onClose={() => setOpenSpec(false)}
         id="updateSpec"
-        product_id={selectedSpec.idphone_variants} // Correctly pass idphone_variants
-        storage={selectedSpec.storage} // Correctly pass storage
+        product_id={selectedSpec.idphone_variants}
+        storage={selectedSpec.storage}
       />
-    </div >
+    </div>
   );
 };
 

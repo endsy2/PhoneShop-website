@@ -73,10 +73,9 @@ const DashBoardMain = ({ data, selectedDate }) => {
       <section className="bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden">
         <div className="p-6 border-b-2 border-gray-100 bg-gradient-to-r from-gray-50 to-white">
           <h2 className="text-2xl font-extrabold text-primary flex items-center gap-3">
-            <span className="text-2xl">📦</span>
             Inventory Management
           </h2>
-          <p className="text-sm text-gray-600 mt-1">Manage your product inventory and stock levels</p>
+          <p className="text-sm text-gray-600 mt-1">Manage product inventory and stock levels</p>
         </div>
         <div className="p-6">
           <TableProduct title="Inventory" items={items?.data || { data: [] }} />

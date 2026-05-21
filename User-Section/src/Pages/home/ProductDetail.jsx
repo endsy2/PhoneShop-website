@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   telegram_green,
   messenger_green,
@@ -108,6 +108,7 @@ const ProductDetail = () => {
   };
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
     fetchData();
     handlefetchProduct();
   }, [fetchData, query, phoneId]);
@@ -533,86 +534,25 @@ const ProductDetail = () => {
             <span className="text-3xl">📋</span>
             Specifications
           </h2>
-          <div className="space-y-3">
-            <details className="group border-2 border-gray-100 rounded-xl overflow-hidden hover:border-green-200 transition-colors">
-              <summary className="flex items-center justify-between cursor-pointer bg-gradient-to-r from-gray-50 to-white p-4 font-semibold text-gray-900 hover:bg-green-50 transition-colors">
-                <span className="flex items-center gap-3">
-                  <span className="text-xl">📱</span>
-                  Screen
+          <div className="divide-y divide-gray-100 border border-gray-100 rounded-xl overflow-hidden">
+            {[
+              { icon: "📱", label: "Screen",    key: "Size",       value: selectedItem.screen_size },
+              { icon: "🔋", label: "Battery",   key: "Capacity",   value: selectedItem.battery },
+              { icon: "📷", label: "Camera",    key: "Resolution", value: selectedItem.camera },
+              { icon: "⚡", label: "Processor", key: "Chipset",    value: selectedItem.processor },
+              { icon: "🧠", label: "RAM",       key: "Memory",     value: selectedItem.ram },
+            ].map(({ icon, label, key, value }) => (
+              <div key={label} className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-gray-50 to-white hover:bg-green-50 transition-colors">
+                <span className="flex items-center gap-3 font-semibold text-gray-900">
+                  <span className="text-xl">{icon}</span>
+                  {label}
                 </span>
-                <span className="text-green-600 group-open:rotate-180 transition-transform">▼</span>
-              </summary>
-              <div className="p-4 bg-white border-t border-gray-100">
-                <div className="flex items-center gap-3 text-gray-700">
-                  <span className="font-medium">Size:</span>
-                  <span className="text-gray-900 font-semibold">{selectedItem.screen_size}</span>
-                </div>
-              </div>
-            </details>
-
-            <details className="group border-2 border-gray-100 rounded-xl overflow-hidden hover:border-green-200 transition-colors">
-              <summary className="flex items-center justify-between cursor-pointer bg-gradient-to-r from-gray-50 to-white p-4 font-semibold text-gray-900 hover:bg-green-50 transition-colors">
-                <span className="flex items-center gap-3">
-                  <span className="text-xl">🔋</span>
-                  Battery
+                <span className="text-gray-700">
+                  <span className="text-gray-500 mr-2">{key}:</span>
+                  <span className="font-semibold text-gray-900">{value || "N/A"}</span>
                 </span>
-                <span className="text-green-600 group-open:rotate-180 transition-transform">▼</span>
-              </summary>
-              <div className="p-4 bg-white border-t border-gray-100">
-                <div className="flex items-center gap-3 text-gray-700">
-                  <span className="font-medium">Capacity:</span>
-                  <span className="text-gray-900 font-semibold">{selectedItem.battery}</span>
-                </div>
               </div>
-            </details>
-
-            <details className="group border-2 border-gray-100 rounded-xl overflow-hidden hover:border-green-200 transition-colors">
-              <summary className="flex items-center justify-between cursor-pointer bg-gradient-to-r from-gray-50 to-white p-4 font-semibold text-gray-900 hover:bg-green-50 transition-colors">
-                <span className="flex items-center gap-3">
-                  <span className="text-xl">📷</span>
-                  Camera
-                </span>
-                <span className="text-green-600 group-open:rotate-180 transition-transform">▼</span>
-              </summary>
-              <div className="p-4 bg-white border-t border-gray-100">
-                <div className="flex items-center gap-3 text-gray-700">
-                  <span className="font-medium">Resolution:</span>
-                  <span className="text-gray-900 font-semibold">{selectedItem.camera}</span>
-                </div>
-              </div>
-            </details>
-
-            <details className="group border-2 border-gray-100 rounded-xl overflow-hidden hover:border-green-200 transition-colors">
-              <summary className="flex items-center justify-between cursor-pointer bg-gradient-to-r from-gray-50 to-white p-4 font-semibold text-gray-900 hover:bg-green-50 transition-colors">
-                <span className="flex items-center gap-3">
-                  <span className="text-xl">⚡</span>
-                  Processor
-                </span>
-                <span className="text-green-600 group-open:rotate-180 transition-transform">▼</span>
-              </summary>
-              <div className="p-4 bg-white border-t border-gray-100">
-                <div className="flex items-center gap-3 text-gray-700">
-                  <span className="font-medium">Chipset:</span>
-                  <span className="text-gray-900 font-semibold">{selectedItem.processor}</span>
-                </div>
-              </div>
-            </details>
-
-            <details className="group border-2 border-gray-100 rounded-xl overflow-hidden hover:border-green-200 transition-colors">
-              <summary className="flex items-center justify-between cursor-pointer bg-gradient-to-r from-gray-50 to-white p-4 font-semibold text-gray-900 hover:bg-green-50 transition-colors">
-                <span className="flex items-center gap-3">
-                  <span className="text-xl">🧠</span>
-                  RAM
-                </span>
-                <span className="text-green-600 group-open:rotate-180 transition-transform">▼</span>
-              </summary>
-              <div className="p-4 bg-white border-t border-gray-100">
-                <div className="flex items-center gap-3 text-gray-700">
-                  <span className="font-medium">Memory:</span>
-                  <span className="text-gray-900 font-semibold">{selectedItem.ram}</span>
-                </div>
-              </div>
-            </details>
+            ))}
           </div>
         </div>
 

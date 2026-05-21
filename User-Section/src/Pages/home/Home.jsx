@@ -1,12 +1,6 @@
 import React, { useEffect } from "react";
 import ProductCard from "./ProductCard";
 import { useState } from "react";
-import {
-  desertColor,
-  blackColor,
-  silverColor,
-  naturalColor,
-} from "../Assets/image";
 import Card from "./Card";
 import {
   fetchBrand,
@@ -130,55 +124,57 @@ const HomePage = () => {
     handleSmartWatch();
     handlePhone();
   }, []);
-  var settings = {
+  const makeSliderSettings = (items = []) => ({
     dots: true,
-    infinite: true,
+    infinite: items.length > 5,
     speed: 500,
-    slidesToShow: 5,
+    slidesToShow: Math.min(5, items.length || 1),
     slidesToScroll: 1,
-    initialSlide: 1,
-    arrows: true, // Corrected 'arrow' to 'arrows'
+    initialSlide: 0,
+    arrows: true,
     prevArrow: <CustomPrevArrow />,
     nextArrow: <CustomNextArrow />,
     responsive: [
       {
-        breakpoint: 1200, // For larger screens (e.g., tablets or small desktops)
+        breakpoint: 1200,
         settings: {
-          slidesToShow: 4,
+          slidesToShow: Math.min(4, items.length || 1),
           slidesToScroll: 1,
-          infinite: true,
+          infinite: items.length > 4,
           dots: true,
         },
       },
       {
-        breakpoint: 1024, // Standard tablets and smaller desktops
+        breakpoint: 1024,
         settings: {
-          slidesToShow: 3,
+          slidesToShow: Math.min(3, items.length || 1),
           slidesToScroll: 1,
-          infinite: true,
+          infinite: items.length > 3,
           dots: true,
         },
       },
       {
-        breakpoint: 768, // Portrait tablets and large mobile devices
+        breakpoint: 768,
         settings: {
-          slidesToShow: 2,
+          slidesToShow: Math.min(2, items.length || 1),
           slidesToScroll: 1,
-          infinite: true,
+          infinite: items.length > 2,
           dots: true,
         },
       },
       {
-        breakpoint: 580, // Small mobile devices
+        breakpoint: 580,
         settings: {
           slidesToShow: 1,
           slidesToScroll: 1,
-          infinite: true,
+          infinite: items.length > 1,
           dots: true,
         },
       },
     ],
-  };
+  });
+
+  var settings = makeSliderSettings(phone);
 
   const specialOfferSettings = {
     dots: true,
@@ -240,7 +236,7 @@ const HomePage = () => {
             <span className="mb-5 inline-flex items-center rounded-full border border-slate-200 bg-white/80 px-5 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-600 shadow-sm">
               ✨ Genius Store
             </span>
-            <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 md:text-6xl lg:text-7xl">
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 md:text-4xl lg:text-5xl whitespace-nowrap">
               Welcome to <span className="bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">Genius Store</span>
             </h1>
             <p className="mt-5 text-lg font-medium text-slate-600 md:text-2xl">
@@ -379,7 +375,7 @@ const HomePage = () => {
             <span className="group-hover:translate-x-1 transition-transform">→</span>
           </Link>
         </div>
-        <Slider {...settings}>
+        <Slider {...makeSliderSettings(phone)}>
           {phone.map((product) => (
             <div key={product.id} className="px-2">
               <div className="max-w-[280px] mx-auto">
@@ -424,7 +420,7 @@ const HomePage = () => {
             <span className="group-hover:translate-x-1 transition-transform">→</span>
           </Link>
         </div>
-        <Slider {...settings}>
+        <Slider {...makeSliderSettings(accessories)}>
           {accessories.map((product) => (
             <div key={product.id} className="px-2">
               <div className="max-w-[280px] mx-auto">
@@ -453,7 +449,7 @@ const HomePage = () => {
             <span className="group-hover:translate-x-1 transition-transform">→</span>
           </Link>
         </div>
-        <Slider {...settings}>
+        <Slider {...makeSliderSettings(smartWatch)}>
           {smartWatch.map((product) => (
             <div key={product.id} className="px-2">
               <div className="max-w-[280px] mx-auto">
