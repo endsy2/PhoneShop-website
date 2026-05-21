@@ -3,8 +3,8 @@ import pool from "../../db/db_handle.js";
 
 export const addNewProduct = async (req, res) => {
 
+    const connection = await pool.promise().getConnection();
     try {
-        // console.log("Files received:", req.files); // Debugging files
         if (!req.files || req.files.length === 0) {
             throw new Error("No files uploaded. Please upload images.");
         }
@@ -26,81 +26,63 @@ export const addNewProduct = async (req, res) => {
             battery,
         } = req.body;
 
-        // Process image filenames (multer saves files in 'uploads/')
         const images = req.files.map((file) => file.filename);
 
-        // Handle database operations
+        // Check for duplicate product name before inserting
+        const [existing] = await connection.query(
+            `SELECT phone_id FROM phones WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))`, [name]
+        );
+        if (existing.length > 0) {
+            throw new Error(`A product named "${name}" already exists. Please use a different name.`);
+        }
 
         const category_query = `SELECT category_id FROM categories WHERE category_name=?`;
-        const brand_query = "SELECT brand_id FROM brands WHERE brand_name=?";
+        const brand_query = `SELECT brand_id FROM brands WHERE brand_name=?`;
         const addProductQuery =
-            "INSERT INTO phones (name, description, category_id, brand_id, release_date) VALUES(?,?,?,?,?)";
-
-        const addSpecificationsQuery =
-            "INSERT INTO specifications (phone_variant_id, screen_size, processor, ram, storage, battery, camera,Price,stock) VALUES(?,?,?,?,?,?,?,?,?)";
-        // const addColorsQuery =
-        //   "INSERT INTO phone_colors (phone_id, color) VALUES (?,?)";
+            `INSERT INTO phones (name, description, category_id, brand_id, release_date) VALUES(?,?,?,?,?)`;
         const addColorQuery =
-            "INSERT INTO phone_variants (phone_id,color) VALUES (?,?)"
+            `INSERT INTO phone_variants (phone_id, color, stock) VALUES (?,?,?)`;
+        const addSpecificationsQuery =
+            `INSERT INTO specifications (phone_variant_id, screen_size, processor, ram, storage, battery, camera, Price, stock) VALUES(?,?,?,?,?,?,?,?,?)`;
         const addImageQuery =
-            "INSERT INTO productimage(phone_variant_id, image) VALUES (?,?)";
+            `INSERT INTO productimage(phone_variant_id, image) VALUES (?,?)`;
 
-        // Database operations (same as your previous code)
-        const [categoryRows] = await pool.promise().query(category_query, [category]);
+        const [categoryRows] = await connection.query(category_query, [category]);
         if (!categoryRows.length) throw new Error("Category not found");
         const category_id = categoryRows[0].category_id;
 
-        const [brandRows] = await pool.promise().query(brand_query, [brand]);
+        const [brandRows] = await connection.query(brand_query, [brand]);
         if (!brandRows.length) throw new Error("Brand not found");
         const brand_id = brandRows[0].brand_id;
 
-        const productValues = [
-            name,
-            description,
-            category_id,
-            brand_id,
-            date
-        ];
+        // Use a transaction so if anything fails, nothing is saved
+        await connection.beginTransaction();
 
-        const [productRows] = await pool.promise().query(addProductQuery, productValues);
+        const [productRows] = await connection.query(addProductQuery, [
+            name, description, category_id, brand_id, date
+        ]);
         const phone_id = productRows.insertId;
 
+        const [variantRows] = await connection.query(addColorQuery, [phone_id, colors, stock]);
+        const variantID = variantRows.insertId;
 
-        let variantID = [];
-        console.log(colors);
-
-        await pool.promise().query(addColorQuery, [phone_id, colors])
-            .then(([rows]) => {
-                variantID.push(rows.insertId)
-            })
-            .catch((err) => {
-                console.log(err);
-            })
-        const specificationValues = [
-            variantID,
-            screenSize,
-            processor,
-            ram,
-            storage,
-            battery,
-            camera,
-            price,
-            stock
-        ];
-        await pool.promise().query(addSpecificationsQuery, specificationValues);
-
-        console.log(price);
-
+        await connection.query(addSpecificationsQuery, [
+            variantID, screenSize, processor, ram, storage, battery, camera, price, stock
+        ]);
 
         for (let image of images) {
-            await pool.promise().query(addImageQuery, [variantID, image]);
+            await connection.query(addImageQuery, [variantID, image]);
         }
 
-
+        await connection.commit();
         res.status(201).json({ message: "Product added successfully" });
+
     } catch (err) {
+        await connection.rollback().catch(() => {});
         console.error(err);
         res.status(400).json({ message: err.message });
+    } finally {
+        connection.release();
     }
 }
 

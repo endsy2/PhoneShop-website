@@ -312,7 +312,20 @@ const AddDetail = () => {
                         className="grid grid-cols-1 md:grid-cols-2 gap-6"
                     >
                         <Field label="Storage" name="storage" value={form.storage} onChange={handleFormChange} placeholder="e.g. 128GB" required />
-                        <Field label="Price ($)" name="price" value={form.price} onChange={handleFormChange} placeholder="e.g. 699" type="number" required />
+                        <div className="flex flex-col">
+                        <label className="text-sm font-medium text-primary mb-2">Price ($)</label>
+                        <input
+                            type="number"
+                            name="price"
+                            value={form.price}
+                            onChange={handleFormChange}
+                            placeholder="e.g. 999.99"
+                            className="input-style"
+                            required
+                            min="0"
+                            step="0.01"
+                        />
+                    </div>
                         <Field label="Stock" name="stock" value={form.stock} onChange={handleFormChange} placeholder="e.g. 50" type="number" required />
                         <Field label="Screen Size" name="screen_size" value={form.screen_size} onChange={handleFormChange} placeholder="e.g. 6.1 inch" required />
                         <Field label="Processor" name="processor" value={form.processor} onChange={handleFormChange} placeholder="e.g. A17 Pro" required />
@@ -340,12 +353,28 @@ const AddDetail = () => {
                 </>
             )}
 
-            {/* Feedback */}
-            {error && (
-                <p className="mt-4 text-center text-red-600 font-medium">{error}</p>
-            )}
-            {success && (
-                <p className="mt-4 text-center text-green-600 font-medium">{success}</p>
+            {/* Success/Error Messages */}
+            {(error || success) && (
+                <div className="mt-6">
+                    {success && (
+                        <div className="flex items-center gap-3 p-4 bg-green-50 border-2 border-green-200 rounded-xl shadow-md animate-fade-in">
+                            <span className="text-3xl">✅</span>
+                            <div>
+                                <p className="text-green-800 font-bold text-lg">{success}</p>
+                                <p className="text-green-600 text-sm">Changes are now live on the user page!</p>
+                            </div>
+                        </div>
+                    )}
+                    {error && (
+                        <div className="flex items-center gap-3 p-4 bg-red-50 border-2 border-red-200 rounded-xl shadow-md animate-fade-in">
+                            <span className="text-3xl">❌</span>
+                            <div>
+                                <p className="text-red-800 font-bold text-lg">{error}</p>
+                                <p className="text-red-600 text-sm">Please try again or contact support.</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
             )}
         </div>
     );

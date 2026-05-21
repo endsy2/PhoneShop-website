@@ -94,18 +94,15 @@ const AddProduct = ({ product_id }) => {
       if (result?.status >= 200 && result?.status < 300) {
         setResult("Add New Product Success")
         setError('')
+        handleClear();
       } else {
         setError("Something Went Wrong")
         setResult('')
       }
-      // console.log(formdata.colors);
-
-      // console.log(formdata.images);
-
-      handleClear(); // Clear form after successful submission
-      console.log(result);
     } catch (error) {
-      setError("Something Went Wrong")
+      // Show the actual server error message (e.g. "product already exists")
+      const serverMessage = error?.response?.data?.message || error?.message || "Something Went Wrong";
+      setError(serverMessage)
       setResult('')
       console.log(error);
     }
@@ -269,14 +266,16 @@ const AddProduct = ({ product_id }) => {
 
         {/* Price */}
         <div className="flex flex-col">
-          <label className="text-sm font-medium text-primary mb-2">Price</label>
+          <label className="text-sm font-medium text-primary mb-2">Price ($)</label>
           <input
             type="number"
             name="price"
-            placeholder="Enter product price"
+            placeholder="e.g. 999.99"
             value={price}
             className="input-style"
             onChange={(e) => setPrice(e.target.value)}
+            min="0"
+            step="0.01"
             required
           />
         </div>
@@ -353,6 +352,8 @@ const AddProduct = ({ product_id }) => {
             required
           >
             <option value="" disabled>Select RAM</option>
+            <option value="8GB">8GB</option>
+            <option value="16GB">16GB</option>
             <option value="32GB">32GB</option>
             <option value="64GB">64GB</option>
             <option value="128GB">128GB</option>
@@ -423,10 +424,29 @@ const AddProduct = ({ product_id }) => {
           </button>
         </div>
       </form >
-      <div className="mt-16">
-        {error && <p className="text-red-500">{error}</p>}
-        {result && <p className="text-primary">{result}</p>}
-      </div>
+      {/* Success/Error Messages */}
+      {(error || result) && (
+        <div className="mt-6">
+          {result && (
+            <div className="flex items-center gap-3 p-4 bg-green-50 border-2 border-green-200 rounded-xl shadow-md animate-fade-in">
+              <span className="text-3xl">✅</span>
+              <div>
+                <p className="text-green-800 font-bold text-lg">{result}</p>
+                <p className="text-green-600 text-sm">Product has been added successfully!</p>
+              </div>
+            </div>
+          )}
+          {error && (
+            <div className="flex items-center gap-3 p-4 bg-red-50 border-2 border-red-200 rounded-xl shadow-md animate-fade-in">
+              <span className="text-3xl">❌</span>
+              <div>
+                <p className="text-red-800 font-bold text-lg">{error}</p>
+                <p className="text-red-600 text-sm">Please try again or contact support.</p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div >
   );
 };

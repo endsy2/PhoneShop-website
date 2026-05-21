@@ -25,20 +25,16 @@ const cartSlice = createSlice({
     initialState,
     reducers: {
         addToCart(state, action) {
-            const { productId, productName, quantity, price } = action.payload;
+            const { productId, productName, quantity, price, image, color } = action.payload;
 
-            // Find index of the product in the cart
             const indexProductId = state.items.findIndex((item) => item.productId === productId);
 
             if (indexProductId >= 0) {
-                // If product exists, increase quantity
                 state.items[indexProductId].quantity += quantity;
             } else {
-                // If product doesn't exist, add new item
-                state.items.push({ productId, productName, quantity, price });
+                state.items.push({ productId, productName, quantity, price, image: image || "", color: color || "" });
             }
 
-            // Save updated cart to localStorage
             localStorage.setItem("carts", JSON.stringify(state.items));
         },
         changeQuantity(state, action) {

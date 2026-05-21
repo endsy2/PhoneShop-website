@@ -52,46 +52,32 @@ export const register = async (req, res) => {
   const { username, email, password } = req.body;
   console.log(req.body);
 
-  // Validate that all fields are provided
   if (!username || !email || !password) {
     return res.status(400).json({ message: "All fields must be filled" });
   }
 
   try {
-    // Hash the password for secure storage
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Insert user into the database
     const queryInsert =
-      "INSERT INTO customers (username, email, password) VALUES ( ?, ?, ?)";
-    const values = [username, email, hashedPassword];
+      "INSERT INTO customers (username, email, password) VALUES (?, ?, ?)";
 
-    pool.query(queryInsert, values, (error, result) => {
-      if (error) {
-        console.error("Database insert error:", error.message); // Log for debugging
-        if (error.code === "ER_DUP_ENTRY") {
-          return res.status(400).json({ message: "Email or phone already exists" });
-        }
-        return res
-          .status(500)
-          .json({ message: "Something went wrong while inserting the user" });
-      }
+    const [result] = await pool.promise().query(queryInsert, [username, email, hashedPassword]);
 
-      // Generate tokens using input data
-      const payload = { username, role: 2 };
-      const accessToken = generateAccessToken(payload);
-      const refreshToken = generateRefreshToken(payload);
+    const payload = { username, role: 2 };
+    const accessToken = generateAccessToken(payload);
+    const refreshToken = generateRefreshToken(payload);
 
-      // Set tokens in cookies
-      res.cookie("access-token", accessToken, cookieConfig);
-      res.cookie("refresh-token", refreshToken, cookieConfig);
+    res.cookie("access-token", accessToken, cookieConfig);
+    res.cookie("refresh-token", refreshToken, cookieConfig);
 
-      return res
-        .status(201)
-        .json({ message: "User registered successfully", token: accessToken });
-    });
+    return res.status(201).json({ message: "User registered successfully", token: accessToken });
+
   } catch (error) {
-    console.error("Error:", error.message); // Log for debugging
+    console.error("Error:", error.message);
+    if (error.code === "ER_DUP_ENTRY") {
+      return res.status(400).json({ message: "Email or username already exists" });
+    }
     return res.status(500).json({ message: "Internal server error" });
   }
 };
