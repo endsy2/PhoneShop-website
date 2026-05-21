@@ -187,7 +187,6 @@ export const searchOrder = async ({ username }) => {
 export const addNewProductAPI = async (formdata) => {
   const formData = new FormData();
 
-  // Append non-file data to formData
   formData.append("name", formdata.name);
   formData.append("brand", formdata.brand);
   formData.append("price", formdata.price);
@@ -203,29 +202,16 @@ export const addNewProductAPI = async (formdata) => {
   formData.append("battery", formdata.battery);
   formData.append("colors", formdata.colors);
 
-
-
-
-  // Append `images` (files) to formData
   for (let image of formdata.images) {
-    formData.append("images", image); // The key `images` must match the backend
+    formData.append("images", image);
   }
 
-  try {
-    const response = await axios.post(`${API_URL_Admin}/addNewProduct`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data", // Ensure this matches your backend
-      },
-      withCredentials: true
-    });
-    return response;
-    // console.log(formdata);
-
-
-  } catch (error) {
-    console.log(error);
-
-  }
+  // Let errors throw so the caller's catch block handles them
+  const response = await axios.post(`${API_URL_Admin}/addNewProduct`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+    withCredentials: true,
+  });
+  return response;
 }
 export const addNewColorFetch = async (formdata) => {
   try {
@@ -323,31 +309,17 @@ export const removeOneFetch = async ({ deleteid }) => {
   }
 }
 export const removeVariants = async ({ deleteid }) => {
-  try {
-    const response = await axios.delete(`${API_URL_Admin}/deleteVariants?variants_id=${deleteid}`, {
-      withCredentials: true
-    })
-    return response;
-
-
-  } catch (error) {
-    console.log(error);
-
-  }
+  const response = await axios.delete(`${API_URL_Admin}/deleteVariants?variants_id=${deleteid}`, {
+    withCredentials: true
+  });
+  return response;
 }
+
 export const removeSpec = async (variantID, storage) => {
-  try {
-    const response = await axios.delete(`${API_URL_Admin}/deleleSpec?variantID=${variantID}&storage=${storage}`, {
-      withCredentials: true
-    })
-    // console.log(variantID);
-    // console.log(storage);
-
-    return response;
-  } catch (error) {
-    console.log(error);
-
-  }
+  const response = await axios.delete(`${API_URL_Admin}/deleleSpec?variantID=${variantID}&storage=${storage}`, {
+    withCredentials: true
+  });
+  return response;
 }
 export const removeOrder = async ({ deleteid }) => {
   try {
@@ -531,32 +503,23 @@ export const insertPromotion = async ({ formData }) => {
 export const updateProductVariants = async (formdata, id) => {
   const formData = new FormData();
 
-  // Append all fields to FormData
-
   formData.append("stock", formdata.stock);
   formData.append("color", formdata.colors);
 
-  // Append images to FormData
   for (let image of formdata.images) {
-    formData.append("productImages", image); // Ensure "images" matches the backend field
+    formData.append("productImages", image);
   }
-  try {
-    const response = await axios.put(
-      `${API_URL_Admin}/updateVariants/${id}`,
-      formData, // Pass FormData directly
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-        withCredentials: true, // If authentication is required
-      }
-    );
-    console.log("Update successful:", response.data); // Log success response
-    return response.data; // Return the response data to the caller
-  } catch (error) {
-    console.error("Error updating product:", error);
-    throw error; // Re-throw the error to allow proper error handling
-  }
+
+  // throw on error so caller's catch block handles it
+  const response = await axios.put(
+    `${API_URL_Admin}/updateVariants/${id}`,
+    formData,
+    {
+      headers: { "Content-Type": "multipart/form-data" },
+      withCredentials: true,
+    }
+  );
+  return response;
 };
 export const fetchProductVariantsWithSpecs = async (product_id) => {
   try {

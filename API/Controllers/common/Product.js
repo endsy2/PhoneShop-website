@@ -2,34 +2,36 @@ import pool from "../../db/db_handle.js";
 
 export const displayAllProduct = (req, res) => {
 
-    const query = `SELECT *
-FROM (
-    SELECT 
-        p.*, 
-        c.category_name, 
-        b.brand_name,
-        pv.idphone_variants,
-        s.spec_id,
-        s.price, 
-        pv.color,
-        pm.image AS images,
-        ROUND(AVG(pr.rating), 1) AS avg_rating,
-        COUNT(pr.review_id) AS review_count,
-        ROW_NUMBER() OVER (PARTITION BY p.phone_id ORDER BY s.price DESC) AS row_num
-        
-    FROM phones p
-    INNER JOIN categories c ON c.category_id = p.category_id
-    INNER JOIN brands b ON b.brand_id = p.brand_id
-    INNER JOIN phone_variants pv ON pv.phone_id = p.phone_id
-    LEFT JOIN productimage pm ON pm.phone_variant_id=pv.idphone_variants
-    LEFT JOIN specifications s ON s.phone_variant_id=pv.idphone_variants
-    LEFT JOIN product_reviews pr ON pr.spec_id = s.spec_id
-    GROUP BY p.phone_id, p.name, p.description, p.release_date, p.category_id, 
-             c.category_name, b.brand_name, pv.idphone_variants, s.spec_id, s.price, 
-             pv.color, pm.image
-) AS ranked
-WHERE row_num = 1;
-`
+    const query = `
+    SELECT phone_id, name, description, release_date, category_id,
+           category_name, brand_name, idphone_variants, spec_id,
+           price, color, stock, images, avg_rating, review_count
+    FROM (
+        SELECT
+            p.phone_id, p.name, p.description, p.release_date, p.category_id,
+            c.category_name, b.brand_name,
+            pv.idphone_variants, s.spec_id, s.price,
+            pv.color, pv.stock,
+            GROUP_CONCAT(DISTINCT pm.image ORDER BY pm.image SEPARATOR ',') AS images,
+            ROUND(AVG(pr.rating), 1) AS avg_rating,
+            COUNT(DISTINCT pr.review_id) AS review_count,
+            ROW_NUMBER() OVER (PARTITION BY p.phone_id ORDER BY s.price ASC) AS rn
+        FROM phones p
+        INNER JOIN categories c ON c.category_id = p.category_id
+        INNER JOIN brands b ON b.brand_id = p.brand_id
+        INNER JOIN phone_variants pv ON pv.phone_id = p.phone_id
+        INNER JOIN specifications s ON s.phone_variant_id = pv.idphone_variants
+        LEFT JOIN productimage pm ON pm.phone_variant_id = pv.idphone_variants
+        LEFT JOIN product_reviews pr ON pr.spec_id = s.spec_id
+        GROUP BY
+            p.phone_id, p.name, p.description, p.release_date, p.category_id,
+            c.category_name, b.brand_name,
+            pv.idphone_variants, pv.color, pv.stock,
+            s.spec_id, s.price
+    ) AS ranked
+    WHERE rn = 1
+    ORDER BY phone_id;
+    `
     pool.query(query, (err, rows) => {
         if (err) return res.status(400).json({ message: "something went wrong" });
         res.status(200).json({
@@ -119,86 +121,84 @@ export const brand = (req, res) => {
 export const displayByCategory = (req, res) => {
     const { category } = req.query;
 
-    const query = ` SELECT *
-FROM (
-     SELECT 
-        p.*, 
-        c.category_name, 
-        b.brand_name,
-        pv.idphone_variants,
-        s.spec_id,
-        s.price, 
-        pv.color,
-        pm.image AS images,
-        ROUND(AVG(pr.rating), 1) AS avg_rating,
-        COUNT(pr.review_id) AS review_count,
-         ROW_NUMBER() OVER (PARTITION BY p.phone_id ORDER BY s.price DESC) AS row_num
-    FROM phones p
-    INNER JOIN categories c ON c.category_id = p.category_id
-    INNER JOIN brands b ON b.brand_id = p.brand_id
-    INNER JOIN phone_variants pv ON pv.phone_id = p.phone_id
-    LEFT JOIN specifications s ON s.phone_variant_id=pv.idphone_variants
-    LEFT JOIN productimage pm ON pm.phone_variant_id=pv.idphone_variants
-    LEFT JOIN product_reviews pr ON pr.spec_id = s.spec_id
-    GROUP BY p.phone_id, p.name, p.description, p.release_date, p.category_id, 
-             c.category_name, b.brand_name, pv.idphone_variants, s.spec_id, s.price, 
-             pv.color, pm.image
-    ORDER BY phone_id
-) AS ranked
-WHERE row_num = 1 AND category_name=?;
-                    `
+    const query = `
+    SELECT phone_id, name, description, release_date, category_id,
+           category_name, brand_name, idphone_variants, spec_id,
+           price, color, stock, images, avg_rating, review_count
+    FROM (
+        SELECT
+            p.phone_id, p.name, p.description, p.release_date, p.category_id,
+            c.category_name, b.brand_name,
+            pv.idphone_variants, s.spec_id, s.price,
+            pv.color, pv.stock,
+            GROUP_CONCAT(DISTINCT pm.image ORDER BY pm.image SEPARATOR ',') AS images,
+            ROUND(AVG(pr.rating), 1) AS avg_rating,
+            COUNT(DISTINCT pr.review_id) AS review_count,
+            ROW_NUMBER() OVER (PARTITION BY p.phone_id ORDER BY s.price ASC) AS rn
+        FROM phones p
+        INNER JOIN categories c ON c.category_id = p.category_id
+        INNER JOIN brands b ON b.brand_id = p.brand_id
+        INNER JOIN phone_variants pv ON pv.phone_id = p.phone_id
+        INNER JOIN specifications s ON s.phone_variant_id = pv.idphone_variants
+        LEFT JOIN productimage pm ON pm.phone_variant_id = pv.idphone_variants
+        LEFT JOIN product_reviews pr ON pr.spec_id = s.spec_id
+        GROUP BY
+            p.phone_id, p.name, p.description, p.release_date, p.category_id,
+            c.category_name, b.brand_name,
+            pv.idphone_variants, pv.color, pv.stock,
+            s.spec_id, s.price
+    ) AS ranked
+    WHERE rn = 1 AND category_name = ?
+    ORDER BY phone_id;
+    `;
 
     pool.query(query, [category], (err, rows) => {
         if (err) {
             return res.status(400).json({ message: "something went wrong" });
         }
-        res.status(200).json({
-            data: rows,
-            message: "sucessfully"
-        })
-    })
+        res.status(200).json({ data: rows, message: "sucessfully" });
+    });
 }
 export const displayByBrand = (req, res) => {
     const { brand } = req.query;
 
-    const query = ` SELECT *
-FROM (
-     SELECT 
-        p.*, 
-        c.category_name, 
-        b.brand_name,
-        pv.idphone_variants,
-        s.spec_id,
-        s.price, 
-        pv.color,
-        pm.image AS images,
-        ROUND(AVG(pr.rating), 1) AS avg_rating,
-        COUNT(pr.review_id) AS review_count,
-         ROW_NUMBER() OVER (PARTITION BY p.phone_id ORDER BY s.price DESC) AS row_num
-    FROM phones p
-    INNER JOIN categories c ON c.category_id = p.category_id
-    INNER JOIN brands b ON b.brand_id = p.brand_id
-    INNER JOIN phone_variants pv ON pv.phone_id = p.phone_id
-    LEFT JOIN specifications s ON s.phone_variant_id=pv.idphone_variants
-    LEFT JOIN productimage pm ON pm.phone_variant_id=pv.idphone_variants
-    LEFT JOIN product_reviews pr ON pr.spec_id = s.spec_id
-    GROUP BY p.phone_id, p.name, p.description, p.release_date, p.category_id, 
-             c.category_name, b.brand_name, pv.idphone_variants, s.spec_id, s.price, 
-             pv.color, pm.image
-    ORDER BY phone_id
-) AS ranked
-WHERE row_num = 1 AND brand_name=?;
-                    `
+    const query = `
+    SELECT phone_id, name, description, release_date, category_id,
+           category_name, brand_name, idphone_variants, spec_id,
+           price, color, stock, images, avg_rating, review_count
+    FROM (
+        SELECT
+            p.phone_id, p.name, p.description, p.release_date, p.category_id,
+            c.category_name, b.brand_name,
+            pv.idphone_variants, s.spec_id, s.price,
+            pv.color, pv.stock,
+            GROUP_CONCAT(DISTINCT pm.image ORDER BY pm.image SEPARATOR ',') AS images,
+            ROUND(AVG(pr.rating), 1) AS avg_rating,
+            COUNT(DISTINCT pr.review_id) AS review_count,
+            ROW_NUMBER() OVER (PARTITION BY p.phone_id ORDER BY s.price ASC) AS rn
+        FROM phones p
+        INNER JOIN categories c ON c.category_id = p.category_id
+        INNER JOIN brands b ON b.brand_id = p.brand_id
+        INNER JOIN phone_variants pv ON pv.phone_id = p.phone_id
+        INNER JOIN specifications s ON s.phone_variant_id = pv.idphone_variants
+        LEFT JOIN productimage pm ON pm.phone_variant_id = pv.idphone_variants
+        LEFT JOIN product_reviews pr ON pr.spec_id = s.spec_id
+        GROUP BY
+            p.phone_id, p.name, p.description, p.release_date, p.category_id,
+            c.category_name, b.brand_name,
+            pv.idphone_variants, pv.color, pv.stock,
+            s.spec_id, s.price
+    ) AS ranked
+    WHERE rn = 1 AND brand_name = ?
+    ORDER BY phone_id;
+    `;
 
     pool.query(query, [brand], (err, rows) => {
         if (err) {
             return res.status(400).json({ message: "something went wrong" });
         }
-        res.status(200).json({
-            data: rows,
-            message: "sucessfully"
-        })
-    })
+        res.status(200).json({ data: rows, message: "sucessfully" });
+    });
 }
 
 export const searchItems = (req, res) => {

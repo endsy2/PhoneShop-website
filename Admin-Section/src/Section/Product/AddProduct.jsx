@@ -94,18 +94,15 @@ const AddProduct = ({ product_id }) => {
       if (result?.status >= 200 && result?.status < 300) {
         setResult("Add New Product Success")
         setError('')
+        handleClear();
       } else {
         setError("Something Went Wrong")
         setResult('')
       }
-      // console.log(formdata.colors);
-
-      // console.log(formdata.images);
-
-      handleClear(); // Clear form after successful submission
-      console.log(result);
     } catch (error) {
-      setError("Something Went Wrong")
+      // Show the actual server error message (e.g. "product already exists")
+      const serverMessage = error?.response?.data?.message || error?.message || "Something Went Wrong";
+      setError(serverMessage)
       setResult('')
       console.log(error);
     }
@@ -355,6 +352,8 @@ const AddProduct = ({ product_id }) => {
             required
           >
             <option value="" disabled>Select RAM</option>
+            <option value="8GB">8GB</option>
+            <option value="16GB">16GB</option>
             <option value="32GB">32GB</option>
             <option value="64GB">64GB</option>
             <option value="128GB">128GB</option>

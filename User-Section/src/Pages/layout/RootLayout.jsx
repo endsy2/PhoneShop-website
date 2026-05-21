@@ -3,9 +3,7 @@ import Navbar from "../home/Navbar";
 import { useEffect, useState } from "react";
 import Footer from "../home/Footer";
 import { useSelector } from "react-redux";
-import store from "../../store/store";
 import AddToCart from "../home/AddToCart";
-import ChatSupport from "../../Components/ChatSupport";
 import axios from "axios";
 import { NETWORK_CONFIG } from "../../network/Network_EndPoint";
 
@@ -54,7 +52,6 @@ const RootLayout = () => {
         <Footer />
       </footer>
       {stateTabCart && <AddToCart />}
-      <ChatSupport />
     </>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { fetchdataProduct, fetchProductByDate, fetchProductDiscount } from '../../FetchAPI/Fetch';
 import ProductCard from './ProductCard';
 import { useLocation } from 'react-router-dom';

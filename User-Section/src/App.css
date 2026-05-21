@@ -43,3 +43,20 @@
 html {
   scroll-behavior: smooth;
 }
+
+/* react-slick: prevent slides from stacking vertically */
+.slider-container {
+  width: 100%;
+  overflow: hidden;
+}
+.slider-container .slick-track {
+  display: flex !important;
+}
+.slider-container .slick-slide {
+  height: inherit !important;
+  display: flex !important;
+  justify-content: center;
+}
+.slider-container .slick-slide > div {
+  width: 100%;
+}
