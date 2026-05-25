@@ -189,135 +189,97 @@ const UserProfile = () => {
   }
 
   return (
-    <div style={styles.container}>
-      <aside style={styles.sidebar}>
-        <div style={styles.sidebarHeader}>
-          <div style={styles.sidebarProfile}>
+    <div className="flex flex-col md:flex-row min-h-screen bg-gray-50 font-sans">
+      {/* Sidebar */}
+      <aside className="w-full md:w-64 lg:w-72 bg-gray-100 p-4 flex flex-col items-center md:items-stretch gap-4 border-b md:border-b-0 md:border-r border-gray-200">
+        {/* Profile Header */}
+        <div className="bg-green-200 flex items-center justify-between p-3 rounded-xl w-full">
+          <div className="flex items-center gap-2">
             {previewUrl ? (
-              <img src={previewUrl} alt="Profile" style={styles.sidebarProfileImage} />
+              <img src={previewUrl} alt="Profile" className="w-9 h-9 rounded-full object-cover border-2 border-green-600" />
             ) : (
-              <div style={styles.sidebarAvatar}>{avatarLabel}</div>
+              <div className="w-9 h-9 rounded-full bg-green-600 text-white flex items-center justify-center font-bold border-2 border-green-600">{avatarLabel}</div>
             )}
-            <div style={styles.sidebarTextContainer}>
-              <p style={styles.sidebarProfileName}>{profile.username || "Your name"}</p>
-              <p style={styles.sidebarProfileEmail}>{profile.email || "Your email"}</p>
+            <div>
+              <p className="text-sm font-bold leading-tight">{profile.username || "Your name"}</p>
+              <p className="text-xs text-gray-600 truncate max-w-[120px]">{profile.email || "Your email"}</p>
             </div>
           </div>
-          <div style={styles.sidebarArrow}>&gt;</div>
+          <span className="font-bold text-gray-700">&gt;</span>
         </div>
 
-        <nav style={styles.sidebarMenu}>
-          {[
-            "My Order",
-            "Personal",
-          ].map((item) => (
-            <button key={item} type="button" onClick={() => {
-              setActiveTab(item);
-              // Clear password fields when switching tabs
-              if (item === "Personal") {
-                setPasswordForm(emptyPassword);
-              }
-            }} style={styles.sidebarItem(activeTab === item)}>
-              {item}
-            </button>
+        {/* Nav */}
+        <nav className="flex flex-row md:flex-col gap-2 w-full">
+          {["My Order", "Personal"].map((item) => (
+            <button key={item} type="button"
+              onClick={() => { setActiveTab(item); if (item === "Personal") setPasswordForm(emptyPassword); }}
+              className={`flex-1 md:flex-none px-4 py-2.5 rounded-xl border text-left font-semibold text-sm transition-colors ${
+                activeTab === item ? "bg-green-50 border-green-300 text-green-700" : "bg-white border-gray-200 text-gray-700 hover:border-green-300"
+              }`}
+            >{item}</button>
           ))}
-          <button
-            type="button"
-            onClick={() => {
-              localStorage.removeItem("authToken");
-              localStorage.removeItem("userProfile");
-              window.location.href = "/";
-            }}
-            style={styles.sidebarLogout}
-          >
-            Sign out
-          </button>
+          <button type="button"
+            onClick={() => { localStorage.removeItem("authToken"); localStorage.removeItem("userProfile"); window.location.href = "/"; }}
+            className="flex-1 md:flex-none px-4 py-2.5 rounded-xl border border-red-200 bg-red-50 text-red-700 font-semibold text-sm text-left hover:bg-red-100 transition-colors"
+          >Sign out</button>
         </nav>
       </aside>
 
-      <main style={styles.mainContent}>
-        <section style={styles.card}>
-          <div style={styles.headerContainer}>
-            <div style={styles.profileInfo}>
+      {/* Main Content */}
+      <main className="flex-1 p-4 md:p-6">
+        <section className="bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-gray-100">
+          {/* Header */}
+          <div className="flex flex-wrap justify-between items-center gap-4 mb-5">
+            <div className="flex items-center gap-3">
               {previewUrl ? (
-                <img src={previewUrl} alt="Profile" style={styles.profileImageHeader} />
+                <img src={previewUrl} alt="Profile" className="w-14 h-14 rounded-full object-cover border-2 border-green-600" />
               ) : (
-                <div style={styles.profileAvatar}>{avatarLabel}</div>
+                <div className="w-14 h-14 rounded-full bg-green-600 text-white flex items-center justify-center font-bold text-xl border-2 border-green-600">{avatarLabel}</div>
               )}
-              <div style={styles.textContainer}>
-                <h3 style={styles.profileName}>{profile.firstName} {profile.lastName}</h3>
-              </div>
+              <h3 className="text-xl font-bold text-gray-900">{profile.firstName} {profile.lastName}</h3>
             </div>
-            <div style={{ display: "flex", gap: "10px" }}>
-              <label style={styles.uploadButton}>
-                Upload New Photo
-                <input type="file" accept="image/*" onChange={handleImageChange} style={styles.hiddenInput} />
+            <div className="flex gap-2 flex-wrap">
+              <label className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-green-50 text-green-700 font-semibold text-sm border border-green-200 cursor-pointer hover:bg-green-100 transition-colors">
+                Upload Photo
+                <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
               </label>
-              <button type="button" style={styles.deleteButton} onClick={() => {
-                setProfileDraft({ ...profileDraft, profile_picture: "" });
-                setPreviewUrl("");
-                setSelectedImage(null);
-              }}>
-                Delete
-              </button>
+              <button type="button"
+                onClick={() => { setProfileDraft({ ...profileDraft, profile_picture: "" }); setPreviewUrl(""); setSelectedImage(null); }}
+                className="px-4 py-2 rounded-xl bg-white text-red-600 font-semibold text-sm border border-red-200 hover:bg-red-50 transition-colors"
+              >Delete</button>
             </div>
           </div>
 
           {activeTab === "Personal" && (
             <form onSubmit={handleProfileSubmit}>
-              <div style={styles.formGrid}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
                 <Field label="First Name" name="firstName" value={profileDraft.firstName} onChange={handleProfileChange} placeholder="Enter first name" />
                 <Field label="Last Name" name="lastName" value={profileDraft.lastName} onChange={handleProfileChange} placeholder="Enter last name" />
-              </div>
-              <div style={styles.formGrid}>
                 <Field label="Email Address" name="email" value={profileDraft.email} onChange={handleProfileChange} placeholder="Enter email address" type="email" />
-              </div>
-              <div style={styles.formGrid}>
                 <Field label="Phone Number" name="phone_number" value={profileDraft.phone_number} onChange={handleProfileChange} placeholder="Enter phone number" />
-              </div>
-              <div style={styles.formGrid}>
-                <Field label="Address" name="address" value={profileDraft.address} onChange={handleProfileChange} placeholder="Enter delivery address" />
-              </div>
-              <div style={styles.formGrid}>
+                <div className="sm:col-span-2">
+                  <Field label="Address" name="address" value={profileDraft.address} onChange={handleProfileChange} placeholder="Enter delivery address" />
+                </div>
                 <Field label="Current Password" name="oldPassword" value={passwordForm.oldPassword} onChange={handlePasswordChange} placeholder="Enter current password" type="password" autoComplete="current-password" />
-                <div style={styles.passwordFieldContainer}>
+                <div className="relative">
                   <Field label="New Password" name="newPassword" value={passwordForm.newPassword} onChange={handlePasswordChange} placeholder="Enter new password" type={showPasswords.newPassword ? "text" : "password"} autoComplete="new-password" />
-                  <button type="button" style={styles.eyeButton} onClick={() => togglePasswordVisibility("newPassword")}>
-                    {showPasswords.newPassword ? "👁️" : "👁️‍🗨️"}
-                  </button>
+                  <button type="button" onClick={() => togglePasswordVisibility("newPassword")} className="absolute right-3 bottom-3 text-lg">{showPasswords.newPassword ? "👁️" : "👁️‍🗨️"}</button>
                 </div>
-              </div>
-              <div style={styles.formGrid}>
-                <div style={styles.passwordFieldContainer}>
+                <div className="relative">
                   <Field label="Confirm New Password" name="confirmPassword" value={passwordForm.confirmPassword} onChange={handlePasswordChange} placeholder="Confirm new password" type={showPasswords.confirmPassword ? "text" : "password"} autoComplete="new-password" />
-                  <button type="button" style={styles.eyeButton} onClick={() => togglePasswordVisibility("confirmPassword")}>
-                    {showPasswords.confirmPassword ? "👁️" : "👁️‍🗨️"}
-                  </button>
+                  <button type="button" onClick={() => togglePasswordVisibility("confirmPassword")} className="absolute right-3 bottom-3 text-lg">{showPasswords.confirmPassword ? "👁️" : "👁️‍🗨️"}</button>
                 </div>
               </div>
-
-              <div style={styles.actionRow}>
-                <button type="button" style={styles.signoutButton} onClick={() => {
-                  localStorage.removeItem("authToken");
-                  localStorage.removeItem("userProfile");
-                  window.location.href = "/";
-                }}>
-                  Sign out
-                </button>
-                <button type="button" style={styles.cancelButton} onClick={() => {
-                  loadProfile();
-                  setPasswordForm(emptyPassword);
-                }}>
-                  Cancel
-                </button>
-                <button type="submit" style={styles.editButton} disabled={isSaving}>{isSaving ? "Saving..." : "Save Changes"}</button>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <button type="submit" disabled={isSaving} className="px-5 py-2.5 rounded-xl bg-green-600 text-white font-bold text-sm hover:bg-green-700 disabled:opacity-60 transition-colors">{isSaving ? "Saving..." : "Save Changes"}</button>
+                <button type="button" onClick={() => { loadProfile(); setPasswordForm(emptyPassword); }} className="px-5 py-2.5 rounded-xl border border-gray-300 text-gray-600 font-bold text-sm hover:bg-gray-50 transition-colors">Cancel</button>
               </div>
-              {feedback ? <p style={styles.feedbackText}>{feedback}</p> : null}
+              {feedback && <p className="mt-3 text-sm text-gray-700">{feedback}</p>}
             </form>
           )}
 
           {activeTab === "My Order" && (
-            <div style={styles.sectionSpacing}>
+            <div className="mt-4">
               <MyOrderPage />
             </div>
           )}
@@ -328,10 +290,18 @@ const UserProfile = () => {
 };
 
 const Field = ({ label, name, value, onChange, placeholder, type = "text", autoComplete = "on" }) => (
-  <label style={styles.field}>
-    <span style={styles.fieldLabel}>{label}</span>
-    <input name={name} value={value} onChange={onChange} type={type} placeholder={placeholder} style={styles.input} autoComplete={autoComplete} />
-  </label>
+  <div className="flex flex-col gap-1.5">
+    <span className="text-xs font-bold text-gray-600 uppercase tracking-wide">{label}</span>
+    <input
+      name={name}
+      value={value}
+      onChange={onChange}
+      type={type}
+      placeholder={placeholder}
+      autoComplete={autoComplete}
+      className="h-12 rounded-xl border border-gray-300 px-4 outline-none bg-white w-full focus:border-green-500 focus:ring-1 focus:ring-green-200 transition-colors"
+    />
+  </div>
 );
 
 const SectionPlaceholder = ({ title, text }) => (

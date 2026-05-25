@@ -297,10 +297,8 @@ const HomePage = () => {
         </div>
         <Slider {...specialOfferSettings}>
           {uniqueDiscountProducts.map((product) => (
-            <div key={`${product.phone_id}-${product.spec_id || product.promo_id || "offer"}`} className="px-2">
-              <div className="max-w-[280px] mx-auto">
-                <ProductCard product={product} />
-              </div>
+            <div key={`${product.phone_id}-${product.spec_id || product.promo_id || "offer"}`} className="px-1">
+              <ProductCard product={product} />
             </div>
           ))}
         </Slider>
@@ -377,10 +375,8 @@ const HomePage = () => {
         </div>
         <Slider {...makeSliderSettings(phone)}>
           {phone.map((product) => (
-            <div key={product.id} className="px-2">
-              <div className="max-w-[280px] mx-auto">
-                <ProductCard product={product} />
-              </div>
+            <div key={product.id} className="px-1">
+              <ProductCard product={product} />
             </div>
           ))}
         </Slider>
@@ -422,10 +418,8 @@ const HomePage = () => {
         </div>
         <Slider {...makeSliderSettings(accessories)}>
           {accessories.map((product) => (
-            <div key={product.id} className="px-2">
-              <div className="max-w-[280px] mx-auto">
-                <ProductCard product={product} />
-              </div>
+            <div key={product.id} className="px-1">
+              <ProductCard product={product} />
             </div>
           ))}
         </Slider>
@@ -451,10 +445,8 @@ const HomePage = () => {
         </div>
         <Slider {...makeSliderSettings(smartWatch)}>
           {smartWatch.map((product) => (
-            <div key={product.id} className="px-2">
-              <div className="max-w-[280px] mx-auto">
-                <ProductCard product={product} />
-              </div>
+            <div key={product.id} className="px-1">
+              <ProductCard product={product} />
             </div>
           ))}
         </Slider>
