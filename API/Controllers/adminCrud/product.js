@@ -30,10 +30,10 @@ export const addNewProduct = async (req, res) => {
 
         // Check for duplicate product name before inserting
         const [existing] = await connection.query(
-            `SELECT phone_id FROM phones WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))`, [name]
+            `SELECT phone_id FROM phones WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))`, [name.trim()]
         );
         if (existing.length > 0) {
-            throw new Error(`A product named "${name}" already exists. Please use a different name.`);
+            throw new Error(`A product named "${name.trim()}" already exists. Please use a different name.`);
         }
 
         const category_query = `SELECT category_id FROM categories WHERE category_name=?`;
@@ -59,7 +59,7 @@ export const addNewProduct = async (req, res) => {
         await connection.beginTransaction();
 
         const [productRows] = await connection.query(addProductQuery, [
-            name, description, category_id, brand_id, date
+            name.trim(), description, category_id, brand_id, date
         ]);
         const phone_id = productRows.insertId;
 

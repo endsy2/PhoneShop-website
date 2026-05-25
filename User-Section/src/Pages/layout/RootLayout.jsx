@@ -37,22 +37,22 @@ const RootLayout = () => {
   };
 
   return (
-    <>
+    <div className="flex flex-col min-h-screen">
       <header>
         <nav><Navbar token={token} onLogin={handleLogin} onLogout={handleLogout} /></nav>
       </header>
       <main
-        className={`flex-1 max-w-full m-auto transform transition-transform duration-500 
+        className={`flex-1 max-w-full m-auto w-full transform transition-transform duration-500 
         ${stateTabCart ? "-translate-x-2 opacity-50" : ""}
       `}
       >
-        <Outlet /> {/* Ensure nested routes are rendered */}
+        <Outlet />
       </main>
       <footer>
         <Footer />
       </footer>
       {stateTabCart && <AddToCart />}
-    </>
+    </div>
   );
 };
 

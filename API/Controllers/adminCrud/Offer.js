@@ -47,7 +47,7 @@ export const offerInsert = async (req, res) => {
     const findPhoneQuery = `SELECT pv.idphone_variants 
                             FROM phones p
                             INNER JOIN phone_variants pv ON pv.phone_id = p.phone_id
-                            WHERE p.name = ? AND pv.color = ?`;
+                            WHERE TRIM(LOWER(p.name)) = TRIM(LOWER(?)) AND TRIM(LOWER(pv.color)) = TRIM(LOWER(?))`;
 
     const findSpec = `SELECT spec_id 
                       FROM specifications 
