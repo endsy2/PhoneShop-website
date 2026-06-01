@@ -69,7 +69,7 @@ const ProductCard = ({ product }) => {
         className="block"
       >
         {/* Image Container */}
-        <div className="relative aspect-square bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
+        <div className="relative h-48 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
           {/* Discount Badge */}
           {discountPercentage > 0 && (
             <div className="absolute top-3 left-3 z-20">
@@ -89,10 +89,10 @@ const ProductCard = ({ product }) => {
           </div>
 
           {/* Product Image */}
-          <div className="relative w-full h-full p-6 flex items-center justify-center">
+          <div className="absolute inset-0 p-4 flex items-center justify-center">
             {!imageLoaded && (
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-12 h-12 border-4 border-green-200 border-t-green-600 rounded-full animate-spin"></div>
+                <div className="w-10 h-10 border-4 border-green-200 border-t-green-600 rounded-full animate-spin"></div>
               </div>
             )}
             <img
@@ -137,9 +137,9 @@ const ProductCard = ({ product }) => {
         </div>
 
         {/* Product Info */}
-        <div className="p-4 space-y-3">
+        <div className="px-3 pb-3 pt-1 space-y-0.5">
           {/* Product Name */}
-          <h3 className="text-gray-800 font-semibold text-base line-clamp-2 min-h-[3rem] group-hover:text-green-600 transition-colors duration-200">
+          <h3 className="text-gray-800 font-semibold text-base line-clamp-2 min-h-[2rem] group-hover:text-green-600 transition-colors duration-200">
             {product.name}
           </h3>
 
