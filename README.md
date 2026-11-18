@@ -25,7 +25,7 @@ A customer storefront, an admin panel and a REST API, with Bakong KHQR payments,
 |---|---|
 | ![Storefront home page](docs/screenshots/storefront.png) | ![Admin dashboard](docs/screenshots/admin-dashboard.png) |
 
-<sub>Shown with demo data and generated product images.</sub>
+<sub>Shown with demo data. Product photos from Wikimedia Commons, see Photo credits below.</sub>
 
 ## ✨ Features
 
@@ -128,6 +128,42 @@ PhoneShop-website/
 
 - [Project overview](docs/PROJECT_OVERVIEW.md): features, API endpoints, auth flow
 - [Development notes](docs/dev-notes/): feature write-ups and fixes made along the way
+
+## 🖼️ Photo credits
+
+The product photos and the Apple and Xiaomi logos in the screenshots come from [Wikimedia Commons](https://commons.wikimedia.org/). They are used under the licences below. Brand names and logos belong to their owners.
+
+<details>
+<summary>Show credits</summary>
+
+| Photo | Author | Licence |
+|---|---|---|
+| [AirPods Pro 3 with case](https://commons.wikimedia.org/wiki/File:AirPods_Pro_3_with_case.jpg) | Auggie G | CC BY 3.0 |
+| [Apple Watch Series 10](https://commons.wikimedia.org/wiki/File:Apple_Watch_Series_10.png) | KK IN HK | Public domain |
+| [Samsung Galaxy Buds2 Pro (Graphite) (3)](https://commons.wikimedia.org/wiki/File:Samsung_Galaxy_Buds2_Pro_(Graphite)_(3).jpg) | Gannu03 | CC BY-SA 4.0 |
+| [SAMSUNG EP-T4510 45W POWER ADAPER BLACK](https://commons.wikimedia.org/wiki/File:SAMSUNG_EP-T4510_45W_POWER_ADAPER_BLACK.jpg) | Dinkun Chen | CC BY-SA 4.0 |
+| [Samsung Galaxy Flip7 FE](https://commons.wikimedia.org/wiki/File:Samsung_Galaxy_Flip7_FE.jpg) | Ssu | CC BY-SA 4.0 |
+| [Samsung Galaxy Z Flip7 FE Its Look When Closed](https://commons.wikimedia.org/wiki/File:Samsung_Galaxy_Z_Flip7_FE_Its_Look_When_Closed.jpg) | X-SHLIED | CC BY 4.0 |
+| [Galaxy Watch 7](https://commons.wikimedia.org/wiki/File:Galaxy_Watch_7.jpg) | Kyu3a | CC BY-SA 4.0 |
+| [IPad Air 11-inch (M3)](https://commons.wikimedia.org/wiki/File:IPad_Air_11-inch_(M3).jpg) | 茅野ふたば | CC BY-SA 4.0 |
+| [Black iPhone 17](https://commons.wikimedia.org/wiki/File:Black_iPhone_17.jpg) | Ahmad Ali Karim | CC0 |
+| [Lavender iPhone 17](https://commons.wikimedia.org/wiki/File:Lavender_iPhone_17.jpg) | Ahmad Ali Karim | CC0 |
+| [Mist Blue iPhone 17](https://commons.wikimedia.org/wiki/File:Mist_Blue_iPhone_17.jpg) | Ahmad Ali Karim | CC0 |
+| [White iPhone 17](https://commons.wikimedia.org/wiki/File:White_iPhone_17.jpg) | Ahmad Ali Karim | CC0 |
+| [Cosmic Orange iPhone 17 Pro Max](https://commons.wikimedia.org/wiki/File:Cosmic_Orange_iPhone_17_Pro_Max.jpg) | Ahmad Ali Karim | CC0 |
+| [Silver iPhone 17 Pro Max](https://commons.wikimedia.org/wiki/File:Silver_iPhone_17_Pro_Max.jpg) | Ahmad Ali Karim | CC0 |
+| [Apple logo black](https://commons.wikimedia.org/wiki/File:Apple_logo_black.svg) | Original:  Rob Janoff | Public domain |
+| [Xiaomi logo (2021-)](https://commons.wikimedia.org/wiki/File:Xiaomi_logo_(2021-).svg) | Xiaomi | Public domain |
+| [OnePlus 13 back](https://commons.wikimedia.org/wiki/File:OnePlus_13_back.jpg) | Maksdroider | CC BY-SA 4.0 |
+| [Arrière du Google Pixel 10 Pro pierre de lune de 256 Go](https://commons.wikimedia.org/wiki/File:Arri%C3%A8re_du_Google_Pixel_10_Pro_pierre_de_lune_de_256_Go.jpg) | Fabe56 | CC BY-SA 4.0 |
+| [Pixel Buds Pro, orange](https://commons.wikimedia.org/wiki/File:Pixel_Buds_Pro,_orange.jpg) | Mliu92 | CC BY-SA 3.0 |
+| [Google Pixel Watch - 1](https://commons.wikimedia.org/wiki/File:Google_Pixel_Watch_-_1.jpg) | KKPCW（Kyu3） | CC BY-SA 4.0 |
+| [Samsung Galaxy S25 Ultra](https://commons.wikimedia.org/wiki/File:Samsung_Galaxy_S25_Ultra.jpg) | Jakub CA | CC BY 4.0 |
+| [Samsung Galaxy S25 Ultra Titanium Silverblue](https://commons.wikimedia.org/wiki/File:Samsung_Galaxy_S25_Ultra_Titanium_Silverblue.jpg) | Alvis Jean | CC BY-SA 4.0 |
+| [Galaxy Tab S10+ Back](https://commons.wikimedia.org/wiki/File:Galaxy_Tab_S10%2B_Back.jpg) | Nash Izumrud | CC BY-SA 4.0 |
+| [Xiaomi 14T Pro](https://commons.wikimedia.org/wiki/File:Xiaomi_14T_Pro.jpg) | Petar Milošević | CC BY-SA 4.0 |
+
+</details>
 
 ## 👥 Contributors
 
