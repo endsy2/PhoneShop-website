@@ -1,0 +1,91 @@
+# Full stack: MySQL + API + admin panel + storefront.
+#   cp .env.example .env      # then fill in the secrets
+#   docker compose up --build
+#
+#   storefront  http://localhost:5173
+#   admin       http://localhost:5174
+#   api         http://localhost:3000
+#   mysql       localhost:3307 (for DB tools; containers use db:3306)
+#
+# First start only: every *.sql file in ./database is imported into an empty database
+# (put your schema/data dump there). To re-import, run `docker compose down -v` first.
+
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in .env}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-phone_shop}
+      MYSQL_USER: ${MYSQL_USER:-phoneshop}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?set MYSQL_PASSWORD in .env}
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./database:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    restart: unless-stopped
+
+  api:
+    build: ./API
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PORT: 3000
+      db_host: db
+      db_port: 3306
+      db_user: ${MYSQL_USER:-phoneshop}
+      db_password: ${MYSQL_PASSWORD}
+      db_name: ${MYSQL_DATABASE:-phone_shop}
+      DATABASE_URL: mysql://${MYSQL_USER:-phoneshop}:${MYSQL_PASSWORD}@db:3306/${MYSQL_DATABASE:-phone_shop}
+      CORS_ORIGINS: http://localhost:5173,http://localhost:5174
+      ACCESS_TOKEN_SECRET: ${ACCESS_TOKEN_SECRET:?set ACCESS_TOKEN_SECRET in .env}
+      REFRESH_TOKEN_SECRET: ${REFRESH_TOKEN_SECRET:?set REFRESH_TOKEN_SECRET in .env}
+      jwt_access_expired: ${JWT_ACCESS_EXPIRED:-1d}
+      jwt_refresh_expired: ${JWT_REFRESH_EXPIRED:-7d}
+      BAKONG_BASE_URL: ${BAKONG_BASE_URL:-https://api-bakong.nbc.gov.kh}
+      BAKONG_TOKEN: ${BAKONG_TOKEN:-}
+      BAKONG_ACCOUNT_ID: ${BAKONG_ACCOUNT_ID:-}
+      BAKONG_MERCHANT_ID: ${BAKONG_MERCHANT_ID:-}
+      ACQUIRINGBANK: ${ACQUIRINGBANK:-}
+      MERCHANTNAME: ${MERCHANTNAME:-}
+      STORELABEL: ${STORELABEL:-GeniusStore}
+      MOBILENUMBERSTORELABEL: ${MOBILENUMBERSTORELABEL:-}
+    volumes:
+      # uploaded product/brand images live on the host, so they survive rebuilds
+      - ./API/uploads:/app/uploads
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  user:
+    build:
+      context: ./User-Section
+      dockerfile: ../docker/frontend.Dockerfile
+      args:
+        VITE_REACT_APP_BASE_URL: ${PUBLIC_API_URL:-http://localhost:3000}
+    depends_on:
+      - api
+    ports:
+      - "5173:80"
+    restart: unless-stopped
+
+  admin:
+    build:
+      context: ./Admin-Section
+      dockerfile: ../docker/frontend.Dockerfile
+      args:
+        VITE_REACT_APP_BASE_URL: ${PUBLIC_API_URL:-http://localhost:3000}
+    depends_on:
+      - api
+    ports:
+      - "5174:80"
+    restart: unless-stopped
+
+volumes:
+  db-data:
