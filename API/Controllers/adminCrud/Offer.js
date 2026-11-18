@@ -16,7 +16,6 @@ const getPromotionStatus = (startDate, endDate) => {
     return now >= startAt && now <= endAt ? "Active" : "Inactive";
 };
 
-
 export const offerInsert = async (req, res) => {
     const {
         phone_name,
@@ -26,7 +25,6 @@ export const offerInsert = async (req, res) => {
         end_date,
         color,
     } = req.body;
-    console.log(req.body);
 
     const normalizedPhoneName = phone_name?.trim();
     const normalizedStorage = storage?.trim();
@@ -132,8 +130,6 @@ export const offerInsert = async (req, res) => {
     }
 };
 
-
-
 export const offerUpdate = async (req, res) => {
     const { offerID } = req.params;
     const { promo_name, discount_percent, start_date, end_date } = req.body;
@@ -167,19 +163,16 @@ export const offerUpdate = async (req, res) => {
         ]
 
         await pool.promise().query(queryUpdate, value).then(([rows]) => {
-            console.log(rows);
             res.status(200).json({
                 message: 'successfully',
                 data: rows
             })
         }).catch((error) => {
-            console.log(error);
             res.status(400).json({
                 message: "something went wrong"
             })
         })
     } catch (error) {
-        console.log(error);
         res.status(500).json({ message: "Internal server error" });
     }
 }
@@ -191,13 +184,11 @@ export const offerDelete = async (req, res) => {
     WHERE promo_id=?
     `
     await pool.promise().query(queryDelete, [offerID]).then(([rows]) => {
-        console.log(rows)
         res.status(200).json({
             message: 'successfully',
             data: rows
         })
     }).catch((error) => {
-        console.log(error);
         res.status(400).json({
             message: "something went wrong"
         })

@@ -10,6 +10,7 @@ const normalizeIdentity = (identityOrUsername, roleArg) => {
     roleArg === undefined
   ) {
     return {
+      id: identityOrUsername.id,
       username: identityOrUsername.username || identityOrUsername.name || "",
       role: identityOrUsername.role,
     };

@@ -1,22 +1,12 @@
 import pool from "../../db/db_handle.js";
+import { resolveUsername } from "../../Utils/currentUser.js";
 import bcrypt from "bcrypt";
 import { generateAccessToken, generateRefreshToken } from "../../Utils/generateToken.js";
 import { cookieConfig } from "../../Utils/handleCookies.js";
 
-const resolveUsername = (req) => {
-    const tokenPayload = req?.user?.user || {};
-    if (typeof tokenPayload.username === "object") {
-        return tokenPayload.username.username || tokenPayload.username.name || "";
-    }
-    return tokenPayload.username || tokenPayload.name || "";
-};
-
 export const getUserInformation = async (req, res) => {
     try {
         const username = resolveUsername(req);
-        // console.log(username);
-
-
 
         if (!username) {
             return res.status(400).json({
@@ -25,7 +15,6 @@ export const getUserInformation = async (req, res) => {
         }
 
         const query = `SELECT customer_id, username, email, phone_number, address, profile_picture, province_city, district, street, house_no, is_default_address, created_at FROM customers WHERE username = ?`;
-
 
         const [rows] = await pool.promise().query(query, [username]);
 
@@ -104,7 +93,7 @@ export const updateUserInformation = async (req, res) => {
             [nextUsername, nextEmail, nextPhoneNumber, nextAddress, profilePictureValue, nextProvinceCity, nextDistrict, nextStreet, nextHouseNo, nextIsDefaultAddress ? 1 : 0, customer.customer_id]
         );
 
-        const payload = { username: nextUsername, role: 2 };
+        const payload = { id: customer.customer_id, username: nextUsername, role: "customer" };
         const accessToken = generateAccessToken(payload);
         const refreshToken = generateRefreshToken(payload);
 

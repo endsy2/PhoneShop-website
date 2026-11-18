@@ -30,7 +30,7 @@ export const handlelogin = async (req, res) => {
       return res.status(401).json({ message: "Incorrect password" });
     }
 
-    const userPayLoad = { username: user.username, role: 2 };
+    const userPayLoad = { id: user.customer_id, username: user.username, role: "customer" };
     const accessToken = generateAccessToken(userPayLoad);
     const refreshToken = generateRefreshToken(userPayLoad);
 
@@ -39,6 +39,7 @@ export const handlelogin = async (req, res) => {
 
     return res.json({
       token: accessToken,
+      role: "customer",
       message: "Logged in successfully",
     });
   } catch (error) {
@@ -47,10 +48,8 @@ export const handlelogin = async (req, res) => {
   }
 };
 
-
 export const register = async (req, res) => {
   const { username, email, password } = req.body;
-  console.log(req.body);
 
   if (!username || !email || !password) {
     return res.status(400).json({ message: "All fields must be filled" });
@@ -64,7 +63,7 @@ export const register = async (req, res) => {
 
     const [result] = await pool.promise().query(queryInsert, [username, email, hashedPassword]);
 
-    const payload = { username, role: 2 };
+    const payload = { id: result.insertId, username, role: "customer" };
     const accessToken = generateAccessToken(payload);
     const refreshToken = generateRefreshToken(payload);
 
@@ -82,18 +81,6 @@ export const register = async (req, res) => {
   }
 };
 
-// export const adminlogout = (req, res) => {
-//   try {
-//     // Clear cookies with matching options (path, secure, httpOnly)
-//     res.clearCookie('admin-access-token', { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production' });
-//     res.clearCookie('admin-refresh-token', { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production' });
-
-//     res.status(200).json({ message: "Logout successfully" });
-//   } catch (error) {
-//     console.error("Error during logout:", error);
-//     return res.status(400).json({ message: "Something went wrong" });
-//   }
-// };
 export const logout = (req, res) => {
   try {
     const isProduction = process.env.NODE_ENV === "production";

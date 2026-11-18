@@ -1,22 +1,7 @@
 import pool from "../../db/db_handle.js";
+import { hasPermission, roleOf } from "../../Utils/rbac.js";
+import { resolveCustomerId } from "../../Utils/currentUser.js";
 
-// Resolve customer_id from JWT token username
-const resolveCustomerId = async (req) => {
-    const tokenPayload = req?.user?.user || {};
-    const username = typeof tokenPayload.username === "object"
-        ? tokenPayload.username.username || tokenPayload.username.name || ""
-        : tokenPayload.username || tokenPayload.name || "";
-
-    if (!username) return null;
-
-    const [rows] = await pool.promise().query(
-        `SELECT customer_id FROM customers WHERE username = ? LIMIT 1`,
-        [username]
-    );
-    return rows[0]?.customer_id || null;
-};
-
-// GET /common/reviews/:spec_id  — fetches all reviews for the product (by phone_id)
 export const getProductReviews = async (req, res) => {
     const { spec_id } = req.params;
     const { sortBy = "recent", filterRating = null } = req.query;
@@ -190,11 +175,21 @@ export const voteReview = async (req, res) => {
     }
 };
 
-// Delete review
+// Delete review — the author, or staff with review:moderate
 export const deleteReview = async (req, res) => {
     const { review_id } = req.params;
 
     try {
+        // Staff names live in a different table than customers, so check the permission
+        // before resolving a customer by username.
+        if (hasPermission(roleOf(req), "review:moderate")) {
+            const [result] = await pool.promise().query(`DELETE FROM product_reviews WHERE review_id = ?`, [review_id]);
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ message: "Review not found" });
+            }
+            return res.status(200).json({ message: "Review deleted successfully" });
+        }
+
         const customer_id = await resolveCustomerId(req);
         if (!customer_id) {
             return res.status(401).json({ message: "Please log in" });

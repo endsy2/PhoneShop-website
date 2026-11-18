@@ -4,30 +4,34 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test \"**/*.test.js\"",
     "dev": "nodemon index.js",
-    "vercel-build": "echo hello"
+    "vercel-build": "echo hello",
+    "postinstall": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:studio": "prisma studio"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "api": "file:",
+    "@prisma/adapter-mariadb": "7.10.1",
+    "@prisma/client": "7.10.1",
     "axios": "^1.16.0",
     "bakong-khqr": "^1.0.20",
     "bcrypt": "^5.1.1",
-    "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
-    "express": "^4.21.1",
-    "express-session": "^1.18.1",
+    "express": "^5.3.0",
     "jsonwebtoken": "^9.0.3",
-    "module_name": "^1.0.0",
     "multer": "^1.4.5-lts.1",
-    "mysql2": "^3.11.4",
+    "mysql2": "^3.11.4"
+  },
+  "devDependencies": {
     "nodemon": "^3.1.7",
-    "qrcode": "^1.5.4"
+    "prisma": "7.10.1"
   }
 }

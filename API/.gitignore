@@ -1,6 +1,2 @@
-node_modules/
-.env
+# Shared rules (node_modules, .env, uploads, logs…) live in the root .gitignore.
 key.js
-upload
-vercel.json
-.vercel

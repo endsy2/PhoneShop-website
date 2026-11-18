@@ -14,8 +14,6 @@ export const validateToken_refresh_token = async (req, res, next) => {
     return next(); // Access token is valid, proceed to the next middleware
   } catch (error) {
     if (error.name === "TokenExpiredError") {
-      console.log("Access token expired, attempting refresh...");
-
       const refreshToken = req.cookies['refresh-token'];
       if (!refreshToken) {
         return res.status(403).json({ message: "No refresh token available" });
@@ -26,16 +24,15 @@ export const validateToken_refresh_token = async (req, res, next) => {
         const refreshUser = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
         req.user = refreshUser;
 
-        // Extract payload — tokens are always signed as { user: { username, role } }
+        // Extract payload — tokens are always signed as { user: { id, username, role } }
         const payload = refreshUser?.user || {};
         const username = payload.username || payload.name || "";
-        const role = payload.role;
+        const { id, role } = payload;
 
         // Generate a new access token
-        const newAccessToken = generateAccessToken({ username, role });
+        const newAccessToken = generateAccessToken({ id, username, role });
         res.cookie('access-token', newAccessToken, cookieConfig);
 
-        console.log("New access token generated for:", username);
         return next();
       } catch (err) {
         console.error("Invalid or expired refresh token");

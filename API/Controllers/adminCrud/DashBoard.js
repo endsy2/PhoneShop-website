@@ -1,75 +1,32 @@
 import pool from "../../db/db_handle.js";
 
-export const dashboardHeader = (req, res) => {
-  const { date } = req.query;
-
-  const value = [date, date, date];
-  const query = `SELECT 'Total Revenue' AS label,  
-                    COALESCE(SUM(total_amount), 0) AS total
-                    FROM orders
-                    WHERE order_date >= CURDATE() - INTERVAL ? MONTH
-
-                    UNION ALL
-
-                    SELECT 'Total Order' AS label, COUNT(o.order_id) AS total
-                    FROM order_items oi
-                    JOIN orders o ON oi.order_id = o.order_id
-                    WHERE o.order_date >= CURDATE() - INTERVAL ? MONTH
-                    
-
-                    UNION ALL
-
-                    SELECT 'Total Customer' AS label, 
-                        COUNT(DISTINCT c.customer_id) AS total
-                    FROM customers c
-                    WHERE EXISTS (
-                    SELECT 1
-                    FROM orders o
-                    WHERE o.customer_id = c.customer_id
-                    AND o.order_date >= CURDATE() - INTERVAL ? MONTH
-                    );
-
-                    `;
-  pool.query(query, value, (err, rows) => {
-    if (err) {
-      return res.status(400).json({ message: "something went wrong" });
-    }
-    res.status(200).json({
-      data: rows,
-      message: "successfully",
-    });
-  });
+// Header cards: revenue (canceled orders excluded), number of orders, number of ordering customers.
+// months limits it to orders from the last N months; omit it for all time.
+const dashboardTotals = async (months) => {
+  const limited = Number.isFinite(months) && months > 0;
+  const [[row]] = await pool.promise().query(
+    `SELECT COALESCE(SUM(CASE WHEN status <> 'canceled' THEN total_amount END), 0) AS revenue,
+            COUNT(*) AS orders,
+            COUNT(DISTINCT customer_id) AS customers
+     FROM orders
+     ${limited ? "WHERE order_date >= CURDATE() - INTERVAL ? MONTH" : ""}`,
+    limited ? [months] : []
+  );
+  return [
+    { label: "Total Revenue", total: row.revenue },
+    { label: "Total Order", total: Number(row.orders) },
+    { label: "Total Customer", total: Number(row.customers) },
+  ];
 };
-export const dashboardHeaderAll = (req, res) => {
-  const query = `SELECT 'Total Revenue' AS label,  COALESCE(SUM(total_amount),0) AS total
-                  FROM orders
-  
-                  UNION ALL
-  
-                  SELECT 'Total Order' AS label, COUNT(o.order_id) AS total
-                  FROM order_items oi
-                  JOIN orders o ON oi.order_id = o.order_id
-  
-                  UNION ALL
-  
-                  SELECT 'Total Customer' AS label, COUNT(DISTINCT c.customer_id) AS total
-                  FROM customers c
-                  WHERE EXISTS (
-                    SELECT 1
-                    FROM orders o
-                    WHERE o.customer_id = c.customer_id
-                    
-                  );
-                  `;
-  pool.query(query, (err, rows) => {
-    if (err) {
-      return res.status(400).json({ message: "something went wrong" });
-    }
-    return res.status(200).json({
-      data: rows,
-      message: "sucessfully",
-    });
-  });
+
+export const dashboardHeader = async (req, res) => {
+  const data = await dashboardTotals(Number(req.query.date));
+  res.status(200).json({ data, message: "successfully" });
+};
+
+export const dashboardHeaderAll = async (req, res) => {
+  const data = await dashboardTotals();
+  res.status(200).json({ data, message: "sucessfully" });
 };
 
 export const displayByDate = (req, res) => {

@@ -1,5 +1,5 @@
 import pool from "../../db/db_handle.js"
-
+import { currentUnitPrices, restockOrder } from "../user/placeOrder.js";
 
 export const OrderTableItemsByID = async (req, res) => {
     const { order_id } = req.params;
@@ -59,7 +59,6 @@ GROUP BY
     pm.status,
     o.total_amount
 
-
 `
 
     const queryCustomer = `SELECT o.*, c.username, c.phone_number, c.address,
@@ -74,7 +73,6 @@ GROUP BY
         const orderItems = await new Promise((resolve, reject) => {
             pool.query(queryOrderItems, [order_id], (err, rows) => {
                 if (err) {
-                    console.log(err);
                     return reject(new Error("Order data error"));
                 }
                 resolve(rows);
@@ -84,7 +82,6 @@ GROUP BY
         const customerData = await new Promise((resolve, reject) => {
             pool.query(queryCustomer, [order_id], (err, rows) => {
                 if (err) {
-                    console.log(err);
                     return reject(new Error("Customer data error"));
                 }
                 resolve(rows);
@@ -105,7 +102,6 @@ GROUP BY
 export const orderByID = (req, res) => {
     const { order_id } = req.params;
 
-
     const query = `SELECT * FROM orders o
                     INNER JOIN customers c ON
                     c.customer_id=o.customer_id
@@ -119,136 +115,154 @@ export const orderByID = (req, res) => {
         })
         .catch((error) => {
             return res.status(400).json({
-                message: "something went wrong",
-                error: error
+                message: "something went wrong"
             })
         })
 }
 export const orderTable = async (req, res) => {
-    const query = `SELECT o.*, c.username, COALESCE(o.recipient_name, c.username) AS display_name
-                FROM orders o 
-                INNER JOIN customers c ON 
-                c.customer_id=o.customer_id;`
-    try {
-        await pool.promise().query(query).then(([data]) => {
-            return res.status(200).json({
-                message: "successfully",
-                data: data
-            })
-        }).catch((err) => {
-            console.log(err);
-            return res.status(400).json({
-                message: "something went wrong"
-            })
-        })
-    } catch (error) {
-        console.log(error);
-    }
-}
-export const updateOrderitems = (req, res) => {
-    // The SQL query to update the order
-    const query = `
-        UPDATE order_items ot
-        SET ot.quantity=?,
-            ot.phone_variants_id=(SELECT pv.idphone_variants FROM phone_variants pv
-                                INNER JOIN phones p ON
-                                pv.phone_id=p.phone_id
-                                WHERE p.name=? AND pv.color=?
-                                LIMIT 1),
-            ot.amount=(SELECT price FROM phone_variants WHERE idphone_variants=ot.phone_variants_id)*ot.quantity
-        WHERE order_item_id=?;
-    `;
+    const [data] = await pool.promise().query(
+        `SELECT o.*, c.username, COALESCE(o.recipient_name, c.username) AS display_name
+         FROM orders o
+         INNER JOIN customers c ON c.customer_id = o.customer_id`
+    );
+    return res.status(200).json({ message: "successfully", data });
+};
 
-    // Accessing parameters from the request
+// orders.total_amount is filled by a DB trigger on INSERT only; recompute it after edits/deletes.
+const recalcOrderTotal = (orderId, connection = pool.promise()) =>
+    connection.query(
+        `UPDATE orders
+         SET total_amount = (SELECT COALESCE(SUM(amount), 0) FROM order_items WHERE order_id = ?)
+         WHERE order_id = ?`,
+        [orderId, orderId]
+    );
 
-    const { phone_name, quantity, color, order_items_id } = req.body; // Request body
+// Change an order line to another phone/colour and/or quantity, keeping the line's storage size.
+// Stock follows the change: the old quantity goes back, the new one is taken.
+export const updateOrderitems = async (req, res) => {
+    const { phone_name, color, order_items_id } = req.body;
+    const quantity = Number(req.body.quantity);
 
-    // Validate the parameters
-    if (!phone_name || !quantity || !color || !order_items_id) {
+    if (!phone_name || !color || !order_items_id || !Number.isInteger(quantity) || quantity < 1) {
         return res.status(400).json({ message: "All fields are required" });
     }
 
-    // Prepare the values for the SQL query
-    const values = [
-        quantity,
-        phone_name,
-        color,
-        order_items_id
-    ];
+    const connection = await pool.promise().getConnection();
+    try {
+        await connection.beginTransaction();
+        const fail = async (status, message) => {
+            await connection.rollback();
+            return res.status(status).json({ message });
+        };
 
+        const [[line]] = await connection.query(
+            `SELECT ot.order_id, ot.spec_id, ot.quantity, cur.storage, o.status
+             FROM order_items ot
+             JOIN specifications cur ON cur.spec_id = ot.spec_id
+             JOIN orders o ON o.order_id = ot.order_id
+             WHERE ot.order_item_id = ?
+             FOR UPDATE`,
+            [order_items_id]
+        );
+        if (!line) return fail(404, "Order item not found");
+        if (line.status === "canceled") return fail(400, "A canceled order can't be edited");
 
+        const [[spec]] = await connection.query(
+            `SELECT s.spec_id
+             FROM phones p
+             JOIN phone_variants pv ON pv.phone_id = p.phone_id AND pv.color = ?
+             JOIN specifications s ON s.phone_variant_id = pv.idphone_variants AND s.storage = ?
+             WHERE p.name = ?
+             LIMIT 1
+             FOR UPDATE`,
+            [color, line.storage, phone_name]
+        );
+        if (!spec) return fail(404, "That phone/colour has no spec with the same storage");
 
-    // Execute the query with the prepared values using .then() and .catch()
-    pool.promise().query(query, values)
-        .then(([newUpdate]) => {
-            // If the query is successful, send the response
-            res.status(200).json({
-                message: "Order updated successfully",
-                data: newUpdate
-            });
-        })
-        .catch((error) => {
-            // If there is an error, send an error message
-            console.error(error);
-            res.status(500).json({ message: "Something went wrong", error: error.message });
-        });
+        await connection.query(`UPDATE specifications SET stock = stock + ? WHERE spec_id = ?`, [line.quantity, line.spec_id]);
+        const [taken] = await connection.query(
+            `UPDATE specifications SET stock = stock - ? WHERE spec_id = ? AND stock >= ?`,
+            [quantity, spec.spec_id, quantity]
+        );
+        if (taken.affectedRows === 0) return fail(400, "Not enough stock for that change");
+
+        const unitPrice = (await currentUnitPrices(connection, [spec.spec_id])).get(spec.spec_id);
+        const [result] = await connection.query(
+            `UPDATE order_items SET quantity = ?, spec_id = ?, amount = ? WHERE order_item_id = ?`,
+            [quantity, spec.spec_id, Math.round(unitPrice * quantity * 100) / 100, order_items_id]
+        );
+        await recalcOrderTotal(line.order_id, connection);
+        await connection.commit();
+        return res.status(200).json({ message: "Order updated successfully", data: result });
+    } catch (error) {
+        await connection.rollback().catch(() => {});
+        throw error;
+    } finally {
+        connection.release();
+    }
 };
-export const deleteOrder = (req, res) => {
+// Delete an order and its lines. A still-pending order's items go back to stock;
+// shipped/delivered goods have left the shop and canceled orders were already restocked.
+export const deleteOrder = async (req, res) => {
     const { DeleteOrderID } = req.params;
 
-    const queryDeleteOrderItems = `
-        DELETE FROM order_items
-        WHERE order_id = ?
-    `;
-    const queryDeleteOrders = `
-        DELETE FROM orders
-        WHERE order_id = ?
-    `;
-
-    pool.promise()
-        .query(queryDeleteOrderItems, [DeleteOrderID]) // Delete from order_items first
-        .then(() => {
-            // Delete from orders after order_items are deleted
-            return pool.promise().query(queryDeleteOrders, [DeleteOrderID]);
-        })
-        .then(([rows]) => {
-            // Send success response
-            res.status(200).json({
-                message: "Successfully deleted order",
-                data: rows,
-            });
-        })
-        .catch((error) => {
-            // Handle errors in either query
-            console.error("Error while deleting order:", error);
-            res.status(400).json({
-                message: "Something went wrong",
-                error: error.message,
-            });
-        });
-};
-export const deleteOrderItems = (req, res) => {
-    const { orderItemsID } = req.params;
-    const query = `DELETE FROM order_items 
-                WHERE order_item_id=?`;
+    const connection = await pool.promise().getConnection();
     try {
-        pool.promise()
-            .query(query, [orderItemsID])
-            .then(([rows]) => {
-                return res.status(200).json({
-                    data: rows,
-                    message: "successfully"
-                })
-            }).catch((error) => {
-                return res.status(400).json({
-                    message: "something went wrong "
-                })
-            })
+        await connection.beginTransaction();
+        const [[order]] = await connection.query(
+            `SELECT status FROM orders WHERE order_id = ? FOR UPDATE`,
+            [DeleteOrderID]
+        );
+        if (!order) {
+            await connection.rollback();
+            return res.status(404).json({ message: "Order not found" });
+        }
+        if (order.status === "pending") {
+            await restockOrder(DeleteOrderID, connection);
+        }
+        await connection.query(`DELETE FROM order_items WHERE order_id = ?`, [DeleteOrderID]);
+        const [rows] = await connection.query(`DELETE FROM orders WHERE order_id = ?`, [DeleteOrderID]);
+        await connection.commit();
+        return res.status(200).json({ message: "Successfully deleted order", data: rows });
     } catch (error) {
-        console.log(error);
-
+        await connection.rollback().catch(() => {});
+        throw error;
+    } finally {
+        connection.release();
     }
-}
+};
+// Remove one line; a pending order's quantity goes back to stock.
+export const deleteOrderItems = async (req, res) => {
+    const { orderItemsID } = req.params;
+
+    const connection = await pool.promise().getConnection();
+    try {
+        await connection.beginTransaction();
+        const [[line]] = await connection.query(
+            `SELECT ot.order_id, ot.spec_id, ot.quantity, o.status
+             FROM order_items ot JOIN orders o ON o.order_id = ot.order_id
+             WHERE ot.order_item_id = ?
+             FOR UPDATE`,
+            [orderItemsID]
+        );
+        if (!line) {
+            await connection.rollback();
+            return res.status(404).json({ message: "Order item not found" });
+        }
+        if (line.status === "pending") {
+            await connection.query(`UPDATE specifications SET stock = stock + ? WHERE spec_id = ?`, [line.quantity, line.spec_id]);
+        }
+        const [rows] = await connection.query(`DELETE FROM order_items WHERE order_item_id = ?`, [orderItemsID]);
+        await recalcOrderTotal(line.order_id, connection);
+        await connection.commit();
+        return res.status(200).json({ data: rows, message: "successfully" });
+    } catch (error) {
+        await connection.rollback().catch(() => {});
+        throw error;
+    } finally {
+        connection.release();
+    }
+};
 export const headerOrder = (req, res) => {
     const query = `
         SELECT 
@@ -280,7 +294,6 @@ GROUP BY
             })
         })
     } catch (error) {
-        console.log(error);
         res.status(500).json({
             message: "something went wrong"
         })
@@ -306,8 +319,7 @@ WHERE c.username LIKE ? OR o.recipient_name LIKE ?;`
         })
         .catch((error) => {
             return res.status(400).json({
-                message: "something went wrong",
-                error: error
+                message: "something went wrong"
             })
         })
 }

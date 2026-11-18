@@ -1,9 +1,10 @@
 import pool from "../../db/db_handle.js";
+import { resolveCustomerId } from "../../Utils/currentUser.js";
 
 // Track browsing history
 export const trackBrowsing = async (req, res) => {
     const { spec_id } = req.body;
-    const customer_id = req.user?.user?.customer_id || req.user?.customer_id;
+    const customer_id = await resolveCustomerId(req);
 
     if (!spec_id) {
         return res.status(400).json({ message: "spec_id required" });
@@ -40,8 +41,8 @@ export const getCoViewedProducts = async (req, res) => {
                 pv.color,
                 s.storage,
                 s.price,
-                s.price_discount,
-                s.discount_percentage,
+                ROUND(s.price * (100 - MAX(pm.discount_percentage)) / 100, 2) AS price_discount,
+                MAX(pm.discount_percentage) AS discount_percentage,
                 GROUP_CONCAT(pi.image SEPARATOR ',') as images,
                 (SELECT AVG(rating) FROM product_reviews WHERE spec_id = s.spec_id) as avg_rating,
                 (SELECT COUNT(*) FROM product_reviews WHERE spec_id = s.spec_id) as review_count
@@ -53,6 +54,7 @@ export const getCoViewedProducts = async (req, res) => {
             JOIN phone_variants pv ON s.phone_variant_id = pv.idphone_variants
             JOIN phones p ON pv.phone_id = p.phone_id
             LEFT JOIN productimage pi ON pv.idphone_variants = pi.phone_variant_id
+            LEFT JOIN promotions pm ON pm.spec_id = s.spec_id AND CURDATE() BETWEEN DATE(pm.start_date) AND DATE(pm.end_date)
             WHERE bh1.spec_id = ? AND bh2.spec_id != ?
             GROUP BY s.spec_id, p.phone_id, p.name, pv.color, s.storage, s.price
             ORDER BY COUNT(*) DESC
@@ -86,9 +88,9 @@ export const getSimilarPriceProducts = async (req, res) => {
             return res.status(404).json({ message: "Product not found" });
         }
 
-        const targetPrice = priceData.price;
-        const minPrice = targetPrice - priceRange;
-        const maxPrice = targetPrice + priceRange;
+        const targetPrice = Number(priceData.price);
+        const minPrice = targetPrice - Number(priceRange);
+        const maxPrice = targetPrice + Number(priceRange);
 
         const query = `
             SELECT
@@ -98,8 +100,8 @@ export const getSimilarPriceProducts = async (req, res) => {
                 pv.color,
                 s.storage,
                 s.price,
-                s.price_discount,
-                s.discount_percentage,
+                ROUND(s.price * (100 - MAX(pm.discount_percentage)) / 100, 2) AS price_discount,
+                MAX(pm.discount_percentage) AS discount_percentage,
                 GROUP_CONCAT(DISTINCT pi.image SEPARATOR ',') as images,
                 (SELECT AVG(rating) FROM product_reviews WHERE spec_id = s.spec_id) as avg_rating,
                 (SELECT COUNT(*) FROM product_reviews WHERE spec_id = s.spec_id) as review_count,
@@ -108,6 +110,7 @@ export const getSimilarPriceProducts = async (req, res) => {
             JOIN phone_variants pv ON s.phone_variant_id = pv.idphone_variants
             JOIN phones p ON pv.phone_id = p.phone_id
             LEFT JOIN productimage pi ON pv.idphone_variants = pi.phone_variant_id
+            LEFT JOIN promotions pm ON pm.spec_id = s.spec_id AND CURDATE() BETWEEN DATE(pm.start_date) AND DATE(pm.end_date)
             WHERE s.spec_id != ?
                 AND s.price BETWEEN ? AND ?
                 AND (s.stock - COALESCE(s.reserved_stock, 0)) > 0
@@ -164,7 +167,7 @@ export const getTopRatedInCategory = async (req, res) => {
                 pv.color,
                 s.storage,
                 s.price,
-                s.price_discount,
+                ROUND(s.price * (100 - MAX(pm.discount_percentage)) / 100, 2) AS price_discount,
                 GROUP_CONCAT(DISTINCT pi.image SEPARATOR ',') as images,
                 AVG(pr.rating) as avg_rating,
                 COUNT(pr.review_id) as review_count
@@ -172,6 +175,7 @@ export const getTopRatedInCategory = async (req, res) => {
             JOIN phone_variants pv ON s.phone_variant_id = pv.idphone_variants
             JOIN phones p ON pv.phone_id = p.phone_id
             LEFT JOIN productimage pi ON pv.idphone_variants = pi.phone_variant_id
+            LEFT JOIN promotions pm ON pm.spec_id = s.spec_id AND CURDATE() BETWEEN DATE(pm.start_date) AND DATE(pm.end_date)
             LEFT JOIN product_reviews pr ON s.spec_id = pr.spec_id
             WHERE p.category_id = ? AND s.spec_id != ?
                 AND (s.stock - COALESCE(s.reserved_stock, 0)) > 0
@@ -199,7 +203,7 @@ export const getTopRatedInCategory = async (req, res) => {
 
 // Get personalized recommendations for user
 export const getPersonalizedRecommendations = async (req, res) => {
-    const customer_id = req.user?.user?.customer_id || req.user?.customer_id;
+    const customer_id = await resolveCustomerId(req);
     const limit = req.query.limit || 6;
 
     if (!customer_id) {
@@ -216,7 +220,7 @@ export const getPersonalizedRecommendations = async (req, res) => {
                 pv.color,
                 s.storage,
                 s.price,
-                s.price_discount,
+                ROUND(s.price * (100 - MAX(pm.discount_percentage)) / 100, 2) AS price_discount,
                 GROUP_CONCAT(DISTINCT pi.image SEPARATOR ',') as images,
                 (SELECT AVG(rating) FROM product_reviews WHERE spec_id = s.spec_id) as avg_rating,
                 (SELECT COUNT(*) FROM product_reviews WHERE spec_id = s.spec_id) as review_count
@@ -225,6 +229,7 @@ export const getPersonalizedRecommendations = async (req, res) => {
             JOIN phone_variants pv ON s.phone_variant_id = pv.idphone_variants
             JOIN phones p ON pv.phone_id = p.phone_id
             LEFT JOIN productimage pi ON pv.idphone_variants = pi.phone_variant_id
+            LEFT JOIN promotions pm ON pm.spec_id = s.spec_id AND CURDATE() BETWEEN DATE(pm.start_date) AND DATE(pm.end_date)
             WHERE bh.customer_id = ?
                 AND (s.stock - COALESCE(s.reserved_stock, 0)) > 0
                 AND bh.spec_id NOT IN (
@@ -233,7 +238,7 @@ export const getPersonalizedRecommendations = async (req, res) => {
                     WHERE o.customer_id = ?
                 )
             GROUP BY s.spec_id, p.phone_id, p.name, pv.color, s.storage, s.price
-            ORDER BY bh.viewed_at DESC
+            ORDER BY MAX(bh.viewed_at) DESC
             LIMIT ?
         `;
 

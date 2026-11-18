@@ -93,7 +93,6 @@ export const displayAllProductByName = (req, res) => {
     });
 };
 
-
 export const category = (req, res) => {
     const query = `SELECT category_name FROM categories ORDER BY category_id`
     pool.query(query, (err, rows) => {
@@ -204,7 +203,6 @@ export const displayByBrand = (req, res) => {
 export const searchItems = (req, res) => {
     const { searchData, Category } = req.query;
     const product = `%${searchData}%`
-    console.log(req.query);
 
     if (!searchData) {
         return res.status(400).json({ message: "Missing search data" });
@@ -242,12 +240,13 @@ WHERE row_num = 1 AND ranked.name LIKE ? AND ranked.category_name=?;
 
     pool.query(query, [product, Category], (err, rows) => {
 
-
-        if (rows.length === 0 || err) {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ message: "Internal server error" });
+        }
+        if (rows.length === 0) {
             return res.json({ message: "No products found" });
         }
-
-        console.log(rows);
 
         return res.status(200).json({
             data: rows,
@@ -263,8 +262,6 @@ export const searchItemsByName = async (req, res) => {
     if (!phone_name) {
         return res.status(400).json({ message: "ID parameter is missing" });
     }
-
-    // console.log(`Searching for item with ID: ${id}`);
 
     const query = `
      SELECT 
@@ -328,7 +325,7 @@ WHERE ranked.row_num = 1;
             return res.status(404).json({ message: "Item not found" });
         }
 
-        console.log(rows[0]);  // Log the first row to check the result
+          // Log the first row to check the result
         res.status(200).json({
             data: rows,
             message: "Data retrieved successfully"
@@ -402,7 +399,6 @@ GROUP BY
     pmt.status,
     pmt.discount_percentage
 
-
 `
     const [rows] = await pool.promise().query(query, [
         phone_id || null,
@@ -471,7 +467,6 @@ GROUP BY
     pmt.promo_id;`
     const [rows] = await pool.promise().query(query, [spec_id]);
     if (!rows.length) {
-        console.log("something went wrong");
         return res.status(400).json({
             message: "something went wrong",
         })

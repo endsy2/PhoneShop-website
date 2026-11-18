@@ -2,11 +2,10 @@ import bcrypt from "bcrypt";
 import pool from "../../db/db_handle.js";
 import { generateAccessToken, generateRefreshToken } from "../../Utils/generateToken.js";
 import { cookieConfig } from "../../Utils/handleCookies.js";
+import { permissionsFor, STAFF_ROLES } from "../../Utils/rbac.js";
 
 export const adminLogin = async (req, res) => {
   const { email, password } = req.body;
-  // console.log(email);
-  // console.log(password);
 
   if (!email || !password) {
     return res.status(400).json({ message: "All fields are required" });
@@ -28,17 +27,21 @@ export const adminLogin = async (req, res) => {
       return res.status(401).json({ message: "Invalid password" });
     }
 
+    // Rows created before migrations/add_admin_role.sql have no role; they keep full admin rights.
+    const role = STAFF_ROLES.includes(admin.role) ? admin.role : "admin";
+
     // Generate tokens
-    const adminPayload = { name: admin.adminname, role: 1 };
+    const adminPayload = { id: admin.admin_id, name: admin.adminname, role };
     const accessToken = generateAccessToken(adminPayload);
     const refreshToken = generateRefreshToken(adminPayload);
 
     res.cookie('access-token', accessToken, cookieConfig);
     res.cookie('refresh-token', refreshToken, cookieConfig);
 
-
     return res.status(200).json({
       token: accessToken,
+      role,
+      permissions: permissionsFor(role),
       message: "Logged in successfully",
     });
   } catch (error) {
@@ -47,46 +50,30 @@ export const adminLogin = async (req, res) => {
   }
 };
 
-
+// Creates a staff account. Route is guarded by authorize("staff:manage"), so only admins reach it.
+// Does not log the new staff member in; the caller stays signed in as themselves.
 export const adminRegister = async (req, res) => {
-  const { username, email, password } = req.body;
+  const { username, email, password, role = "support" } = req.body;
 
-  console.log(req.body);
-
-  // Validate that all fields are provided
   if (!username || !email || !password) {
     return res.status(400).json({ message: "All fields must be filled" });
   }
+  if (!STAFF_ROLES.includes(role)) {
+    return res.status(400).json({ message: `Role must be one of: ${STAFF_ROLES.join(", ")}` });
+  }
 
   try {
-    // Hash the password for secure storage
     const hashedPassword = await bcrypt.hash(password, 10);
-    const values = [username, email, hashedPassword];
-    const queryInsert =
-      "INSERT INTO admin (adminname,email,password) VALUES (?, ?, ?)";
-
-    // Insert user into the database
-    pool.query(queryInsert, values, (error, result) => {
-      if (error) {
-        console.error("Database insert error:", error); // Log for debugging
-        return res
-          .status(500)
-          .json({ message: "Something went wrong while inserting the user" });
-      }
-
-      // Generate tokens using input data (if ID isn't required immediately)
-      const payload = { username: username, role: 1 };
-      const accessToken = generateAccessToken(payload);
-      const refreshToken = generateRefreshToken(payload);
-
-      // Set tokens in session
-      res.cookie('admin-access-token', accessToken, cookieConfig);
-      res.cookie('admin-refresh-token', refreshToken, cookieConfig);
-
-      return res.json({ message: "User registered successfully", token: accessToken });
-    });
+    await pool.promise().query(
+      "INSERT INTO admin (adminname, email, password, role) VALUES (?, ?, ?, ?)",
+      [username, email, hashedPassword, role]
+    );
+    return res.status(201).json({ message: "Staff account created", role });
   } catch (error) {
-    console.error("Error:", error.message); // Log for debugging
+    console.error("Error creating staff account:", error.message);
+    if (error.code === "ER_DUP_ENTRY") {
+      return res.status(400).json({ message: "Email or username already exists" });
+    }
     return res.status(500).json({ message: "Internal server error" });
   }
-}
+};

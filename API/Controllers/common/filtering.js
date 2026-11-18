@@ -97,19 +97,21 @@ export const advancedSearch = async (req, res) => {
 
         // On sale filter
         if (onSale === "true" || onSale === true) {
-            whereConditions.push(`s.price_discount IS NOT NULL AND s.price_discount > 0`);
+            whereConditions.push(`pm.promo_id IS NOT NULL`);
         }
 
+        // Ratings and the active promotion are always joined: the SELECT and sorting use them.
+        const ratingJoin = `
+            LEFT JOIN (
+                SELECT spec_id, AVG(rating) as avg_rating, COUNT(*) as review_count
+                FROM product_reviews
+                GROUP BY spec_id
+            ) pr ON s.spec_id = pr.spec_id
+            LEFT JOIN promotions pm ON pm.spec_id = s.spec_id AND CURDATE() BETWEEN DATE(pm.start_date) AND DATE(pm.end_date)
+        `;
+
         // Minimum rating filter
-        let ratingJoin = "";
         if (minRating !== null) {
-            ratingJoin = `
-                LEFT JOIN (
-                    SELECT spec_id, AVG(rating) as avg_rating, COUNT(*) as review_count
-                    FROM product_reviews
-                    GROUP BY spec_id
-                ) pr ON s.spec_id = pr.spec_id
-            `;
             whereConditions.push(`COALESCE(pr.avg_rating, 0) >= ?`);
             params.push(minRating);
         }
@@ -121,7 +123,7 @@ export const advancedSearch = async (req, res) => {
         } else if (sortBy === "price-desc") {
             orderClause = "s.price DESC";
         } else if (sortBy === "rating") {
-            orderClause = "COALESCE(pr.avg_rating, 0) DESC";
+            orderClause = "COALESCE(MAX(pr.avg_rating), 0) DESC";
         } else if (sortBy === "newest") {
             orderClause = "p.release_date DESC";
         } else if (sortBy === "name-asc") {
@@ -155,8 +157,8 @@ export const advancedSearch = async (req, res) => {
                 pv.color,
                 s.storage,
                 s.price,
-                s.price_discount,
-                ROUND(((s.price - s.price_discount) / s.price * 100), 0) as discount_percentage,
+                ROUND(s.price * (100 - MAX(pm.discount_percentage)) / 100, 2) AS price_discount,
+                MAX(pm.discount_percentage) AS discount_percentage,
                 s.processor,
                 s.ram,
                 s.camera,
@@ -164,8 +166,8 @@ export const advancedSearch = async (req, res) => {
                 GROUP_CONCAT(DISTINCT pi.image SEPARATOR ',') as images,
                 b.brand_name,
                 c.category_name,
-                COALESCE(pr.avg_rating, 0) as avg_rating,
-                COALESCE(pr.review_count, 0) as review_count,
+                COALESCE(MAX(pr.avg_rating), 0) as avg_rating,
+                COALESCE(MAX(pr.review_count), 0) as review_count,
                 (s.stock - COALESCE(s.reserved_stock, 0)) as available_stock
             FROM specifications s
             JOIN phone_variants pv ON s.phone_variant_id = pv.idphone_variants

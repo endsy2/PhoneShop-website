@@ -1,55 +1,32 @@
 import pool from "../../db/db_handle.js";
+import { cancelOrderById, ORDER_STATUSES } from "./cancelOrder.js";
 
 // Update order status
 export const updateOrderStatus = async (req, res) => {
     const { order_id } = req.params;
-    const { status } = req.body;
+    const status = String(req.body.status || "").toLowerCase();
 
-    try {
-        // First, check what the current status looks like in DB to understand the ENUM format
-        const [current] = await pool.promise().query(
-            `SELECT order_id, status FROM orders WHERE order_id = ?`,
-            [order_id]
-        );
-        
-        console.log('Current DB status:', current[0]);
-        console.log('Requested new status:', status);
-
-        // Get the ENUM column info to see exact allowed values
-        const [enumInfo] = await pool.promise().query(
-            `SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS 
-             WHERE TABLE_NAME = 'orders' AND COLUMN_NAME = 'status'`
-        );
-        console.log('DB ENUM definition:', enumInfo[0]?.COLUMN_TYPE);
-
-        const [result] = await pool.promise().query(
-            `UPDATE orders SET status = ? WHERE order_id = ?`,
-            [status, order_id]
-        );
-
-        console.log('Update result affectedRows:', result.affectedRows);
-
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ message: "Order not found" });
-        }
-
-        const [verify] = await pool.promise().query(
-            `SELECT order_id, status FROM orders WHERE order_id = ?`,
-            [order_id]
-        );
-        console.log('Status after update:', verify[0]);
-
-        return res.status(200).json({ 
-            message: "Order status updated successfully",
-            order_id,
-            new_status: verify[0]?.status
-        });
-    } catch (error) {
-        console.error("Error updating order status:", error.sqlMessage || error.message);
-        return res.status(500).json({ 
-            message: "Failed to update order status",
-            error: error.message,
-            sqlError: error.sqlMessage
-        });
+    if (!ORDER_STATUSES.includes(status)) {
+        return res.status(400).json({ message: `Status must be one of: ${ORDER_STATUSES.join(", ")}` });
     }
+
+    const [[order]] = await pool.promise().query(`SELECT status FROM orders WHERE order_id = ?`, [order_id]);
+    if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+    }
+
+    if (status === "canceled") {
+        await cancelOrderById(order_id); // also returns the items to stock
+    } else if (order.status === "canceled") {
+        // Its stock was already returned; reopening could sell stock that is gone. Place a new order instead.
+        return res.status(400).json({ message: "A canceled order can't be reopened" });
+    } else {
+        await pool.promise().query(`UPDATE orders SET status = ? WHERE order_id = ?`, [status, order_id]);
+    }
+
+    return res.status(200).json({
+        message: "Order status updated successfully",
+        order_id,
+        new_status: status
+    });
 };
