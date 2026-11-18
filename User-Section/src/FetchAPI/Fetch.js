@@ -1,50 +1,36 @@
 import axios from "axios";
+import { NETWORK_CONFIG } from "../network/Network_EndPoint";
 
-const API_URL_COMMON = "http://localhost:3000/common";
-const API_URL_USER = "http://localhost:3000/user";
+const API_URL_COMMON = `${NETWORK_CONFIG.apiBaseUrl}/common`;
+const API_URL_USER = `${NETWORK_CONFIG.apiBaseUrl}/user`;
 
 export const fetchUserInfo = async () => {
-    try {
-        const response = await axios.get(`${API_URL_USER}/userInfo`, {
-            withCredentials: true,
-        });
+    const response = await axios.get(`${API_URL_USER}/userInfo`, {
+        withCredentials: true,
+    });
 
-        return response.data;
-    } catch (error) {
-        console.log(error);
-        throw error;
-    }
+    return response.data;
 }
 
 export const updateUserInfo = async (formData) => {
-    try {
-        const response = await axios.put(`${API_URL_USER}/userInfo`, formData, {
-            withCredentials: true,
-            headers: {
-                "Content-Type": "multipart/form-data",
-            },
-        });
+    const response = await axios.put(`${API_URL_USER}/userInfo`, formData, {
+        withCredentials: true,
+        headers: {
+            "Content-Type": "multipart/form-data",
+        },
+    });
 
-        return response.data;
-    } catch (error) {
-        console.log(error);
-        throw error;
-    }
+    return response.data;
 }
 
 export const changePassword = async ({ oldPassword, newPassword }) => {
-    try {
-        const response = await axios.post(
-            `${API_URL_USER}/change-password`,
-            { oldPassword, newPassword },
-            { withCredentials: true }
-        );
+    const response = await axios.post(
+        `${API_URL_USER}/change-password`,
+        { oldPassword, newPassword },
+        { withCredentials: true }
+    );
 
-        return response.data;
-    } catch (error) {
-        console.log(error);
-        throw error;
-    }
+    return response.data;
 }
 
 export const fetchdataProduct = async () => {
@@ -52,7 +38,7 @@ export const fetchdataProduct = async () => {
         const response = await axios.get(`${API_URL_COMMON}/getAllProduct`)
         return response.data;
     } catch (error) {
-        console.log(error);
+      console.error(error);
     }
 }
 export const fetchProductByName = async ({ phone_name, phone_id }) => {
@@ -68,12 +54,10 @@ export const fetchProductByName = async ({ phone_name, phone_id }) => {
         }
 
         const response = await axios.get(`${API_URL_COMMON}/getProduct?${params.toString()}`)
-        // console.log({ phone_name });
 
         return response.data;
     } catch (error) {
-        console.log(error);
-
+      console.error(error);
     }
 }
 export const fetchProductDiscount = async () => {
@@ -82,7 +66,7 @@ export const fetchProductDiscount = async () => {
 
         return response.data;
     } catch (error) {
-        console.log(error);
+      console.error(error);
     }
 }
 export const fetchProductByDate = async () => {
@@ -90,8 +74,7 @@ export const fetchProductByDate = async () => {
         const response = await axios.get(`${API_URL_COMMON}/getAllProductbydate?date=6`);
         return response.data;
     } catch (error) {
-        console.log(error);
-
+      console.error(error);
     }
 }
 export const fetchCategory = async () => {
@@ -99,8 +82,7 @@ export const fetchCategory = async () => {
         const response = await axios.get(`${API_URL_COMMON}/category`);
         return response.data;
     } catch (error) {
-        console.log(error);
-
+      console.error(error);
     }
 }
 export const fetchBrand = async () => {
@@ -108,8 +90,7 @@ export const fetchBrand = async () => {
         const response = await axios.get(`${API_URL_COMMON}/brand`);
         return response.data;
     } catch (error) {
-        console.log(error);
-
+      console.error(error);
     }
 }
 
@@ -118,8 +99,7 @@ export const fetchSearchDataByName = async ({ phone_name }) => {
         const response = await axios.get(`${API_URL_COMMON}/getAllProductByName?phone_name=${phone_name}`)
         return response.data;
     } catch (error) {
-        console.log(error);
-
+      console.error(error);
     }
 }
 export const fetchProductByCategory = async ({ category }) => {
@@ -145,21 +125,15 @@ export const fetchProductBySpecID = async ({ spec_id }) => {
         const response = await axios.get(`${API_URL_COMMON}/getOneItemBySpecID?spec_id=${spec_id}`)
         return response.data;
     } catch (error) {
-        console.log(error);
-
+      console.error(error);
     }
 }
 export const fetchCheckOut = async (data) => {
-    try {
-        const response = await axios.post(`${API_URL_USER}/checkout`, data, {
-            headers: { 'Content-Type': 'application/json' },
-            withCredentials: true
-        });
-        return response;
-    } catch (error) {
-        // Re-throw with the full axios error so the caller can read error.response.data.message
-        throw error;
-    }
+    const response = await axios.post(`${API_URL_USER}/checkout`, data, {
+        headers: { 'Content-Type': 'application/json' },
+        withCredentials: true
+    });
+    return response;
 }
 
 // ─── Bakong KHQR Payment ──────────────────────────────────────────────────────

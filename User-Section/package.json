@@ -10,25 +10,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@chakra-ui/react": "^2.10.5",
-    "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.0",
     "@reduxjs/toolkit": "^2.5.0",
     "axios": "^1.7.9",
-    "dotenv": "^16.4.7",
-    "framer-motion": "^12.0.0",
-    "js-cookie": "^3.0.5",
     "qrcode.react": "^4.2.0",
     "react": "^18.3.1",
-    "react-cookie": "^7.2.2",
     "react-dom": "^18.3.1",
     "react-icons": "^5.3.0",
     "react-redux": "^9.2.0",
     "react-router-dom": "^6.4.5",
-    "react-slick": "^0.30.3",
-    "reactjs-popup": "^2.0.6",
-    "slick-carousel": "^1.8.1",
-    "user-section": "file:"
+    "reactjs-popup": "^2.0.6"
   },
   "devDependencies": {
     "@eslint/js": "^9.11.1",
@@ -39,6 +29,8 @@
     "eslint": "^9.11.1",
     "eslint-plugin-react": "^7.37.0",
     "eslint-plugin-react-hooks": "^5.1.0",
+    "eslint-plugin-react-refresh": "^0.4.26",
+    "globals": "^15.15.0",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.14",
     "vite": "^5.4.8"

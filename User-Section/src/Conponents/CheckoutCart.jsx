@@ -1,15 +1,16 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { fetchProductByName, fetchProductBySpecID } from '../FetchAPI/Fetch';
 import { useDispatch, useSelector } from 'react-redux';
 import { removeFromCart, syncCartItem } from '../store/cart';
-import { NETWORK_CONFIG } from '../network/Network_EndPoint';
+import ProductImage from '../Components/ProductImage';
+import Price from '../Components/Price';
 
 const CheckoutCart = ({ items }) => {
     const [data, setData] = useState([]);
     const [error, setError] = useState(null);
     const [invalid, setInvalid] = useState(false);
     const cart = useSelector(store => store.cart.items);
-    const [totalQuatity, setTotalQuantity] = useState();
+    const [, setTotalQuantity] = useState();
     const dispatch = useDispatch();
 
     const handleFetchData = useCallback(async () => {
@@ -73,60 +74,28 @@ const CheckoutCart = ({ items }) => {
 
     if (invalid) {
         return (
-            <div className="flex items-center justify-between py-2 opacity-50">
-                <p className="text-sm text-red-500 line-through">{items?.productName} — unavailable</p>
-                <button
-                    type="button"
-                    onClick={() => dispatch(removeFromCart({ productId: items.productId }))}
-                    className="text-xs text-red-500 underline ml-2"
-                >
+            <div className="flex items-center justify-between py-3 text-sm">
+                <p className="text-ink-3 line-through">{items?.productName}</p>
+                <button type="button" onClick={() => dispatch(removeFromCart({ productId: items.productId }))} className="text-[13px] text-danger underline underline-offset-2">
                     Remove
                 </button>
             </div>
         );
     }
+    if (error) return <p className="py-3 text-[13px] text-danger">{error}</p>;
+    if (!data.length) return <p className="py-3 text-[13px] text-ink-3">Checking price</p>;
 
+    const row = data[0];
     return (
-        <div className='my-3'>
-            {error && !invalid ? (
-                <p className="text-xs text-red-400">Error: {error}</p>
-            ) : (
-                <>
-                    {data.length > 0 ? (
-                        <div className="flex items-center justify-between py-2">
-                            {/* Product Image and Name */}
-                            <div className="flex items-center w-[175px] gap-2">
-                                <img
-                                    src={`${NETWORK_CONFIG.apiBaseUrl}/${data[0].images?.split(',')[0]?.trim()?.replace(/uploads[\\/]/g, '')?.replace(/\s+/g, '')}`}
-                                    className="w-12 h-12 object-cover"
-                                    alt={data[0]?.name || "Product"}
-                                    onError={(e) => { e.target.src = "https://via.placeholder.com/48x48?text=No+Image"; }}
-                                />
-                                <p className="text-sm">{data[0]?.name}</p>
-                            </div>
-
-                            {/* Quantity */}
-                            <div className="text-center flex-shrink-0 w-12">
-                                <p className="text-sm">{items?.quantity}</p>
-                            </div>
-
-                            {/* Price */}
-                            <div className="flex flex-col items-end w-24">
-                                {data[0].price_discount ? (
-                                    <div className='flex items-center gap-5'>
-                                        <s className="text-gray-500 text-xs">{data[0]?.price}</s>
-                                        <p className="text-sm">{data[0]?.price_discount}</p>
-                                    </div>
-                                ) : (
-                                    <p className="text-sm">{items?.price}</p>
-                                )}
-                            </div>
-                        </div>
-                    ) : (
-                        <p className="text-sm text-gray-400">Loading...</p>
-                    )}
-                </>
-            )}
+        <div className="flex items-center gap-3 py-3">
+            <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md bg-raised">
+                <ProductImage src={row.images} alt={row.name} className="h-full w-full p-1" />
+            </div>
+            <div className="min-w-0 flex-1">
+                <p className="truncate text-sm text-ink">{row.name}</p>
+                <p className="price text-xs text-ink-3">Qty {items?.quantity}</p>
+            </div>
+            <Price size="sm" price={row.price_discount || row.price || items?.price} original={row.price_discount ? row.price : null} className="justify-end" />
         </div>
     );
 };

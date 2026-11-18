@@ -1,453 +1,212 @@
-import React, { useEffect, useRef } from "react";
-import { logo, menu, buy, favorite_packages, compare } from "../Assets/image";
-import { Link, NavLink } from "react-router-dom";
-import { IoIosNotifications } from "react-icons/io";
+import { useEffect, useState } from "react";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { FiBell, FiHeart, FiMenu, FiSearch, FiShoppingBag, FiX } from "react-icons/fi";
 import Popup from "reactjs-popup";
-import NotificationCard from "./Notification_Card";
-import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-// import store from "../../store/store";
-import { nav_icon } from "../../Constants";
+import { logo } from "../Assets/image";
+import NotificationCard from "./Notification_Card";
 import { toggleStatusTab } from "../../store/cart";
 import { fetchUserInfo } from "../../FetchAPI/Fetch";
 import { NETWORK_CONFIG } from "../../network/Network_EndPoint";
 
-const Navbar = ({ token, onLogin, onLogout }) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [totalQuatity, setTotalQuantity] = useState(0);
+const LINKS = [
+  { label: "Home", to: "/" },
+  { label: "New arrivals", to: "/AfterHomePage?page=NEW ARRIVAL" },
+  { label: "All products", to: "/AfterHomePage?page=PRODUCT" },
+  { label: "Deals", to: "/AfterHomePage?page=DISCOUNT" },
+  { label: "Compare", to: "/compare-product" },
+];
+
+const emptyProfile = { username: "", email: "", profile_picture: "" };
+
+const Avatar = ({ src, initial, size = "h-8 w-8" }) =>
+  src ? (
+    <img src={src} alt="" className={`${size} rounded-full object-cover`} />
+  ) : (
+    <span className={`${size} flex items-center justify-center rounded-full bg-raised text-sm font-medium text-ink-2`}>
+      {initial}
+    </span>
+  );
+
+const Navbar = ({ token, onLogout }) => {
   const cart = useSelector((store) => store.cart.items);
   const dispatch = useDispatch();
-  const [toggleMenu, setToggleMenu] = useState(false);
-  const [searchData, setSearchData] = useState("");
-  const [profile, setProfile] = useState({ username: "", email: "", address: "", phone_number: "", profile_picture: "" });
+  const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [profile, setProfile] = useState(emptyProfile);
 
-  // Create a reference to the footer
-  const footerRef = useRef(null);
+  const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
 
-
-  const handleSearchChange = (e) => {
-    setSearchData(e.target.value);
+  const submitSearch = (event) => {
+    event.preventDefault();
+    if (!query.trim()) return;
+    setMenuOpen(false);
+    navigate(`/Search?productName=${encodeURIComponent(query.trim())}`);
   };
 
-  // Handle search click or press enter
-  const handleSearchSubmit = () => {
-    if (searchData.trim()) {
-      // Navigate to search results page with the query
-      setToggleMenu(false); // Close the mobile menu after search
-      window.location.href = `Search?productName=${searchData}`;
-    }
+  const scrollToContact = (event) => {
+    event.preventDefault();
+    setMenuOpen(false);
+    document.getElementById("contact")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
-  // Scroll to footer when "Contact Us" link is clicked
-  const scrollToFooter = () => {
-    if (footerRef.current) {
-      footerRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-    } else {
-      console.log("Footer reference is not set properly.");
-    }
-  };
+
   useEffect(() => {
     if (!token) {
-      onLogin;
+      setProfile(emptyProfile);
+      return;
     }
-    let total = 0;
-    cart.forEach((item) => (total += item.quantity));
-    setTotalQuantity(total);
-  }, [token, onLogin, cart]);
-
-  // Scroll to the footer when the "Contact" link is clicked
-
-  const handleOpenTabCart = () => {
-    dispatch(toggleStatusTab()); // Dispatch the action to open the cart tab
-  };
-
-  useEffect(() => {
-    const loadProfile = async () => {
-      if (!token) {
-        setProfile({ username: "", email: "", address: "", phone_number: "", profile_picture: "" });
-        return;
-      }
-
-      try {
-        const response = await fetchUserInfo();
-        const userData = response?.data?.[0] || {};
-        setProfile({
-          username: userData.username || "",
-          email: userData.email || "",
-          address: userData.address || "",
-          phone_number: userData.phone_number || "",
-          profile_picture: userData.profile_picture || "",
-        });
-      } catch (error) {
-        setProfile({ username: "", email: "", address: "", phone_number: "", profile_picture: "" });
-      }
-    };
-
-    loadProfile();
+    fetchUserInfo()
+      .then((response) => {
+        const user = response?.data?.[0] || {};
+        setProfile({ username: user.username || "", email: user.email || "", profile_picture: user.profile_picture || "" });
+      })
+      .catch(() => setProfile(emptyProfile));
   }, [token]);
 
-  const avatarInitial = (profile.username || profile.email || "U").trim().charAt(0).toUpperCase();
-  const profileImageSrc = profile.profile_picture ? `${NETWORK_CONFIG.apiBaseUrl}/${profile.profile_picture}` : "";
+  const initial = (profile.username || profile.email || "U").trim().charAt(0).toUpperCase();
+  const avatarSrc = profile.profile_picture ? `${NETWORK_CONFIG.apiBaseUrl}/${profile.profile_picture}` : "";
+
+  const searchForm = (
+    <form onSubmit={submitSearch} className="relative w-full" role="search">
+      <FiSearch size={16} strokeWidth={1.5} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" />
+      <input
+        type="search"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Search phones, watches, accessories"
+        aria-label="Search"
+        className="input pl-9"
+      />
+    </form>
+  );
 
   return (
-    <nav className="bg-white shadow-md">
-      <div className="w-full max-w-7xl px-5 mx-auto">
-        <div className="flex justify-between items-center h-20">
-          {/* Logo and Name */}
-          <div className="flex items-center">
-            <Link to="/">
-              <img src={logo} alt="Phone Shop Logo" className="h-10 md:h-12 lg:h-14 w-auto" />
-            </Link>
-            {/* <Link to="/">             
-                <span className="text-green-600 text-4xl font-bold ml-2 font-poppins tracking-wider">
-                  Genius Store
-                </span>
-            </Link> */}
-          </div>
+    <div className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur">
+      <div className="page-container flex h-16 items-center gap-6">
+        <Link to="/" className="shrink-0" aria-label="Genius Store home">
+          <img src={logo} alt="Genius Store" className="h-9 w-auto" />
+        </Link>
 
-          {/* Search Bar */}
-          <div className="relative flex-1 mx-8 max-lg:hidden">
-            <input
-              type="text"
-              placeholder="Search"
-              className="w-full pl-10 pr-28 py-2 border border-gray-300 rounded-full focus:outline-none "
-              onChange={handleSearchChange}
-              style={{ borderRadius: "8px" }}
-            />
-            <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-              🔍
-            </span>
-            <button
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-green-600 text-white px-4 py-1 rounded"
-              style={{ borderRadius: "4px" }}
-              onClick={handleSearchSubmit}
+        <div className="hidden max-w-xl flex-1 lg:block">{searchForm}</div>
+
+        <div className="ml-auto flex items-center gap-1">
+          <NavLink to="/add-to-favorite" className="icon-btn" aria-label="Favorites">
+            <FiHeart size={18} strokeWidth={1.5} />
+          </NavLink>
+          <button type="button" onClick={() => dispatch(toggleStatusTab())} className="icon-btn relative w-auto gap-1.5 px-2" aria-label={`Cart, ${cartCount} items`}>
+            <FiShoppingBag size={18} strokeWidth={1.5} />
+            <span className="price text-[13px] text-ink">{cartCount}</span>
+          </button>
+
+          {token && (
+            <Popup
+              trigger={
+                <button type="button" className="icon-btn" aria-label="Notifications">
+                  <FiBell size={18} strokeWidth={1.5} />
+                </button>
+              }
+              position="bottom right"
+              arrow={false}
+              closeOnDocumentClick
             >
-              SEARCH
-            </button>
-          </div>
+              <NotificationCard />
+            </Popup>
+          )}
 
-          {/* Account Btn */}
-          <div className="flex items-center space-x-6">
-            {nav_icon.map((element) =>
-              element.label === "AddToCart" ? (
-                <div
-                  key={element.label}
-                  className="w-12 h-12 rounded-full flex justify-center items-center relative"
-                  onClick={() => handleOpenTabCart()} // Add onClick event
-                >
-                  <img src={element.img} alt={element.label} className="w-8" />
-                  <span className="absolute font-bold bottom-1 right-1 text-white bg-red-600 text-xs w-4 h-4 rounded-full flex justify-center items-center">
-                    {totalQuatity}
-                  </span>
-                </div>
-              ) : (
-                <NavLink key={element.label} to={element.href}>
-
-                  <img
-                    src={element.img}
-                    alt={element.label}
-                    className={`w-8 md:block  `}
-                  />
-                </NavLink>
-              )
-            )}
-            {token ? (
-              <Popup
-                trigger={
-                  <button type="button" className="flex items-center gap-2 rounded-full px-2 py-1 hover:bg-gray-100">
-                    {profileImageSrc ? (
-                      <img
-                        src={profileImageSrc}
-                        alt="Profile"
-                        className="h-9 w-9 rounded-full object-cover border border-green-500"
-                      />
-                    ) : (
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-green-600 text-sm font-bold text-white overflow-hidden">
-                        {avatarInitial}
-                      </div>
-                    )}
-                    <div className="hidden min-[1100px]:block text-left leading-tight">
-                      <p className="text-sm font-semibold text-gray-800">
-                        {profile.username || "My Profile"}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {profile.email || "View account details"}
-                      </p>
-                    </div>
-                  </button>
-                }
-                position="bottom right"
-                arrow={false}
-                closeOnDocumentClick
-              >
-                <div className="w-72 rounded-xl bg-white p-4 shadow-lg border border-gray-100">
-                  <div className="flex items-center gap-3">
-                    {profileImageSrc ? (
-                      <img
-                        src={profileImageSrc}
-                        alt="Profile"
-                        className="h-12 w-12 rounded-full object-cover border border-green-500"
-                      />
-                    ) : (
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-600 text-base font-bold text-white">
-                        {avatarInitial}
-                      </div>
-                    )}
-                    <div>
-                      <p className="font-semibold text-gray-900">
-                        {profile.username || "User"}
-                      </p>
-                      <p className="text-sm text-gray-500">{profile.email || "No email found"}</p>
-                    </div>
-                  </div>
-                  <div className="mt-4 flex items-center gap-2">
-                    <Link
-                      to="user-profile"
-                      className="flex-1 rounded-lg bg-green-600 px-3 py-2 text-center text-sm font-medium text-white hover:bg-green-700"
-                    >
-                      View Profile
-                    </Link>
+          {token ? (
+            <Popup
+              trigger={
+                <button type="button" className="ml-2 flex items-center gap-2 rounded-lg py-1 pl-1 pr-2 transition-colors duration-150 ease-out hover:bg-raised">
+                  <Avatar src={avatarSrc} initial={initial} />
+                  <span className="hidden max-w-[140px] truncate text-sm text-ink xl:block">{profile.username || "Account"}</span>
+                </button>
+              }
+              position="bottom right"
+              arrow={false}
+              closeOnDocumentClick
+            >
+              <div className="card mt-2 w-64 p-2 shadow-float">
+                <div className="flex items-center gap-3 px-2 py-2">
+                  <Avatar src={avatarSrc} initial={initial} size="h-10 w-10" />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-ink">{profile.username || "Account"}</p>
+                    <p className="truncate text-[13px] text-ink-3">{profile.email}</p>
                   </div>
                 </div>
-              </Popup>
-
-            ) : ''}
-
-            {/* Conditional Rendering Based on Token */}
-            {token ? (
-              // Show Notification Pop-up and Logout Button if token exists
-              <div className="flex items-center justify-center space-x-4">
-                <Popup
-                  trigger={
-                    <div className="cursor-pointer">
-                      <IoIosNotifications size={24} />
-                    </div>
-                  }
-                  position="bottom center"
-                  arrow={true}
-                  closeOnDocumentClick
-                >
-                  {/* Popup Content */}
-                  <NotificationCard />
-                </Popup>
-
-                <button
-                  onClick={onLogout}
-                  className="bg-red-600 text-white px-4 py-2 rounded-full max-lg:hidden"
-                  style={{ borderRadius: "8px" }}
-                >
-                  Log Out
-                </button>
-
-                {/* Hamburger Button (Mobile) */}
-                <div className="flex justify-center items-center">
-                  <button
-                    className="flex items-center justify-center lg:hidden "
-                    onClick={() => setToggleMenu(!toggleMenu)}
-                    aria-label="Toggle menu"
-                  >
-                    <img src={menu} alt="Menu button" className="w-7" />
-                  </button>
-                </div>
-              </div>
-
-            ) : (
-              // Show Login and Sign Up Buttons if no token exists
-              <div className="flex justify-center items-center gap-3 ">
-                <Link to="/auth/login">
-                  <button
-                    className="bg-gray-200 text-gray-800 px-6 py-2 rounded-full hidden lg:block"
-                    style={{ borderRadius: "8px" }}
-                  >
-                    Log In
-                  </button>
-                </Link>
-                <NavLink to="/auth/signup">
-                  <button
-                    className="bg-green-600 text-white px-6 py-2 rounded-full hidden lg:block"
-                    style={{ borderRadius: "8px" }}
-                  >
-                    Sign Up
-                  </button>
-                </NavLink>
-
-                {/* Hamburger Button (Mobile) */}
-                <button
-                  className="flex items-center justify-center lg:hidden"
-                  onClick={() => setToggleMenu(!toggleMenu)}
-                  aria-label="Toggle menu"
-                >
-                  <img src={menu} alt="Menu button" className="w-7" />
+                <div className="my-1 h-px bg-line" />
+                <Link to="/user-profile" className="flex h-9 items-center rounded-lg px-2 text-sm text-ink hover:bg-raised">Profile</Link>
+                <Link to="/myorder" className="flex h-9 items-center rounded-lg px-2 text-sm text-ink hover:bg-raised">My orders</Link>
+                <button type="button" onClick={onLogout} className="flex h-9 w-full items-center rounded-lg px-2 text-sm text-danger hover:bg-danger-soft">
+                  Log out
                 </button>
               </div>
+            </Popup>
+          ) : (
+            <div className="ml-2 hidden items-center gap-1 lg:flex">
+              <Link to="/auth/login" className="btn btn-ghost btn-sm">Log in</Link>
+              <Link to="/auth/signup" className="btn btn-dark btn-sm">Sign up</Link>
+            </div>
+          )}
 
-
-            )}
-
-          </div>
+          <button type="button" className="icon-btn lg:hidden" onClick={() => setMenuOpen(true)} aria-label="Open menu">
+            <FiMenu size={18} strokeWidth={1.5} />
+          </button>
         </div>
       </div>
 
-      {/* Mobile Menu Icon */}
-
-
-      {/* Navigation Links */}
-      <div className="bg-green-600 max-lg:hidden">
-        <div className="flex justify-center space-x-32 py-3 text-white">
-          <Link to="/">
-            <span className="hover:text-gray-200">HOME</span>
-          </Link>
-          <Link
-            to={`/AfterHomePage?page=NEW ARRIVAL`}
-            className="hover:text-gray-200"
-          >
-            NEW ARRIVAL
-          </Link>
-          <Link
-            to={`/AfterHomePage?page=PRODUCT`}
-            className="hover:text-gray-200"
-          >
-            PRODUCT
-          </Link>
-          <Link
-            to={`/AfterHomePage?page=DISCOUNT`}
-            className="hover:text-gray-200"
-          >
-            DISCOUNT
-          </Link>
-          <a
-            onClick={scrollToFooter}
-            className="cursor-pointer hover:text-gray-200"
-            href="#contact"
-          >
-            CONTACT US
+      <nav className="hidden border-t border-line lg:block">
+        <div className="page-container flex h-11 items-center gap-6">
+          {LINKS.map((link) => (
+            <Link key={link.label} to={link.to} className="text-sm text-ink-2 transition-colors duration-150 ease-out hover:text-ink">
+              {link.label}
+            </Link>
+          ))}
+          <a href="#contact" onClick={scrollToContact} className="text-sm text-ink-2 transition-colors duration-150 ease-out hover:text-ink">
+            Contact
           </a>
-          <Link
-            to="/compare-product"
-            className="hover:text-gray-200"
-          >
-            COMPARE
-          </Link>
         </div>
-      </div>
+      </nav>
 
-      {/* Mobile Navigation */}
-        <div
-          className={`fixed inset-0 z-40 flex flex-col bg-gray-800 bg-opacity-50 lg:hidden transition-transform transform ${toggleMenu ? "translate-x-0" : "-translate-x-full"}`}
-        onClick={() => setToggleMenu(false)} // Close menu on overlay click
+      {/* Mobile menu */}
+      <div
+        className={`fixed inset-0 z-40 bg-ink/30 transition-opacity duration-200 ease-out lg:hidden ${menuOpen ? "opacity-100" : "pointer-events-none opacity-0"}`}
+        onClick={() => setMenuOpen(false)}
       >
         <div
-          className="w-80 bg-white h-full shadow-lg overflow-y-auto"
-          onClick={(e) => e.stopPropagation()} // Prevent closing on content click
+          className={`h-full w-80 max-w-[85vw] bg-surface p-4 transition-transform duration-300 ease-out ${menuOpen ? "translate-x-0" : "-translate-x-full"}`}
+          onClick={(e) => e.stopPropagation()}
         >
-          {/* Navigation Links */}
-          <div className="text-green-600  p-6">
-            <div className="flex flex-col space-y-4 text-green-600  text-lg" onClick={() => setToggleMenu(false)}>
-              <Link to="/" className="hover:text-green-700 hover:border-b-2 duration-400 border-green-600">
-
-                HOME
-              </Link>
-              <Link to={`/AfterHomePage?page=NEW ARRIVAL`} className="hover:text-green-700 hover:border-b-2 duration-400 border-green-600 ">
-                NEW ARRIVAL
-              </Link>
-              <Link to={`/AfterHomePage?page=PRODUCT`} className="hover:text-green-700 hover:border-b-2 duration-400 border-green-600 ">
-                PRODUCT
-              </Link>
-              <Link to={`/AfterHomePage?page=DISCOUNT`} className="hover:text-green-700 hover:border-b-2 duration-400 border-green-600">
-                DISCOUNT
-              </Link>
-
-              <a
-                onClick={scrollToFooter}
-                className="cursor-pointer hover:text-green-700 hover:border-b-2 duration-400 border-green-600"
-                href="#contact"
-              >
-                CONTACT US
-              </a>
-
-              <Link to="/compare-product" className="hover:text-green-700 hover:border-b-2 duration-400 border-green-600">
-                COMPARE
-              </Link>
-            </div>
-          </div>
-
-          {/* Search Bar */}
-          <div className="relative mx-6 mt-8 mb-6">
-            <input
-              type="text"
-              placeholder="Search"
-              className="w-full pl-10 pr-28 py-2 border border-gray-300 rounded-full focus:outline-none"
-              onChange={handleSearchChange}
-              style={{ borderRadius: "8px" }}
-            />
-            <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-              🔍
-            </span>
-            <button
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-green-600 text-white px-4 py-1 rounded"
-              style={{ borderRadius: "4px" }}
-              onClick={handleSearchSubmit}
-            >
-              SEARCH
+          <div className="mb-4 flex items-center justify-between">
+            <img src={logo} alt="Genius Store" className="h-8 w-auto" />
+            <button type="button" className="icon-btn" onClick={() => setMenuOpen(false)} aria-label="Close menu">
+              <FiX size={18} strokeWidth={1.5} />
             </button>
           </div>
-
-          {/* Log Out Button */}
-          {token ?
-            <div className="flex justify-center mt-6">
-              <button
-                onClick={onLogout}
-                className="bg-red-600 text-white px-6 py-2 w-full rounded-full"
-                style={{ borderRadius: "8px" }}
-                to='/'
-
-              >
-                Log Out
-              </button>
-            </div>
-            :
-            <div className="flex justify-center items-center gap-3 ">
-              <Link to="/auth/login">
-                <button
-                  className="bg-gray-200 text-gray-800 px-6 py-2 rounded-full "
-                  style={{ borderRadius: "8px" }}
-                >
-                  Log In
-                </button>
+          {searchForm}
+          <div className="mt-4 flex flex-col">
+            {LINKS.map((link) => (
+              <Link key={link.label} to={link.to} onClick={() => setMenuOpen(false)} className="flex h-10 items-center rounded-lg px-2 text-[15px] text-ink hover:bg-raised">
+                {link.label}
               </Link>
-              <NavLink to="/auth/signup">
-                <button
-                  className="bg-green-600 text-white px-6 py-2 rounded-full "
-                  style={{ borderRadius: "8px" }}
-                >
-                  Sign Up
-                </button>
-              </NavLink>
-            </div>
-
-          }
+            ))}
+            <a href="#contact" onClick={scrollToContact} className="flex h-10 items-center rounded-lg px-2 text-[15px] text-ink hover:bg-raised">
+              Contact
+            </a>
+          </div>
+          <div className="mt-6 border-t border-line pt-4">
+            {token ? (
+              <button type="button" onClick={onLogout} className="btn btn-danger w-full">Log out</button>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                <Link to="/auth/login" className="btn btn-secondary">Log in</Link>
+                <Link to="/auth/signup" className="btn btn-dark">Sign up</Link>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-
-
-      {/* Mobile Dropdown Menu */}
-      {isMenuOpen && (
-        <div className="bg-white shadow-md md:hidden">
-          <div className="flex flex-row items-center justify-center gap-8 pb-4">
-            <Link to="/">
-              <button className="relative">
-                <span role="img" aria-label="cart">
-                  <img src={buy} alt="buy_cart" className="w-[30px] h-auto" />
-                </span>
-              </button>
-            </Link>
-            {/* Other buttons here */}
-            <button onClick={scrollToFooter} className="text-gray-800 mb-2">
-              CONTACT US
-            </button>
-          </div>
-        </div>
-      )}
-    </nav>
+    </div>
   );
 };
 

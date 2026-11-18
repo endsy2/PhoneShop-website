@@ -1,103 +1,76 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { fetchBrand, fetchCategory, fetchSearchDataByName } from "../../FetchAPI/Fetch";
 import ProductCard from "./ProductCard";
 import Card from "./Card";
 
 const Search = () => {
-  const search = window.location.search;
-  const params = new URLSearchParams(search);
-  const productName = params.get("productName");
-
-  const [brand, setBrand] = useState([]);
-  const [data, setData] = useState([]);
-  const [category, setCategory] = useState([]);
-
-  const handleFetchCategory = async () => {
-    try {
-      const response = await fetchCategory();
-      setCategory(response.data);
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-    }
-  };
-
-  const handleSearch = useCallback(async () => {
-    try {
-      const response = await fetchSearchDataByName({ phone_name: productName });
-      setData(response.data);
-    } catch (error) {
-      console.error(error);
-    }
-  }, [productName]);
-
-  const handleFetchBrand = async () => {
-    try {
-      const response = await fetchBrand();
-      setBrand(response.data);
-    } catch (error) {
-      console.error("Error fetching brands:", error);
-    }
-  };
+  const [params] = useSearchParams();
+  const productName = params.get("productName") || "";
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState([]);
+  const [brands, setBrands] = useState([]);
 
   useEffect(() => {
-    if (productName) {
-      handleSearch();
-    }
-    handleFetchCategory();
-    handleFetchBrand();
-  }, [handleSearch, productName]);
+    setLoading(true);
+    (productName ? fetchSearchDataByName({ phone_name: productName }) : Promise.resolve({ data: [] }))
+      .then((response) => setResults(response?.data || []))
+      .catch((error) => console.error(error))
+      .finally(() => setLoading(false));
+  }, [productName]);
+
+  useEffect(() => {
+    fetchCategory().then((r) => setCategories(r?.data || [])).catch((e) => console.error(e));
+    fetchBrand().then((r) => setBrands(r?.data || [])).catch((e) => console.error(e));
+  }, []);
 
   return (
-    <div className="p-8  min-h-screen">
-      <div className="container mx-auto">
-        {/* Header */}
+    <div className="page-container pt-8">
+      <p className="text-sm text-ink-3">Search results</p>
+      <h1 className="mt-1 text-3xl tracking-[-0.01em]">&ldquo;{productName}&rdquo;</h1>
 
-        <div className="flex flex-wrap lg:flex-nowrap gap-12">
-          {/* Categories Section */}
-          <div className="flex flex-col  bg-white shadow-lg rounded-lg p-6 w-full lg:w-1/4">
-            <h2 className="text-2xl font-bold mb-6 ">Categories</h2>
-            <div className="flex flex-col gap-4">
-              {category.length > 0 ? (
-                category.map((element, index) => (
-                  <Card key={index} data={element} page="Categories" />
-                ))
-              ) : (
-                <p className="text-gray-500">No categories available.</p>
-              )}
-            </div>
+      <div className="mt-8 grid gap-10 lg:grid-cols-[220px_1fr]">
+        <aside>
+          <h2 className="text-sm font-medium">Categories</h2>
+          <div className="mt-3 flex flex-col gap-2">
+            {categories.map((element) => (
+              <Card key={element.category_name} data={element} page="Categories" />
+            ))}
           </div>
+        </aside>
 
-          {/* Products Section */}
-          <div className="flex-1 bg-white shadow-lg rounded-lg p-6">
-            <h2 className="text-2xl font-bold mb-6 text-green-600">
-              Results for "{productName || "All Products"}"
-            </h2>
-            {data.length === 0 ? (
-              <p className="text-gray-500">No products found for "{productName}"</p>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                {data.map((element) => (
-                  <ProductCard key={element.phone_id || element.id} product={element} />
+        <section>
+          {loading ? (
+            <p className="py-16 text-center text-sm text-ink-3">Searching</p>
+          ) : results.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-line-strong px-6 py-16 text-center">
+              <p className="text-sm text-ink">No products match &ldquo;{productName}&rdquo;</p>
+              <p className="mt-1 text-[13px] text-ink-3">Try a shorter name, or browse a category or brand</p>
+            </div>
+          ) : (
+            <>
+              <p className="price mb-4 text-sm text-ink-3">{results.length} products</p>
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
+                {results.map((element) => (
+                  <ProductCard key={`${element.phone_id}-${element.spec_id || ""}`} product={element} />
                 ))}
               </div>
-            )}
-          </div>
-        </div>
-
-        {/* Popular Brands Section */}
-        <div className="mt-12 bg-white shadow-lg rounded-lg p-6">
-          <h2 className="text-3xl font-bold mb-6 ">Popular Brands</h2>
-          <div className="flex flex-wrap gap-6">
-            {brand.length > 0 ? (
-              brand.map((element, index) => (
-                <Card key={index} data={element} page="Brands" />
-              ))
-            ) : (
-              <p className="text-gray-500">No brands available.</p>
-            )}
-          </div>
-        </div>
+            </>
+          )}
+        </section>
       </div>
+
+      {brands.length > 0 && (
+        <section className="mt-16">
+          <h2 className="section-title mb-5">Brands</h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+            {brands.map((element) => (
+              <Card key={element.brand_name} data={element} page="Brands" />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 };

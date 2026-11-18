@@ -1,158 +1,111 @@
-import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
+import { FiColumns, FiX } from "react-icons/fi";
 import { clearCompare, removeFromCompare } from "../../store/compare";
-import { NETWORK_CONFIG } from "../../network/Network_EndPoint";
+import Price from "../../Components/Price";
+import ProductImage from "../../Components/ProductImage";
 
 const compareFields = [
-  { label: "Color", key: "color" },
+  { label: "Colour", key: "color" },
   { label: "Storage", key: "storage" },
+  { label: "RAM", key: "ram" },
   { label: "Display", key: "screen_size" },
+  { label: "Processor", key: "processor" },
   { label: "Battery", key: "battery" },
   { label: "Camera", key: "camera" },
-  { label: "Processor", key: "processor" },
-  { label: "RAM", key: "ram" },
-  { label: "Release Date", key: "release_date" },
+  { label: "Released", key: "release_date" },
 ];
 
-const imageUrlFromProduct = (product) => {
-  const imagePath = (product?.images || "").split(",")[0] || "";
-  if (!imagePath) return "";
-  return `${NETWORK_CONFIG.apiBaseUrl}/${imagePath.trim().replace(/uploads[\\/]/g, "").replace(/\s+/g, "")}`;
-};
-
-const formatValue = (value, fieldKey) => {
-  if (!value) {
-    return "-";
-  }
-
-  if (fieldKey === "release_date") {
+const formatValue = (value, key) => {
+  if (!value) return "—";
+  if (key === "release_date") {
     const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString();
+    return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString("en-GB", { month: "short", year: "numeric" });
   }
-
   return value;
 };
 
-const getEffectivePrice = (item) => Number(item?.price_discount ?? item?.price ?? Infinity);
+const effectivePrice = (item) => Number(item?.price_discount ?? item?.price ?? Infinity);
 
 const Compare = () => {
   const dispatch = useDispatch();
-  const compareItems = useSelector((store) => store.compare.compareItems);
+  const items = useSelector((store) => store.compare.compareItems);
 
-  const bestValuePhoneId = compareItems.reduce((bestId, item) => {
-    if (!bestId) {
-      return item.phone_id;
-    }
+  if (items.length === 0) {
+    return (
+      <div className="page-container flex flex-col items-center py-24 text-center">
+        <FiColumns size={28} strokeWidth={1.5} className="text-ink-3" />
+        <h1 className="mt-4 text-xl">Nothing to compare yet</h1>
+        <p className="mt-1 text-sm text-ink-2">Use the compare button on a product page to add phones here</p>
+        <Link to="/AfterHomePage?page=PRODUCT" className="btn btn-dark mt-6">Browse products</Link>
+      </div>
+    );
+  }
 
-    const currentBest = compareItems.find((product) => product.phone_id === bestId);
-    return getEffectivePrice(item) < getEffectivePrice(currentBest) ? item.phone_id : bestId;
-  }, null);
-
-  const differingFieldKeys = new Set(
-    compareFields
-      .filter((field) => {
-        const uniqueValues = new Set(
-          compareItems.map((item) => String(formatValue(item[field.key], field.key)))
-        );
-        return uniqueValues.size > 1;
-      })
-      .map((field) => field.key)
-  );
+  const cheapestId = items.reduce((best, item) => (!best || effectivePrice(item) < effectivePrice(best) ? item : best), null)?.phone_id;
+  const differs = (key) => new Set(items.map((item) => String(formatValue(item[key], key)))).size > 1;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-white to-white px-3 py-6 sm:px-6 md:px-10">
-          <div className="mx-auto max-w-7xl">
-            {compareItems.length > 0 ? (
-              <>
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-100 bg-emerald-50 p-3">
-                <p className="text-sm font-semibold text-emerald-800">
-                  Best value is highlighted in green. Different specifications are highlighted in yellow.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => dispatch(clearCompare())}
-                  className="rounded-full bg-white px-4 py-2 text-xs font-bold text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
-                >
-                  Clear Compare
-                </button>
-              </div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 sm:gap-4 md:gap-6 justify-items-center">
-                {compareItems.map((item) => (
-                  <div key={item.phone_id} className={`w-full max-w-[340px] sm:max-w-[360px] rounded-2xl border bg-white p-3 sm:p-4 shadow-sm hover:shadow-md transition-shadow ${item.phone_id === bestValuePhoneId ? "border-emerald-400 ring-2 ring-emerald-200" : "border-slate-300"}`}>
-                    <div className="mb-4 flex flex-col sm:flex-row sm:items-start sm:justify-between sm:gap-3 gap-2">
-                      <h2 className="text-lg sm:text-xl md:text-2xl font-extrabold text-slate-900 line-clamp-2">
-                        {item.name || "Unknown product"}
-                      </h2>
-                      {item.phone_id === bestValuePhoneId ? (
-                        <span className="rounded-full bg-emerald-100 px-2 py-1 text-[11px] font-bold text-emerald-700">
-                          Best Value
-                        </span>
-                      ) : null}
-                      <button
-                        type="button"
-                        onClick={() => dispatch(removeFromCompare({ productId: item.phone_id }))}
-                        className="whitespace-nowrap rounded-full bg-red-50 px-2 sm:px-3 py-1 text-xs font-semibold text-red-600 hover:bg-red-100 transition-colors self-start sm:self-auto"
-                      >
-                        Remove
-                      </button>
-                    </div>
+    <div className="page-container pt-8">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-3xl tracking-[-0.01em]">Compare</h1>
+          <p className="mt-1 text-sm text-ink-3">Rows where the phones differ are shown in full colour</p>
+        </div>
+        <button type="button" onClick={() => dispatch(clearCompare())} className="btn btn-ghost btn-sm">Clear all</button>
+      </div>
 
-                    <Link
-                      to={`/product-detail?phone_id=${item.phone_id}&phone_name=${encodeURIComponent(item.name || "")}`}
-                      className="block"
+      <div className="mt-8 overflow-x-auto">
+        <table className="w-full min-w-[640px] table-fixed border-collapse text-sm">
+          <thead>
+            <tr>
+              <th className="w-36" />
+              {items.map((item) => (
+                <th key={item.phone_id} className="px-3 pb-4 text-left align-top font-normal">
+                  <div className="relative rounded-xl border border-line bg-surface p-3">
+                    <button
+                      type="button"
+                      onClick={() => dispatch(removeFromCompare({ productId: item.phone_id }))}
+                      className="icon-btn absolute right-2 top-2 h-7 w-7"
+                      aria-label={`Remove ${item.name}`}
                     >
-                      <div className="flex h-56 sm:h-64 justify-center rounded-xl border border-slate-300 bg-white p-2 sm:p-3 shadow-sm overflow-hidden">
-                        {imageUrlFromProduct(item) ? (
-                          <img
-                            src={imageUrlFromProduct(item)}
-                            alt={item.name}
-                            className="h-full w-full object-contain"
-                          />
-                        ) : (
-                          <div className="flex w-full items-center justify-center text-xs sm:text-sm text-slate-400">
-                            No image available
-                          </div>
-                        )}
+                      <FiX size={14} strokeWidth={1.5} />
+                    </button>
+                    <Link to={`/product-detail?phone_id=${item.phone_id}&phone_name=${encodeURIComponent(item.name || "")}`} className="block">
+                      <div className="aspect-square overflow-hidden rounded-lg bg-raised">
+                        <ProductImage src={item.images} alt={item.name} className="h-full w-full p-4" />
                       </div>
+                      <p className="mt-3 line-clamp-2 text-sm text-ink">{item.name}</p>
                     </Link>
-
-                    <div className="mt-4 space-y-1.5 sm:space-y-2 text-sm sm:text-base text-slate-700">
-                      {compareFields.map((field) => (
-                        <p key={`${item.phone_id}-${field.key}`} className={`leading-6 sm:leading-7 rounded px-1 ${differingFieldKeys.has(field.key) ? "bg-amber-50" : ""}`}>
-                          <span className="font-bold text-slate-900">{field.label}:</span>{" "}
-                          <span className="break-words">{formatValue(item[field.key], field.key)}</span>
-                        </p>
-                      ))}
-                    </div>
-
-                    <p className="mt-4 text-lg sm:text-xl md:text-2xl font-extrabold text-red-600 break-words">
-                      Price : {item.price_discount ? `${item.price_discount}$` : `${item.price}$`}
-                    </p>
-                    {item.price_discount ? (
-                      <p className="mt-1 text-xs sm:text-sm text-slate-400 line-through">{item.price}$</p>
-                    ) : null}
+                    <Price
+                      size="sm"
+                      price={item.price_discount ?? item.price}
+                      original={item.price_discount ? item.price : null}
+                      className="mt-1"
+                    />
+                    {items.length > 1 && item.phone_id === cheapestId && <p className="mt-1 text-xs text-brand">Lowest price</p>}
                   </div>
-                ))}
-              </div>
-              </>
-            ) : (
-              <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-6 sm:p-12 text-center shadow-sm">
-                <h2 className="text-xl sm:text-2xl font-bold text-slate-900">No products selected yet</h2>
-                <p className="mt-3 text-sm sm:text-base text-slate-500 px-2">
-                  Use the Compare button on any product to add it here.
-                </p>
-                <div className="mt-6">
-                  <Link
-                    to="/"
-                    className="inline-flex rounded-full bg-emerald-600 px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white hover:bg-emerald-700 transition-colors"
-                  >
-                    Back to Shop
-                  </Link>
-                </div>
-              </div>
-            )}
-          </div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {compareFields.map(({ label, key }) => {
+              const different = differs(key);
+              return (
+                <tr key={key} className="border-t border-line">
+                  <th scope="row" className="py-3 pr-3 text-left font-normal text-ink-3">{label}</th>
+                  {items.map((item) => (
+                    <td key={item.phone_id} className={`px-3 py-3 ${different ? "text-ink" : "text-ink-3"}`}>
+                      {formatValue(item[key], key)}
+                    </td>
+                  ))}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

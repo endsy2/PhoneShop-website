@@ -18,16 +18,11 @@ const RootLayout = () => {
     }
   }, []);
 
-  const handleLogin = () => {
-    const savedToken = localStorage.getItem("authToken");
-    setToken(savedToken);
-  };
-
   const handleLogout = async () => {
     try {
       await axios.post(`${NETWORK_CONFIG.apiBaseUrl}/auth/logout`, {}, { withCredentials: true });
     } catch (error) {
-      console.log("Logout API error:", error);
+      console.error(error);
     } finally {
       setToken(null);
       localStorage.removeItem("authToken");
@@ -39,13 +34,9 @@ const RootLayout = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <header>
-        <nav><Navbar token={token} onLogin={handleLogin} onLogout={handleLogout} /></nav>
+        <Navbar token={token} onLogout={handleLogout} />
       </header>
-      <main
-        className={`flex-1 max-w-full m-auto w-full transform transition-transform duration-500 
-        ${stateTabCart ? "-translate-x-2 opacity-50" : ""}
-      `}
-      >
+      <main className="w-full flex-1">
         <Outlet />
       </main>
       <footer>

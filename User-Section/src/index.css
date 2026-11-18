@@ -1,3 +1,78 @@
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html {
+    font-family: theme("fontFamily.sans");
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    @apply bg-page text-ink;
+  }
+  h1, h2, h3, h4 {
+    @apply font-medium text-ink;
+  }
+  :focus-visible {
+    outline: 2px solid theme("colors.brand.DEFAULT");
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex h-10 items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium
+      transition-[color,background-color,border-color,transform] duration-150 ease-out
+      active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100;
+  }
+  .btn-lg {
+    @apply h-12 px-5 text-[15px];
+  }
+  .btn-sm {
+    @apply h-8 px-3 text-[13px];
+  }
+  .btn-primary {
+    @apply bg-brand text-white hover:bg-brand-hover;
+  }
+  .btn-dark {
+    @apply bg-ink text-white hover:bg-[#2a2a2a];
+  }
+  .btn-secondary {
+    @apply border border-line-strong bg-surface text-ink hover:bg-raised;
+  }
+  .btn-ghost {
+    @apply text-ink-2 hover:bg-raised hover:text-ink;
+  }
+  .btn-danger {
+    @apply border border-line-strong bg-surface text-danger hover:bg-danger-soft;
+  }
+  .icon-btn {
+    @apply inline-flex h-9 w-9 items-center justify-center rounded-lg text-ink-2
+      transition-colors duration-150 ease-out hover:bg-raised hover:text-ink;
+  }
+  .card {
+    @apply rounded-xl border border-line bg-surface;
+  }
+  .input {
+    @apply h-10 w-full rounded-lg border border-line-strong bg-surface px-3 text-sm text-ink
+      transition-colors duration-150 ease-out placeholder:text-ink-3
+      focus:border-ink-3 focus:outline-none;
+  }
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-ink-2;
+  }
+  .field-error {
+    @apply mt-1.5 text-[13px] text-danger;
+  }
+  .price {
+    @apply font-mono tabular-nums;
+  }
+  .section-title {
+    @apply text-xl font-medium text-ink;
+  }
+  .page-container {
+    @apply mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8;
+  }
+}

@@ -1,11 +1,31 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { removeAllCart } from "../../store/cart";
 import CheckoutCart from "../../Conponents/CheckoutCart";
 import { fetchCheckOut } from "../../FetchAPI/Fetch";
 import BakongQR from "../../Components/BakongQR";
-import { NETWORK_CONFIG } from "../../network/Network_EndPoint";
+import { FiCheck, FiCreditCard, FiDollarSign, FiHome, FiLock, FiTruck } from "react-icons/fi";
+import ProductImage from "../../Components/ProductImage";
+import { formatPrice } from "../../utils/display";
+
+// Defined outside the page so inputs keep focus between renders
+const Field = ({ label, hint, error, children }) => (
+  <div>
+    {label && (
+      <p className="label">
+        {label} {hint && <span className="font-normal text-ink-3">{hint}</span>}
+      </p>
+    )}
+    {children}
+    {error && <p className="field-error">{error}</p>}
+  </div>
+);
+
+const option = (active) =>
+  `flex h-12 flex-1 cursor-pointer items-center gap-3 rounded-lg border px-4 text-sm transition-colors duration-150 ease-out ${
+    active ? "border-ink text-ink" : "border-line-strong text-ink-2 hover:border-ink-3"
+  }`;
 
 const CheckoutPage = () => {
   const cart = useSelector((store) => store.cart.items);
@@ -53,7 +73,7 @@ const CheckoutPage = () => {
 
   const handleSubmit = async () => {
     if (!validateForm()) {
-      setError("Please complete all required fields");
+      setError("Please complete the required fields");
       setResponse("");
       return;
     }
@@ -84,8 +104,8 @@ const CheckoutPage = () => {
       if (response) {
         const skipped = response.data?.skippedItems || 0;
         const msg = skipped > 0
-          ? `Order placed! ${skipped} item(s) were skipped — please re-add them from the product detail page.`
-          : "Order placed successfully!";
+          ? `Order placed. ${skipped} item(s) were skipped, please add them again from the product page`
+          : "Order placed. We\u2019ll call to confirm delivery";
         setResponse(msg);
         setError("");
         setCustomerName("");
@@ -94,7 +114,7 @@ const CheckoutPage = () => {
         setPayment("");
         clearCart();
       } else {
-        setError("Something went wrong. Please try again.");
+        setError("Something went wrong. Please try again");
         setResponse("");
       }
     } catch (error) {
@@ -102,7 +122,7 @@ const CheckoutPage = () => {
       const serverMsg =
         error?.response?.data?.message ||
         error?.message ||
-        "Checkout failed. Please try again.";
+        "Checkout failed. Please try again";
       setError(serverMsg);
       setResponse("");
     } finally {
@@ -117,378 +137,211 @@ const CheckoutPage = () => {
   }, [cart]);
 
 
-  return (
-    <>
-      {token ? (
-        <div className="flex-col bg-gradient-to-b from-gray-50 to-white pt-6">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="mb-6 font-extrabold text-gray-900 text-3xl md:text-4xl flex items-center gap-3">
-              <span className="text-3xl">🛒</span>
-              Checkout
-            </h2>
-          </div>
-          
-          <div className="flex flex-col lg:flex-row justify-center gap-6 px-4 sm:px-6 lg:px-8 pb-12 max-w-7xl mx-auto">
-            {/* Left Column - Delivery Information */}
-            <div className="w-full lg:w-2/3 bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-gray-100">
-              <h3 className="text-2xl font-bold mb-6 text-gray-900 flex items-center gap-2">
-                <span className="text-2xl">📦</span>
-                Delivery Information
-              </h3>
-              <hr className="mb-6 border-gray-200" />
-              
-              <form className="space-y-6">
-                {/* Recipient Name */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-gray-700">
-                    RECIPIENT NAME <span className="text-xs text-gray-400 font-normal">(who receives the delivery)</span>
-                  </label>
-                  <input
-                    value={customerName}
-                    type="text"
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    placeholder="Enter recipient name"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-                  />
-                  {fieldErrors.customerName && (
-                    <p className="text-sm text-red-600 flex items-center gap-1">
-                      <span>⚠️</span> {fieldErrors.customerName}
-                    </p>
-                  )}
-                </div>
-
-                {/* Delivery Type */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-gray-700">
-                    DELIVERY TYPE
-                  </label>
-                  <select
-                    value={delivery || ""}
-                    onChange={(e) => setDelivery(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all appearance-none bg-white"
-                  >
-                    <option value="">Select Delivery Type</option>
-                    <option value="Delivery">🚚 Delivery</option>
-                    <option value="Pick up">🏪 Pick up</option>
-                  </select>
-                  {fieldErrors.delivery && (
-                    <p className="text-sm text-red-600 flex items-center gap-1">
-                      <span>⚠️</span> {fieldErrors.delivery}
-                    </p>
-                  )}
-                </div>
-
-                {/* Payment Method */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-gray-700">
-                    PAYMENT METHOD
-                  </label>
-                  <select
-                    value={payment || ""}
-                    onChange={(e) => setPayment(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all appearance-none bg-white"
-                  >
-                    <option value="">Select Payment Method</option>
-                    <option value="By Delivery">Cash on Delivery</option>
-                    <option value="Bakong QR">Bakong QR</option>
-                  </select>
-                  {fieldErrors.payment && (
-                    <p className="text-sm text-red-600 flex items-center gap-1">
-                      <span>⚠️</span> {fieldErrors.payment}
-                    </p>
-                  )}
-                </div>
-
-                {/* Location */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-gray-700">
-                    DELIVERY LOCATION
-                  </label>
-                  <input
-                    value={location || ""}
-                    type="text"
-                    onChange={(e) => setLocation(e.target.value)}
-                    placeholder="Enter your address (Village, Street, City)"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-                  />
-                  {fieldErrors.location && (
-                    <p className="text-sm text-red-600 flex items-center gap-1">
-                      <span>⚠️</span> {fieldErrors.location}
-                    </p>
-                  )}
-                </div>
-
-                {/* Submit Button */}
-                <div className="pt-4">
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleSubmit();
-                    }}
-                    disabled={submitting || !isFormReady}
-                    className={`w-full py-4 text-white font-bold text-lg rounded-xl transition-all duration-300 flex items-center justify-center gap-2 ${
-                      submitting || !isFormReady 
-                        ? "cursor-not-allowed bg-gray-400" 
-                        : "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                    }`}
-                  >
-                    {submitting ? (
-                      <>
-                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <span>💳</span>
-                        Place Order
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                {/* Response Messages */}
-                {(response || error) && (
-                  <div className="mt-6">
-                    {response && (
-                      <div className="p-4 bg-green-50 border border-green-200 rounded-xl">
-                        <p className="text-green-700 font-semibold flex items-center gap-2">
-                          <span className="text-xl">✅</span>
-                          {response}
-                        </p>
-                      </div>
-                    )}
-                    {error && (
-                      <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
-                        <p className="text-red-700 font-semibold flex items-center gap-2">
-                          <span className="text-xl">❌</span>
-                          {error}
-                        </p>
-                        {error.includes("cart items") && (
-                          <button
-                            type="button"
-                            onClick={() => { clearCart(); setError(""); }}
-                            className="mt-3 text-sm underline text-red-600 hover:text-red-800 font-medium"
-                          >
-                            Clear cart and start fresh
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </form>
-            </div>
-
-            {/* Right Column - Order Summary */}
-            <div className="w-full lg:w-1/2 bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-gray-100 lg:sticky lg:top-6 h-fit">
-              <h3 className="text-2xl font-bold mb-6 text-gray-900 flex items-center gap-2">
-                <span className="text-2xl">📋</span>
-                Order Summary
-              </h3>
-              
-              <div className="space-y-4">
-                {/* Cart Items Header */}
-                <div className="flex justify-between text-sm font-semibold text-gray-600 pb-2 border-b border-gray-200">
-                  <span>Product</span>
-                  <span>Qty</span>
-                  <span>Price</span>
-                </div>
-
-                {/* Cart Items */}
-                <div className="space-y-3 max-h-96 overflow-y-auto">
-                  {fieldErrors.cart && (
-                    <p className="text-sm text-red-600 flex items-center gap-1 p-3 bg-red-50 rounded-lg">
-                      <span>⚠️</span> {fieldErrors.cart}
-                    </p>
-                  )}
-                  {cart.map((element) => (
-                    <CheckoutCart key={element.productId} items={element} />
-                  ))}
-                </div>
-
-                {/* Summary Calculations */}
-                <div className="space-y-3 pt-4 border-t border-gray-200">
-                  <div className="flex justify-between text-gray-700">
-                    <span className="font-medium">Total Items:</span>
-                    <span className="font-semibold">{totalQuatity || 0}</span>
-                  </div>
-                  <div className="flex justify-between text-gray-700">
-                    <span className="font-medium">Subtotal:</span>
-                    <span className="font-semibold">${subtotal.toFixed(2)}</span>
-                  </div>
-                  <hr className="border-gray-200" />
-                  <div className="flex justify-between text-xl font-bold text-green-600 pt-2">
-                    <span>Total Payment:</span>
-                    <span>${finalTotal.toFixed(2)}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Bakong QR Modal Overlay */}
-          {showBakongQR && pendingOrderData && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 px-4 backdrop-blur-sm">
-              <div className="w-full max-w-sm">
-                <BakongQR
-                  amount={subtotal}
-                  orderData={pendingOrderData}
-                  onPaymentSuccess={({ orderId }) => {
-                    setShowBakongQR(false);
-                    setPendingOrderData(null);
-                    // Show receipt popup with order details
-                    setPaymentReceipt({
-                      orderId,
-                      items: pendingOrderData.items,
-                      cartItems: cart,
-                      total: subtotal,
-                      customerName: pendingOrderData.customerName,
-                      delivery: pendingOrderData.delivery,
-                      location: pendingOrderData.location,
-                    });
-                    setError("");
-                    setCustomerName("");
-                    setDelivery("");
-                    setLocation("");
-                    setPayment("");
-                    clearCart();
-                  }}
-                  onCancel={() => {
-                    setShowBakongQR(false);
-                    setPendingOrderData(null);
-                  }}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Payment Success Receipt Modal */}
-          {paymentReceipt && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 px-4 backdrop-blur-sm">
-              <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
-                {/* Success Header */}
-                <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-6 text-center">
-                  <div className="text-5xl mb-2">✅</div>
-                  <h2 className="text-2xl font-bold text-white">Payment Successful!</h2>
-                  <p className="text-green-100 text-sm mt-1">Your Bakong payment was confirmed</p>
-                </div>
-
-                {/* Receipt Body */}
-                <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
-                  {/* Order ID */}
-                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                    <span className="text-gray-500 text-sm">Order ID</span>
-                    <span className="font-bold text-gray-900">#{paymentReceipt.orderId}</span>
-                  </div>
-
-                  {/* Customer */}
-                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                    <span className="text-gray-500 text-sm">Recipient</span>
-                    <span className="font-semibold text-gray-900">{paymentReceipt.customerName}</span>
-                  </div>
-
-                  {/* Delivery */}
-                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                    <span className="text-gray-500 text-sm">Delivery</span>
-                    <span className="font-semibold text-gray-900">{paymentReceipt.delivery}</span>
-                  </div>
-
-                  {/* Location */}
-                  <div className="flex justify-between items-start py-2 border-b border-gray-100">
-                    <span className="text-gray-500 text-sm">Address</span>
-                    <span className="font-semibold text-gray-900 text-right max-w-[60%]">{paymentReceipt.location}</span>
-                  </div>
-
-                  {/* Payment Method */}
-                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                    <span className="text-gray-500 text-sm">Payment</span>
-                    <span className="font-semibold text-green-600">✓ Bakong QR (Paid)</span>
-                  </div>
-
-                  {/* Products */}
-                  <div className="py-2">
-                    <p className="text-gray-500 text-sm mb-3">Items Ordered</p>
-                    <div className="space-y-3">
-                      {paymentReceipt.cartItems.map((item, i) => (
-                        <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                          {item.image ? (
-                            <img
-                              src={`${NETWORK_CONFIG.apiBaseUrl}/${String(item.image).split(",")[0].trim().replace(/\\/g, "/").replace(/^uploads\//, "")}`}
-                              alt={item.name}
-                              className="w-12 h-12 object-cover rounded-lg border border-gray-200"
-                              onError={(e) => { e.target.src = "https://via.placeholder.com/48x48?text=?"; }}
-                            />
-                          ) : (
-                            <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center text-gray-400 text-xs">?</div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-gray-900 text-sm truncate">{item.productName || item.name}</p>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span
-                                className="w-3 h-3 rounded-full border border-gray-300 inline-block"
-                                style={{ background: item.color }}
-                              />
-                              <span className="text-xs text-gray-500">Qty {item.quantity}</span>
-                            </div>
-                          </div>
-                          <span className="font-bold text-gray-900 text-sm">${(Number(item.price) * item.quantity).toFixed(2)}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Total */}
-                  <div className="flex justify-between items-center py-3 border-t-2 border-gray-200">
-                    <span className="font-bold text-gray-900 text-lg">Total Paid</span>
-                    <span className="font-bold text-green-600 text-xl">${paymentReceipt.total.toFixed(2)}</span>
-                  </div>
-                </div>
-
-                {/* Close Button */}
-                <div className="p-4 border-t border-gray-100 flex gap-3">
-                  <button
-                    onClick={() => setPaymentReceipt(null)}
-                    className="flex-1 py-3 bg-white hover:bg-gray-50 text-gray-700 font-bold rounded-xl border-2 border-gray-300 transition-all duration-300"
-                  >
-                    Close
-                  </button>
-                  <Link to="/myorder" className="flex-1">
-                    <button
-                      onClick={() => setPaymentReceipt(null)}
-                      className="w-full py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl transition-all duration-300"
-                    >
-                      View Order
-                    </button>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          )}
+  if (!token) {
+    return (
+      <div className="page-container flex flex-col items-center py-24 text-center">
+        <FiLock size={24} strokeWidth={1.5} className="text-ink-3" />
+        <h1 className="mt-4 text-2xl">Log in to check out</h1>
+        <p className="mt-2 text-sm text-ink-2">Your cart is saved. Log in or create an account to place the order.</p>
+        <div className="mt-8 flex gap-3">
+          <Link to="/auth/login" className="btn btn-dark btn-lg">Log in</Link>
+          <Link to="/auth/signup" className="btn btn-secondary btn-lg">Create account</Link>
         </div>
-      ) : (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-white px-4">
-          <div className="text-center space-y-8 max-w-md">
-            <div className="space-y-4">
-              <div className="text-6xl">🔒</div>
-              <h2 className="text-3xl font-bold text-gray-900">Sign In Required</h2>
-              <p className="text-gray-600">Please log in or create an account to proceed with checkout</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="page-container pt-8">
+      <h1 className="text-3xl tracking-[-0.01em]">Checkout</h1>
+
+      <div className="mt-8 grid items-start gap-8 lg:grid-cols-[1fr_400px]">
+        <form
+          className="card space-y-5 p-6"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSubmit();
+          }}
+        >
+          <h2 className="text-base font-medium">Delivery</h2>
+
+          <Field label="Recipient name" hint="who receives the parcel" error={fieldErrors.customerName}>
+            <input value={customerName} type="text" onChange={(e) => setCustomerName(e.target.value)} className="input" autoComplete="name" />
+          </Field>
+
+          <Field label="Delivery type" error={fieldErrors.delivery}>
+            <div className="flex gap-3">
+              {[
+                { value: "Delivery", label: "Deliver to me", icon: FiTruck },
+                { value: "Pick up", label: "Pick up at the shop", icon: FiHome },
+              ].map(({ value, label, icon: Icon }) => (
+                <label key={value} className={option(delivery === value)}>
+                  <input type="radio" name="delivery" value={value} checked={delivery === value} onChange={(e) => setDelivery(e.target.value)} className="sr-only" />
+                  <Icon size={16} strokeWidth={1.5} className="text-ink-3" />
+                  {label}
+                </label>
+              ))}
             </div>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/auth/signup" className="flex-1">
-                <button className="w-full font-bold text-lg px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                  Create Account
+          </Field>
+
+          <Field label="Address" error={fieldErrors.location}>
+            <input value={location || ""} type="text" onChange={(e) => setLocation(e.target.value)} placeholder="House, street, district, city" className="input" autoComplete="street-address" />
+          </Field>
+
+          <div className="border-t border-line pt-5">
+            <h2 className="mb-4 text-base font-medium">Payment</h2>
+            <Field error={fieldErrors.payment}>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                {[
+                  { value: "By Delivery", label: "Cash on delivery", icon: FiDollarSign },
+                  { value: "Bakong QR", label: "Bakong KHQR", icon: FiCreditCard },
+                ].map(({ value, label, icon: Icon }) => (
+                  <label key={value} className={option(payment === value)}>
+                    <input type="radio" name="payment" value={value} checked={payment === value} onChange={(e) => setPayment(e.target.value)} className="sr-only" />
+                    <Icon size={16} strokeWidth={1.5} className="text-ink-3" />
+                    {label}
+                  </label>
+                ))}
+              </div>
+            </Field>
+          </div>
+
+          <button type="submit" disabled={submitting || !isFormReady} className="btn btn-primary btn-lg w-full">
+            {submitting ? "Placing order" : payment === "Bakong QR" ? "Continue to payment" : "Place order"}
+          </button>
+
+          {response && (
+            <div className="flex items-start gap-3 rounded-lg bg-brand-soft p-4 text-sm text-brand">
+              <FiCheck size={16} strokeWidth={1.5} className="mt-0.5 shrink-0" />
+              <div>
+                <p>{response}</p>
+                <Link to="/myorder" className="mt-1 inline-block text-ink underline underline-offset-2">View my orders</Link>
+              </div>
+            </div>
+          )}
+          {error && (
+            <div className="rounded-lg bg-danger-soft p-4 text-sm text-danger">
+              <p>{error}</p>
+              {error.includes("cart items") && (
+                <button type="button" onClick={() => { clearCart(); setError(""); }} className="mt-2 underline underline-offset-2">
+                  Clear the cart and start again
                 </button>
-              </Link>
-              <Link to="/auth/login" className="flex-1">
-                <button className="w-full font-bold text-lg px-8 py-4 bg-white hover:bg-gray-50 text-green-600 border-2 border-green-600 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                  Log In
-                </button>
-              </Link>
+              )}
+            </div>
+          )}
+        </form>
+
+        <aside className="card p-6 lg:sticky lg:top-32">
+          <h2 className="text-base font-medium">Order summary</h2>
+          {fieldErrors.cart && <p className="field-error">{fieldErrors.cart}</p>}
+          <div className="mt-2 max-h-96 divide-y divide-line overflow-y-auto">
+            {cart.map((element) => (
+              <CheckoutCart key={element.productId} items={element} />
+            ))}
+          </div>
+          <dl className="mt-2 space-y-2 border-t border-line pt-4 text-sm">
+            <div className="flex justify-between text-ink-2">
+              <dt>Items</dt>
+              <dd className="price">{totalQuatity || 0}</dd>
+            </div>
+            <div className="flex justify-between text-ink-2">
+              <dt>Delivery</dt>
+              <dd>{delivery === "Pick up" ? "Pick up at the shop" : delivery ? "Deliver to me" : "Not chosen"}</dd>
+            </div>
+            <div className="flex items-baseline justify-between border-t border-line pt-3 text-ink">
+              <dt className="font-medium">Total</dt>
+              <dd className="price text-xl">{formatPrice(finalTotal)}</dd>
+            </div>
+          </dl>
+        </aside>
+      </div>
+
+      {showBakongQR && pendingOrderData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 px-4">
+          <div className="w-full max-w-sm">
+            <BakongQR
+              amount={subtotal}
+              orderData={pendingOrderData}
+              onPaymentSuccess={({ orderId }) => {
+                setShowBakongQR(false);
+                setPendingOrderData(null);
+                setPaymentReceipt({
+                  orderId,
+                  items: pendingOrderData.items,
+                  cartItems: cart,
+                  total: subtotal,
+                  customerName: pendingOrderData.customerName,
+                  delivery: pendingOrderData.delivery,
+                  location: pendingOrderData.location,
+                });
+                setError("");
+                setCustomerName("");
+                setDelivery("");
+                setLocation("");
+                setPayment("");
+                clearCart();
+              }}
+              onCancel={() => {
+                setShowBakongQR(false);
+                setPendingOrderData(null);
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {paymentReceipt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 px-4">
+          <div className="card w-full max-w-md overflow-hidden shadow-float">
+            <div className="border-b border-line p-6">
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-soft text-brand">
+                <FiCheck size={18} strokeWidth={1.5} />
+              </span>
+              <h2 className="mt-4 text-xl">Payment received</h2>
+              <p className="mt-1 text-sm text-ink-2">Bakong confirmed your transfer. We&apos;ll prepare your order now.</p>
+            </div>
+            <div className="max-h-[50vh] overflow-y-auto p-6">
+              <dl className="space-y-2 text-sm">
+                {[
+                  ["Order", <span key="o" className="price">#{paymentReceipt.orderId}</span>],
+                  ["Recipient", paymentReceipt.customerName],
+                  ["Delivery", paymentReceipt.delivery],
+                  ["Address", paymentReceipt.location],
+                  ["Payment", "Bakong KHQR, paid"],
+                ].map(([label, value]) => (
+                  <div key={label} className="flex justify-between gap-6">
+                    <dt className="text-ink-3">{label}</dt>
+                    <dd className="text-right text-ink">{value}</dd>
+                  </div>
+                ))}
+              </dl>
+              <div className="mt-5 divide-y divide-line border-y border-line">
+                {paymentReceipt.cartItems.map((item, i) => (
+                  <div key={i} className="flex items-center gap-3 py-3">
+                    <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md bg-raised">
+                      <ProductImage src={item.image} alt="" className="h-full w-full p-1" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm text-ink">{item.productName || item.name}</p>
+                      <p className="text-xs text-ink-3">{item.color ? `${item.color} · ` : ""}Qty {item.quantity}</p>
+                    </div>
+                    <span className="price text-sm">{formatPrice(Number(item.price) * item.quantity)}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 flex items-baseline justify-between">
+                <span className="text-sm font-medium">Total paid</span>
+                <span className="price text-lg">{formatPrice(paymentReceipt.total)}</span>
+              </div>
+            </div>
+            <div className="flex gap-2 border-t border-line p-4">
+              <button type="button" onClick={() => setPaymentReceipt(null)} className="btn btn-secondary flex-1">Close</button>
+              <Link to="/myorder" onClick={() => setPaymentReceipt(null)} className="btn btn-dark flex-1">View order</Link>
             </div>
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 };
 

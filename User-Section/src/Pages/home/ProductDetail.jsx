@@ -1,24 +1,16 @@
 import { useCallback, useEffect, useState } from "react";
-import {
-  telegram_green,
-  messenger_green,
-  compare,
-  addToCartWhite,
-  heartFill,
-  heart,
-  instagram_green,
-} from "../Assets/image";
-import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { FiColumns, FiHeart, FiMinus, FiPhone, FiPlus, FiShoppingBag, FiTruck } from "react-icons/fi";
 import { fetchdataProduct, fetchProductByName } from "../../FetchAPI/Fetch";
 import { addToCart, toggleStatusTab } from "../../store/cart";
-import { useDispatch, useSelector } from "react-redux";
 import { addtofavorite, removeFromFavorite } from "../../store/favorite";
 import { addToCompare } from "../../store/compare";
 import ProductCard from "./ProductCard";
-import { NETWORK_CONFIG } from "../../network/Network_EndPoint";
 import ProductReviews from "../../Components/ProductReviews";
 import Breadcrumb from "../../Components/Breadcrumb";
+import Price from "../../Components/Price";
+import ProductImage from "../../Components/ProductImage";
 
 const RECENTLY_VIEWED_KEY = "recentlyViewedProducts";
 
@@ -28,7 +20,7 @@ const ProductDetail = () => {
   const [selectedImage, setSelectedImage] = useState("");
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedStorage, setSelectedStorage] = useState(null);
-  const [selectedSpec, setSelectedSpec] = useState({});
+  const [, setSelectedSpec] = useState({});
   const [quantity, setQuantity] = useState(1);
   const [recentlyViewed, setRecentlyViewed] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -83,7 +75,6 @@ const ProductDetail = () => {
   const handlefetchProduct = async () => {
     const response = await fetchdataProduct();
     setProduct(response.data);
-    // console.log(response.data);
   };
 
   const handleAddToCart = () => {
@@ -226,389 +217,190 @@ const ProductDetail = () => {
 
   if (loading)
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-gray-50 to-white">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 border-4 border-green-200 border-t-green-600 rounded-full animate-spin mx-auto"></div>
-          <p className="text-xl font-semibold text-gray-700">Loading product details...</p>
-        </div>
-      </div>
+      <div className="page-container py-24 text-center text-sm text-ink-3">Loading product</div>
     );
   if (error)
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-gray-50 to-white">
-        <div className="text-center space-y-4 p-8 bg-red-50 rounded-2xl border border-red-200">
-          <span className="text-6xl">❌</span>
-          <p className="text-xl font-semibold text-red-600">{`Error: ${error}`}</p>
-        </div>
+      <div className="page-container py-24 text-center">
+        <p className="text-ink">We couldn&apos;t load this product</p>
+        <p className="mt-1 text-sm text-ink-3">{error}</p>
+        <Link to="/AfterHomePage?page=PRODUCT" className="btn btn-secondary mt-6">Browse all products</Link>
       </div>
     );
 
+  const isFavorite = favorite.findIndex((element) => element === selectedItem?.phone_id) >= 0;
+  const specs = [
+    { label: "Screen", value: selectedItem?.screen_size },
+    { label: "Processor", value: selectedItem?.processor },
+    { label: "RAM", value: selectedItem?.ram },
+    { label: "Storage", value: selectedItem?.storage },
+    { label: "Battery", value: selectedItem?.battery },
+    { label: "Camera", value: selectedItem?.camera },
+  ];
+  const chip = (active) =>
+    `h-10 rounded-lg border px-4 text-sm transition-colors duration-150 ease-out ${
+      active ? "border-ink bg-surface text-ink" : "border-line-strong bg-surface text-ink-2 hover:border-ink-3 hover:text-ink"
+    }`;
+
   return (
-    <div className="bg-gradient-to-b from-gray-50 to-white min-h-screen">
-      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl">
-        {/* Breadcrumb Navigation */}
-        <Breadcrumb 
-          items={[
-            { label: items[0]?.category_name || "Products", link: items[0]?.category_name ? `/Sort?category=${items[0].category_name}` : "/AfterHomePage?page=PRODUCT" },
-            { label: items[0]?.brand_name || "Brand", link: items[0]?.brand_name ? `/Sort?brand=${items[0].brand_name}` : null },
-            { label: items[0]?.name || "Product Details" }
-          ]}
-        />
-        {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-sm text-gray-600 mb-6">
-          <Link to="/" className="hover:text-green-600 transition-colors">Home</Link>
-          <span>›</span>
-          <span className="text-gray-900 font-medium">{selectedItem?.name || "Product"}</span>
-        </nav>
+    <div className="page-container pt-6">
+      <Breadcrumb
+        items={[
+          { label: items[0]?.category_name || "Products", link: items[0]?.category_name ? `/Sort?category=${items[0].category_name}` : "/AfterHomePage?page=PRODUCT" },
+          { label: items[0]?.brand_name || "Brand", link: items[0]?.brand_name ? `/Sort?brand=${items[0].brand_name}` : null },
+          { label: items[0]?.name || "Product" },
+        ]}
+      />
 
-        {/* Main Product Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 bg-white rounded-2xl shadow-lg border border-gray-100 p-6 md:p-8">
-          {/* Product Images */}
-          <div className="flex flex-col">
-            <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-8 mb-6 overflow-hidden group">
-              {/* Discount Badge */}
-              {selectedItem?.discount_percentage > 0 && (
-                <div className="absolute top-4 left-4 z-10">
-                  <div className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-sm font-bold px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
-                    <span>🔥</span>
-                    <span>{selectedItem.discount_percentage}% OFF</span>
-                  </div>
-                </div>
-              )}
-              
-              {/* Stock Badge */}
-              <div className="absolute top-4 right-4 z-10">
-                <div className={`${isOutOfStock ? 'bg-red-500' : availableStock <= 5 ? 'bg-amber-500' : 'bg-emerald-500'} text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${isOutOfStock ? 'bg-red-200' : availableStock <= 5 ? 'bg-amber-200' : 'bg-emerald-200'} animate-pulse`}></span>
-                  {isOutOfStock ? 'Out of Stock' : availableStock <= 5 ? `Only ${availableStock} left` : 'In Stock'}
-                </div>
-              </div>
-
-              <img
-                src={`${NETWORK_CONFIG.apiBaseUrl}/${selectedImage}`}
-                alt="Main Product"
-                className="w-full h-[400px] object-contain transition-transform duration-500 group-hover:scale-105"
-                onError={(e) => { e.target.src = "https://via.placeholder.com/500x400?text=No+Image"; }}
-              />
+      <div className="mt-6 grid gap-10 lg:grid-cols-[1.1fr_1fr]">
+        {/* Gallery */}
+        <div>
+          <div className="card aspect-square overflow-hidden p-3">
+            <div className="h-full w-full rounded-lg bg-raised">
+              <ProductImage src={selectedImage} alt={selectedItem?.name} className="h-full w-full p-10" />
             </div>
-
-            {/* Thumbnail Images */}
-            <div className="flex gap-3 overflow-x-auto pb-2">
+          </div>
+          {arrayImage.length > 1 && (
+            <div className="mt-3 flex gap-2 overflow-x-auto">
               {arrayImage.map((image, idx) => (
                 <button
-                  key={idx}
+                  key={image + idx}
+                  type="button"
                   onClick={() => handleImageClick(image)}
-                  className={`flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 transition-all duration-300 ${
-                    selectedImage === image 
-                      ? 'border-green-500 shadow-lg scale-105' 
-                      : 'border-gray-200 hover:border-green-300 hover:scale-105'
+                  className={`h-20 w-20 shrink-0 overflow-hidden rounded-lg border bg-raised transition-colors duration-150 ease-out ${
+                    selectedImage === image ? "border-ink" : "border-line hover:border-line-strong"
                   }`}
+                  aria-label={`Show image ${idx + 1}`}
                 >
-                  <img
-                    src={`${NETWORK_CONFIG.apiBaseUrl}/${image}`}
-                    alt={`Thumbnail ${idx + 1}`}
-                    className="w-full h-full object-cover"
-                    onError={(e) => { e.target.src = "https://via.placeholder.com/80x80?text=No+Image"; }}
-                  />
+                  <ProductImage src={image} alt="" className="h-full w-full p-2" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Purchase panel */}
+        <div className="lg:pt-2">
+          <p className="text-sm text-ink-3">{items[0]?.brand_name}</p>
+          <h1 className="mt-1 text-3xl font-medium leading-tight tracking-[-0.01em]">{selectedItem?.name || "Product"}</h1>
+          {selectedItem?.release_date && (
+            <p className="mt-2 text-[13px] text-ink-3">
+              Released {new Date(selectedItem.release_date).toLocaleDateString("en-GB", { month: "long", year: "numeric" })}
+            </p>
+          )}
+
+          <div className="mt-6 border-t border-line pt-6">
+            <Price size="lg" price={discountedPrice ?? originalPrice} original={discountedPrice != null ? originalPrice : null} />
+            {savedAmount > 0 && <p className="mt-2 text-[13px] text-ink-3">You save <span className="price">${savedAmount.toFixed(2)}</span></p>}
+          </div>
+
+          <div className="mt-6">
+            <p className="label">Storage</p>
+            <div className="flex flex-wrap gap-2">
+              {items
+                .filter((item) => item.color === selectedColor)
+                .map((item) => (
+                  <button key={item.storage} type="button" onClick={() => handleStorageChange(item.storage)} className={chip(selectedStorage === item.storage)}>
+                    {item.storage}
+                  </button>
+                ))}
+            </div>
+          </div>
+
+          <div className="mt-5">
+            <p className="label">Colour</p>
+            <div className="flex flex-wrap gap-2">
+              {uniqueColors.map((color) => (
+                <button key={color} type="button" onClick={() => handleColorChange(color)} className={chip(selectedColor === color)}>
+                  {color}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Product Details */}
-          <div className="flex flex-col space-y-6">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">
-                {selectedItem?.name || "Product"}
-              </h1>
-              
-              {/* Release Date */}
-              <div className="flex items-center gap-4 mb-4">
-                <span className="text-sm text-gray-600">
-                  Released: {new Date(selectedItem?.release_date).toLocaleDateString()}
-                </span>
-              </div>
-            </div>
-
-            {/* Price Section */}
-            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-100">
-              <div className="flex items-baseline gap-3 mb-2">
-                {selectedItem?.price_discount ? (
-                  <>
-                    <span className="text-4xl font-extrabold text-green-600">
-                      ${selectedItem.price_discount}
-                    </span>
-                    <span className="text-2xl text-gray-400 line-through">
-                      ${selectedItem.price}
-                    </span>
-                  </>
-                ) : (
-                  <span className="text-4xl font-extrabold text-green-600">
-                    ${selectedItem?.price}
-                  </span>
-                )}
-              </div>
-              {savedAmount > 0 && (
-                <p className="inline-flex items-center gap-2 bg-red-500 text-white text-sm font-bold px-4 py-2 rounded-full">
-                  <span>💰</span>
-                  You save ${savedAmount.toFixed(2)}
-                </p>
-              )}
-            </div>
-
-            {/* Storage Options */}
-            <div>
-              <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
-                <span>💾</span>
-                Storage
-              </h3>
-              <div className="flex flex-wrap gap-3">
-                {items
-                  .filter((item) => item.color === selectedColor)
-                  .map((item) => (
-                    <button
-                      key={item.storage}
-                      onClick={() => handleStorageChange(item.storage)}
-                      className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
-                        selectedStorage === item.storage
-                          ? "bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg scale-105"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
-                      }`}
-                    >
-                      {item.storage}
-                    </button>
-                  ))}
-              </div>
-            </div>
-
-            {/* Color Options */}
-            <div>
-              <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
-                <span>🎨</span>
-                Color
-              </h3>
-              <div className="flex flex-wrap gap-3">
-                {uniqueColors.map((color) => (
-                  <button
-                    key={color}
-                    onClick={() => handleColorChange(color)}
-                    className={`relative w-12 h-12 rounded-full transition-all duration-300 ${
-                      selectedColor === color
-                        ? "ring-4 ring-green-500 ring-offset-2 scale-110"
-                        : "ring-2 ring-gray-200 hover:ring-green-300 hover:scale-105"
-                    }`}
-                    style={{ backgroundColor: color }}
-                    title={color}
-                  >
-                    {selectedColor === color && (
-                      <span className="absolute inset-0 flex items-center justify-center text-white text-xl">
-                        ✓
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Quantity Selector */}
-            <div>
-              <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
-                <span>🔢</span>
-                Quantity
-              </h3>
-              <div className="flex items-center gap-4">
-                <div className="inline-flex items-center rounded-xl border-2 border-gray-200 bg-white shadow-sm">
-                  <button
-                    type="button"
-                    onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
-                    className="h-12 w-12 text-xl font-bold text-gray-700 hover:bg-gray-100 rounded-l-xl transition-colors"
-                  >
-                    −
-                  </button>
-                  <span className="w-16 text-center text-lg font-bold text-gray-900">{quantity}</span>
-                  <button
-                    type="button"
-                    onClick={() => setQuantity((prev) => Math.min(availableStock || 99, prev + 1))}
-                    className="h-12 w-12 text-xl font-bold text-gray-700 hover:bg-gray-100 rounded-r-xl transition-colors"
-                  >
-                    +
-                  </button>
-                </div>
-                <span className={`text-sm font-semibold ${isOutOfStock ? "text-red-600" : "text-emerald-600"}`}>
-                  {isOutOfStock ? "⚠️ Out of stock" : `✅ ${availableStock} available`}
-                </span>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="space-y-3 pt-4">
-              <button
-                className={`w-full h-14 flex items-center justify-center gap-3 rounded-xl font-bold text-lg transition-all duration-300 ${
-                  isOutOfStock 
-                    ? "cursor-not-allowed bg-gray-300 text-gray-500" 
-                    : "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                }`}
-                onClick={handleAddToCart}
-                disabled={isOutOfStock}
-              >
-                <img src={addToCartWhite} alt="Cart" className="w-6" />
-                <span>Add to Cart</span>
-              </button>
-
-              <div className="grid grid-cols-3 gap-3">
-                <button
-                  className="h-12 flex items-center justify-center gap-2 text-green-600 bg-green-50 hover:bg-green-100 border-2 border-green-200 rounded-xl font-semibold transition-all duration-300"
-                  onClick={handeAddToFavorite}
-                >
-                  <img
-                    className="w-5"
-                    src={favorite.findIndex((element) => element === selectedItem.phone_id) >= 0 ? heartFill : heart}
-                    alt="Favorite"
-                  />
-                  <span className="hidden sm:inline">Favorite</span>
+          <div className="mt-5">
+            <p className="label">Quantity</p>
+            <div className="flex items-center gap-4">
+              <div className="inline-flex h-10 items-center rounded-lg border border-line-strong">
+                <button type="button" onClick={() => setQuantity((prev) => Math.max(1, prev - 1))} className="flex h-full w-10 items-center justify-center text-ink-2 hover:text-ink" aria-label="Decrease quantity">
+                  <FiMinus size={14} strokeWidth={1.5} />
                 </button>
-                
-                <button
-                  type="button"
-                  onClick={handleCompare}
-                  className="h-12 flex items-center justify-center gap-2 text-green-600 bg-green-50 hover:bg-green-100 border-2 border-green-200 rounded-xl font-semibold transition-all duration-300"
-                >
-                  <img className="w-5" src={compare} alt="Compare" />
-                  <span className="hidden sm:inline">Compare</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowReviewForm(true);
-                    setTimeout(() => {
-                      document.getElementById("review-section")?.scrollIntoView({ behavior: "smooth" });
-                    }, 100);
-                  }}
-                  className="h-12 flex items-center justify-center gap-2 text-green-600 bg-green-50 hover:bg-green-100 border-2 border-green-200 rounded-xl font-semibold transition-all duration-300"
-                >
-                  <span>⭐</span>
-                  <span className="hidden sm:inline">Review</span>
+                <span className="price w-10 text-center text-sm">{quantity}</span>
+                <button type="button" onClick={() => setQuantity((prev) => Math.min(availableStock || 99, prev + 1))} className="flex h-full w-10 items-center justify-center text-ink-2 hover:text-ink" aria-label="Increase quantity">
+                  <FiPlus size={14} strokeWidth={1.5} />
                 </button>
               </div>
-            </div>
-
-            {/* Contact Options */}
-            <div className="pt-4 border-t border-gray-200">
-              <h3 className="text-sm font-bold text-gray-700 mb-3">💬 Contact Us</h3>
-              <div className="flex flex-wrap gap-3">
-                <a
-                  href="https://t.me/yourtelegramusername"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg font-medium transition-colors"
-                >
-                  <img src={telegram_green} alt="Telegram" className="w-5" />
-                  <span className="text-sm">Telegram</span>
-                </a>
-                <a
-                  href="https://m.me/yourmessengerusername"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg font-medium transition-colors"
-                >
-                  <img src={messenger_green} alt="Messenger" className="w-5" />
-                  <span className="text-sm">Messenger</span>
-                </a>
-                <a
-                  href="https://i.me/yourinstagramusername"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-4 py-2 bg-pink-50 hover:bg-pink-100 text-pink-600 rounded-lg font-medium transition-colors"
-                >
-                  <img src={instagram_green} alt="Instagram" className="w-5" />
-                  <span className="text-sm">Instagram</span>
-                </a>
-              </div>
+              <span className={`text-[13px] ${isOutOfStock ? "text-danger" : availableStock <= 5 ? "text-warn" : "text-ink-3"}`}>
+                {isOutOfStock ? "Out of stock" : availableStock <= 5 ? `Only ${availableStock} left` : `${availableStock} in stock`}
+              </span>
             </div>
           </div>
+
+          <div className="mt-8 flex gap-2">
+            <button type="button" className="btn btn-primary btn-lg flex-1" onClick={handleAddToCart} disabled={isOutOfStock}>
+              <FiShoppingBag size={18} strokeWidth={1.5} />
+              {isOutOfStock ? "Out of stock" : "Add to cart"}
+            </button>
+            <button type="button" onClick={handeAddToFavorite} className={`btn btn-secondary btn-lg w-12 px-0 ${isFavorite ? "text-danger" : ""}`} aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"} title="Favorite">
+              <FiHeart size={18} strokeWidth={1.5} className={isFavorite ? "fill-current" : ""} />
+            </button>
+            <button type="button" onClick={handleCompare} className="btn btn-secondary btn-lg w-12 px-0" aria-label="Compare" title="Compare">
+              <FiColumns size={18} strokeWidth={1.5} />
+            </button>
+          </div>
+
+          <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-line pt-5 text-[13px] text-ink-2">
+            <span className="inline-flex items-center gap-2"><FiTruck size={16} strokeWidth={1.5} className="text-ink-3" />Delivery across Phnom Penh</span>
+            <a href="tel:096888750" className="inline-flex items-center gap-2 hover:text-ink"><FiPhone size={16} strokeWidth={1.5} className="text-ink-3" />Questions? 096 888 750</a>
+          </div>
         </div>
-        {/* Specifications Section */}
-        <div className="mt-8 bg-white rounded-2xl shadow-lg border border-gray-100 p-6 md:p-8">
-          <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-6 flex items-center gap-3">
-            <span className="text-3xl">📋</span>
-            Specifications
-          </h2>
-          <div className="divide-y divide-gray-100 border border-gray-100 rounded-xl overflow-hidden">
-            {[
-              { icon: "📱", label: "Screen",    key: "Size",       value: selectedItem.screen_size },
-              { icon: "🔋", label: "Battery",   key: "Capacity",   value: selectedItem.battery },
-              { icon: "📷", label: "Camera",    key: "Resolution", value: selectedItem.camera },
-              { icon: "⚡", label: "Processor", key: "Chipset",    value: selectedItem.processor },
-              { icon: "🧠", label: "RAM",       key: "Memory",     value: selectedItem.ram },
-            ].map(({ icon, label, key, value }) => (
-              <div key={label} className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-gray-50 to-white hover:bg-green-50 transition-colors">
-                <span className="flex items-center gap-3 font-semibold text-gray-900">
-                  <span className="text-xl">{icon}</span>
-                  {label}
-                </span>
-                <span className="text-gray-700">
-                  <span className="text-gray-500 mr-2">{key}:</span>
-                  <span className="font-semibold text-gray-900">{value || "N/A"}</span>
-                </span>
+      </div>
+
+      <section className="mt-16 grid gap-10 lg:grid-cols-[1fr_1.4fr]">
+        <div>
+          <h2 className="section-title">Specifications</h2>
+          <dl className="mt-4 divide-y divide-line border-y border-line">
+            {specs.map(({ label, value }) => (
+              <div key={label} className="flex h-11 items-center justify-between text-sm">
+                <dt className="text-ink-3">{label}</dt>
+                <dd className="text-ink">{value || "—"}</dd>
               </div>
             ))}
-          </div>
+          </dl>
         </div>
-
-        {/* Reviews Section */}
-        <div id="review-section" className="mt-8 bg-white rounded-2xl shadow-lg border border-gray-100 p-6 md:p-8">
+        <div id="review-section">
           <ProductReviews
             spec_id={selectedItem?.spec_id || items[0]?.spec_id}
             openForm={showReviewForm}
             onFormClose={() => setShowReviewForm(false)}
           />
         </div>
+      </section>
 
-        {/* Recently Viewed Section */}
-        {recentlyViewed.length > 0 && (
-          <div className="mt-8 bg-white rounded-2xl shadow-lg border border-gray-100 p-6 md:p-8">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl md:text-3xl font-extrabold text-gray-900 flex items-center gap-3">
-                <span className="text-3xl">👁️</span>
-                Recently Viewed
-              </h3>
-              <p className="text-sm text-gray-500 hidden sm:block">Products you checked before</p>
-            </div>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
-              {recentlyViewed.map((item) => (
-                <ProductCard key={`recent-${item.phone_id}`} product={item} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Related Products Section */}
-        <div className="mt-8 bg-white rounded-2xl shadow-lg border border-gray-100 p-6 md:p-8">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-2xl md:text-3xl font-extrabold text-gray-900 flex items-center gap-3">
-              <span className="text-3xl">🛍️</span>
-              More Products
-            </h3>
-            <Link to="/AfterHomePage?page=PRODUCT" className="text-green-600 hover:text-green-700 font-semibold flex items-center gap-2 group">
-              View All
-              <span className="group-hover:translate-x-1 transition-transform">→</span>
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {product.map((product, index) => (
-              <div
-                key={product.phone_id || product.id || index}
-                onClick={() => {
-                  window.scrollTo(0, 0);
-                }}
-              >
-                <ProductCard product={product} />
-              </div>
+      {recentlyViewed.length > 0 && (
+        <section className="mt-16">
+          <h2 className="section-title mb-5">Recently viewed</h2>
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+            {recentlyViewed.map((item) => (
+              <ProductCard key={`recent-${item.phone_id}`} product={item} />
             ))}
           </div>
+        </section>
+      )}
+
+      <section className="mt-16">
+        <div className="mb-5 flex items-end justify-between">
+          <h2 className="section-title">More products</h2>
+          <Link to="/AfterHomePage?page=PRODUCT" className="text-sm text-ink-2 hover:text-ink">View all</Link>
         </div>
-      </div>
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+          {product.map((item, index) => (
+            <div key={item.phone_id || index} onClick={() => window.scrollTo(0, 0)}>
+              <ProductCard product={item} />
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 };

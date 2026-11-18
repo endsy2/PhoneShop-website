@@ -20,7 +20,7 @@ import buy from "../Assets/Buy.png";
 import back_sign from "../Assets/back_sign.png";
 import favorite_packages from "../Assets/favorite_package.png";
 import compare from "../Assets/compare.png";
-import addToCartWhite from "../Assets/addtocartWhite.svg";
+import addToCartWhite from "../Assets/addtocartwhite.svg";
 import messengerWhite from "../Assets/messengerWhite.svg";
 import telegramWhite from "../Assets/telegramWhite.svg";
 import heartFill from "../Assets/addtofavoriteFullStrock.svg";

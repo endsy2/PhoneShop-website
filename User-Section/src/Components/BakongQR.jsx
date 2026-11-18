@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
+import { FiCheck } from "react-icons/fi";
 import { checkBakongPayment, generateBakongQR } from "../FetchAPI/Fetch";
 
 const EXPIRY_SECONDS = 300; // 5 minutes
@@ -54,7 +55,7 @@ const BakongQR = ({ amount, orderData, onPaymentSuccess, onCancel }) => {
             checkPaymentStatus(data.data.md5Hash, data.data.orderId);
             startTimer();
         } catch (err) {
-            setError(err?.response?.data?.message || "Failed to generate QR. Please try again.");
+            setError(err?.response?.data?.message || "Couldn\u2019t create the QR code. Please try again");
         } finally {
             setLoading(false);
         }
@@ -112,135 +113,90 @@ const BakongQR = ({ amount, orderData, onPaymentSuccess, onCancel }) => {
         return `${m}:${s}`;
     };
 
-    // ── Payment confirmed screen ──
+    const panel = "card w-full p-6 shadow-float";
+    const shownAmount = Number(qrData?.amount ?? amount);
+
     if (paid) {
         return (
-            <div className="flex flex-col items-center justify-center p-8 bg-green-50 rounded-2xl border border-green-200 text-center">
-                <div className="text-6xl mb-4">✅</div>
-                <h3 className="text-2xl font-bold text-green-700 mb-2">Payment Confirmed!</h3>
-                <p className="text-green-600 mb-1">Your Bakong payment was received successfully.</p>
-                {orderId && (
-                    <p className="text-sm text-slate-500 mt-2">Order ID: <strong>#{orderId}</strong></p>
-                )}
+            <div className={`${panel} text-center`}>
+                <span className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-brand-soft text-brand">
+                    <FiCheck size={18} strokeWidth={1.5} />
+                </span>
+                <p className="mt-4 text-base text-ink">Payment received</p>
+                {orderId && <p className="price mt-1 text-[13px] text-ink-3">Order #{orderId}</p>}
             </div>
         );
     }
 
-    // ── Loading screen ──
     if (loading) {
-        return (
-            <div className="flex flex-col items-center justify-center p-8">
-                <div className="w-12 h-12 border-4 border-green-600 border-t-transparent rounded-full animate-spin mb-4" />
-                <p className="text-slate-600">Generating QR code and creating order...</p>
-            </div>
-        );
+        return <div className={`${panel} py-12 text-center text-sm text-ink-3`}>Creating your QR code</div>;
     }
 
-    // ── Error before QR generated ──
     if (error && !qrData) {
         return (
-            <div className="flex flex-col items-center p-6 bg-red-50 rounded-2xl border border-red-200">
-                <p className="text-red-600 font-medium mb-4 text-center">{error}</p>
-                <button type="button" onClick={doGenerateQR}
-                    className="px-6 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition">
-                    Try Again
-                </button>
+            <div className={`${panel} text-center`}>
+                <p className="text-sm text-ink">{error}</p>
+                <div className="mt-5 flex justify-center gap-2">
+                    <button type="button" onClick={onCancel} className="btn btn-secondary">Back</button>
+                    <button type="button" onClick={doGenerateQR} className="btn btn-dark">Try again</button>
+                </div>
             </div>
         );
     }
 
-    // ── QR display ──
     return (
-        <div className="flex flex-col items-center p-6 bg-white rounded-2xl border border-slate-200 shadow-sm w-full max-w-sm mx-auto">
-            {/* Header */}
-            <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-blue-700 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-white font-extrabold text-sm">B</span>
-                </div>
+        <div className={panel}>
+            <div className="flex items-start justify-between">
                 <div>
-                    <p className="font-bold text-slate-800">Bakong KHQR</p>
-                    <p className="text-xs text-slate-500">Scan with any Cambodian banking app</p>
+                    <p className="text-sm font-medium text-ink">Pay with Bakong KHQR</p>
+                    <p className="mt-0.5 text-[13px] text-ink-3">Scan with ABA, ACLEDA, Wing or any KHQR app</p>
                 </div>
+                {orderId && <span className="price text-xs text-ink-3">#{orderId}</span>}
             </div>
 
-            {/* Order ID */}
-            {orderId && (
-                <div className="mb-2 text-center">
-                    <p className="text-xs text-slate-400">Order #{orderId}</p>
-                </div>
-            )}
-
-            {/* Amount */}
-            <div className="mb-4 text-center">
-                <p className="text-3xl font-extrabold text-green-600">${parseFloat(amount).toFixed(2)}</p>
-                <p className="text-xs text-slate-400 mt-0.5">USD — {orderData?.items?.length || 0} item(s)</p>
+            <div className="mt-6 flex flex-col items-center">
+                {qrData?.qrString && (
+                    <div className="rounded-xl border border-line p-3">
+                        <QRCodeSVG value={qrData.qrString} size={216} level="M" />
+                    </div>
+                )}
+                <p className="price mt-5 text-[28px] leading-none text-ink">${shownAmount.toFixed(2)}</p>
+                <p className={`price mt-2 text-[13px] ${timeLeft <= 60 ? "text-danger" : "text-ink-3"}`}>
+                    Expires in {formatTime(timeLeft)}
+                </p>
             </div>
 
-            {/* QR Code */}
-            {qrData?.qrString && (
-                <div className="p-3 bg-white border-2 border-slate-200 rounded-xl mb-4">
-                    <QRCodeSVG value={qrData.qrString} size={220} level="M" includeMargin={true} />
-                </div>
-            )}
-
-            {/* Timer */}
-            <div className={`flex items-center gap-2 mb-3 px-4 py-1.5 rounded-full text-sm font-semibold ${
-                timeLeft <= 60 ? "bg-red-100 text-red-600" : "bg-slate-100 text-slate-600"
-            }`}>
-                <span>⏱</span>
-                <span>Expires in {formatTime(timeLeft)}</span>
-            </div>
-
-            {/* Checking indicator */}
             {checking && !error && (
-                <div className="flex flex-col items-center mb-3">
-                    <div className="w-6 h-6 border-2 border-green-600 border-t-transparent rounded-full animate-spin mb-2" />
-                    <p className="text-xs text-slate-400 animate-pulse">Waiting for payment...</p>
-                    <p className="text-xs text-slate-300 mt-1">This may take up to 5 minutes</p>
-                </div>
+                <p className="mt-5 flex items-center justify-center gap-2 text-[13px] text-ink-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-brand" />
+                    Waiting for your payment, this updates by itself
+                </p>
             )}
 
-            {/* Error / status message */}
             {error && (
-                <div className="w-full mb-3 text-center">
-                    <p className="text-red-600 text-sm mb-2">{error}</p>
+                <div className="mt-5 rounded-lg bg-danger-soft p-3 text-[13px] text-danger">
+                    <p>{error}</p>
                     {error.includes("expired") && (
-                        <button type="button" onClick={doGenerateQR}
-                            className="w-full py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition text-sm">
-                            Generate New QR
-                        </button>
+                        <button type="button" onClick={doGenerateQR} className="mt-2 underline underline-offset-2">New QR code</button>
                     )}
-                    {error.includes("timeout") && orderId && (
-                        <p className="text-xs text-slate-400 mt-2">
-                            Your order #{orderId} has been saved. If you completed the payment, please contact support.
-                        </p>
-                    )}
-                    {error.includes("token") && (
-                        <p className="text-xs text-slate-400 mt-1">
-                            Admin needs to add BAKONG_TOKEN to the server .env file.
-                            Your order has been saved — payment can be verified manually.
+                    {(error.includes("timeout") || error.includes("token")) && orderId && (
+                        <p className="mt-1 text-ink-2">
+                            Order #{orderId} is saved. If you already paid, call 096 888 750 and we&apos;ll confirm it.
                         </p>
                     )}
                 </div>
             )}
 
-            {/* Instructions */}
-            <div className="w-full bg-slate-50 rounded-xl p-3 text-xs text-slate-500 space-y-1 mb-4">
-                <p>1. Open your banking app (ABA, ACLEDA, Wing, etc.)</p>
-                <p>2. Tap <strong>Scan QR</strong> or <strong>Pay</strong></p>
-                <p>3. Scan this QR code and confirm the amount</p>
-                <p>4. Wait for confirmation (automatic) ✅</p>
-            </div>
-
-            {/* Cancel */}
-            <button type="button"
+            <button
+                type="button"
                 onClick={() => {
                     clearInterval(timerRef.current);
                     if (onCancel) onCancel();
                 }}
-                className="text-sm text-slate-400 hover:text-slate-600 underline transition"
-                disabled={checking}>
-                {checking ? "Please wait..." : "Cancel and go back"}
+                className="btn btn-ghost mt-5 w-full"
+                disabled={checking}
+            >
+                {checking ? "Checking payment" : "Cancel"}
             </button>
         </div>
     );

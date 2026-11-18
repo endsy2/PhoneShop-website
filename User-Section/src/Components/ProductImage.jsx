@@ -1,0 +1,28 @@
+import { useState } from "react";
+import { FiSmartphone } from "react-icons/fi";
+import { imageUrl } from "../utils/display";
+
+// Product photo on a calm surface; a quiet phone glyph when the image is missing or fails.
+const ProductImage = ({ src, alt = "", className = "", fit = "contain" }) => {
+  const url = imageUrl(src);
+  const [failed, setFailed] = useState(false);
+
+  if (!url || failed) {
+    return (
+      <div className={`flex items-center justify-center bg-raised text-ink-3 ${className}`} aria-label={alt}>
+        <FiSmartphone size={28} strokeWidth={1.5} />
+      </div>
+    );
+  }
+  return (
+    <img
+      src={url}
+      alt={alt}
+      loading="lazy"
+      onError={() => setFailed(true)}
+      className={`${fit === "cover" ? "object-cover" : "object-contain"} ${className}`}
+    />
+  );
+};
+
+export default ProductImage;

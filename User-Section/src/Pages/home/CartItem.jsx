@@ -1,100 +1,49 @@
-import React, { useState, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
-import { changeQuantity, removeFromCart } from '../../store/cart';
-import { fetchProductByName } from '../../FetchAPI/Fetch';
-import { NETWORK_CONFIG } from '../../network/Network_EndPoint';
+import { useDispatch } from "react-redux";
+import { FiMinus, FiPlus, FiX } from "react-icons/fi";
+import { changeQuantity, removeFromCart } from "../../store/cart";
+import ProductImage from "../../Components/ProductImage";
+import { formatPrice } from "../../utils/display";
 
+// One cart line, rendered from what the cart stored when the item was added
 const CartItem = ({ product }) => {
-    const { productId, quantity } = product;
-    const [detail, setDetail] = useState(null);
-    const dispatch = useDispatch();
+  const { productId, productName, quantity, price, image, color } = product;
+  const dispatch = useDispatch();
 
-    const fetchProductDetail = async (id) => {
-        try {
-            const response = await fetchProductByName({
-                phone_id: product.productId,
-                phone_name: product.productName,
-            });
-            const productList = response?.data ?? response;
-            const productDetails = Array.isArray(productList)
-                ? productList.find(item => item.spec_id === id || item.phone_id === id)
-                : null;
-            setDetail(productDetails || null);
-        } catch (error) {
-            console.error('Failed to fetch product details:', error);
-        }
-    };
+  const decrease = () =>
+    quantity > 1
+      ? dispatch(changeQuantity({ productId, quantity: quantity - 1 }))
+      : dispatch(removeFromCart({ productId }));
 
-    useEffect(() => {
-        fetchProductDetail(productId);
-    }, [productId]);
-
-    const handleMinusQuantity = () => {
-        if (quantity > 1) {
-            dispatch(changeQuantity({ productId, quantity: quantity - 1 }));
-        } else {
-            dispatch(removeFromCart({ productId }));
-        }
-    };
-
-    const handlePlusQuantity = () => {
-        dispatch(changeQuantity({ productId, quantity: quantity + 1 }));
-    };
-
-    const handleRemoveItem = () => {
-        dispatch(removeFromCart({ productId }));
-    };
-
-    if (!detail) {
-        return <div className='p-2 text-white'>Loading...</div>;
-    }
-
-    const rawImage = (detail.images || "").split(',')[0].trim().replace(/uploads[\\/]/g, '').replace(/\s+/g, '');
-    const imageUrl = rawImage ? `${NETWORK_CONFIG.apiBaseUrl}/${rawImage}` : "https://via.placeholder.com/96x96?text=No+Image";
-
-    return (
-        <div className='flex flex-col sm:flex-row items-start sm:items-center bg-green-600 text-white p-4 border-b border-gray-700 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200'>
-            <img
-                src={imageUrl}
-                alt={detail.name}
-                className='w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-lg'
-                onError={(e) => {
-                    e.target.src = '/default-image.png'; // Fallback image if the URL fails
-                }}
-            />
-            <div className='flex-1 ml-4 flex flex-col justify-between'>
-                <div className='flex justify-between items-center mb-2'>
-                    <h3 className='text-sm font-semibold'>{detail.name || 'Unknown Product'}</h3>
-                    <p className='text-lg font-bold text-white'>
-                        ${(detail.price_discount != null
-                            ? Number(detail.price_discount)
-                            : Number(detail.price)).toFixed(2)}
-                    </p>
-                </div>
-                <div className='flex items-center gap-3'>
-                    <button
-                        className='bg-white  text-green-600 rounded-full p-2 hover:bg-gray-600 transition-colors duration-200'
-                        onClick={handleMinusQuantity}
-                    >
-                        <span className='text-lg'>-</span>
-                    </button>
-                    <span className='text-lg font-medium'>{quantity}</span>
-                    <button
-                        className='bg-white  text-green-600 rounded-full p-2 hover:bg-gray-600 transition-colors duration-200'
-                        onClick={handlePlusQuantity}
-                    >
-                        <span className='text-lg'>+</span>
-                    </button>
-                    <button
-                        className='bg-red-600 text-white rounded-full p-2 hover:bg-red-500 transition-colors duration-200'
-                        onClick={handleRemoveItem}
-                    >
-                        <span className='text-lg'>×</span>
-                    </button>
-                </div>
-            </div>
+  return (
+    <div className="flex gap-4 py-4">
+      <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-raised">
+        <ProductImage src={image} alt={productName} className="h-full w-full p-2" />
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="truncate text-sm text-ink">{productName || "Product"}</p>
+            {color && <p className="mt-0.5 text-xs text-ink-3">{color}</p>}
+          </div>
+          <button type="button" onClick={() => dispatch(removeFromCart({ productId }))} className="icon-btn -mr-2 -mt-1 h-7 w-7" aria-label={`Remove ${productName}`}>
+            <FiX size={14} strokeWidth={1.5} />
+          </button>
         </div>
-    );
+        <div className="mt-auto flex items-center justify-between pt-2">
+          <div className="inline-flex h-8 items-center rounded-lg border border-line-strong">
+            <button type="button" onClick={decrease} className="flex h-full w-8 items-center justify-center text-ink-2 hover:text-ink" aria-label="Decrease quantity">
+              <FiMinus size={12} strokeWidth={1.5} />
+            </button>
+            <span className="price w-6 text-center text-[13px]">{quantity}</span>
+            <button type="button" onClick={() => dispatch(changeQuantity({ productId, quantity: quantity + 1 }))} className="flex h-full w-8 items-center justify-center text-ink-2 hover:text-ink" aria-label="Increase quantity">
+              <FiPlus size={12} strokeWidth={1.5} />
+            </button>
+          </div>
+          <span className="price text-sm text-ink">{formatPrice(Number(price) * quantity)}</span>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default CartItem;

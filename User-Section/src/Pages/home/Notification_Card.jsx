@@ -1,47 +1,37 @@
-import axios from 'axios';
-import React, { useEffect, useState } from 'react';
-import { COMMONENDPOINT, NETWORK_CONFIG } from '../../network/Network_EndPoint';
+import axios from "axios";
+import { useEffect, useState } from "react";
+import { COMMONENDPOINT, NETWORK_CONFIG } from "../../network/Network_EndPoint";
 
 const NotificationCard = () => {
   const [notifications, setNotifications] = useState([]);
 
-  let getNotifications = async () => {
-    await axios.get(`${NETWORK_CONFIG.apiBaseUrl}${COMMONENDPOINT.GET_NOTIFICATIONS}`).then(function (response) {
-      if (response.status === 200) {
-        setNotifications(response.data.data);
-      }
-    }).catch(function (error) {
-      console.log(error);
-    })
-  };
   useEffect(() => {
-    getNotifications()
+    axios
+      .get(`${NETWORK_CONFIG.apiBaseUrl}${COMMONENDPOINT.GET_NOTIFICATIONS}`)
+      .then((response) => setNotifications(response.data.data || []))
+      .catch((error) => console.error(error));
   }, []);
-  return (
-    <div className="w-80 bg-white rounded-lg shadow-md p-4 max-h-[32rem] overflow-y-auto">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">Notifications ({notifications.length})</h2>
-      </div>
-      {/* Notifications List */}
-      <div className="space-y-4">
-        {notifications.length > 0 ? notifications.map((notification) => (
-          <div
-            key={notification.id}
-            className="flex items-center justify-between bg-gray-100 rounded-lg p-3"
-          >
-            <div className="flex items-center">
-              <div
-                className="w-10 h-10 rounded-full bg-red-500 mr-3 flex-shrink-0 flex-grow-0"
-              ></div>
-              <div>
-                <p className="font-semibold text-sm">{notification.title || `Notification ${notification.id}`}</p>
-                <p className="text-xs text-gray-500">{notification.label}</p>
-              </div>
-            </div>
-            <div className="text-xs text-gray-400">{notification.last_upload}</div>
-          </div>
-        )) : <p>No notifications</p>}
 
+  return (
+    <div className="card mt-2 w-80 overflow-hidden shadow-float">
+      <div className="flex h-11 items-center justify-between border-b border-line px-4">
+        <h2 className="text-sm font-medium">Notifications</h2>
+        <span className="price text-xs text-ink-3">{notifications.length}</span>
+      </div>
+      <div className="max-h-96 overflow-y-auto">
+        {notifications.length > 0 ? (
+          notifications.map((notification) => (
+            <div key={notification.id} className="border-b border-line px-4 py-3 last:border-b-0">
+              <div className="flex items-baseline justify-between gap-3">
+                <p className="text-sm font-medium text-ink">{notification.title || "Message"}</p>
+                <span className="shrink-0 text-xs text-ink-3">{notification.last_upload}</span>
+              </div>
+              <p className="mt-1 text-[13px] leading-5 text-ink-2">{notification.label}</p>
+            </div>
+          ))
+        ) : (
+          <p className="px-4 py-6 text-center text-sm text-ink-3">No notifications yet</p>
+        )}
       </div>
     </div>
   );
