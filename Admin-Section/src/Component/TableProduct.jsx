@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { trash } from "../Assets";
+import { FiSearch, FiTrash2 } from "react-icons/fi";
+import ProductImage from "./ProductImage";
+import { formatDate, formatPrice } from "../Utils/display";
 import { tableHeadProduct } from "../Constants";
 import { Link, useLocation } from "react-router-dom";
-import { productByID, productByName, removeOneFetch, searchFetchByCategory, } from "../Fetch/FetchAPI.js";
-import Cookies from 'js-cookie';
+import { productByName, removeOneFetch, searchFetchByCategory } from "../Fetch/FetchAPI.js";
 
 const TableProduct = ({ title, items, category }) => {
   const [datatable, setDataTable] = useState([]);
@@ -36,7 +37,8 @@ const TableProduct = ({ title, items, category }) => {
     );
   };
 
-  const handleRemove = async (id) => {
+  const handleRemove = async (id, name) => {
+    if (!window.confirm(`Delete ${name}? This also removes its colours, specs and order lines.`)) return;
     try {
       await removeOneFetch({ deleteid: id });
       setDataTable((prev) => ({
@@ -50,6 +52,7 @@ const TableProduct = ({ title, items, category }) => {
 
   const handleSelectRemove = async (e) => {
     e.preventDefault();
+    if (!selectedRows.length || !window.confirm(`Delete ${selectedRows.length} selected product(s)?`)) return;
     try {
       // Loop through each selected row ID and remove it using the removeOneFetch function
       for (const id of selectedRows) {
@@ -70,7 +73,6 @@ const TableProduct = ({ title, items, category }) => {
     }
   };
 
-
   const searchDataFetchByCategory = async () => {
     try {
       const data = await searchFetchByCategory({ searchData, Category });
@@ -87,8 +89,7 @@ const TableProduct = ({ title, items, category }) => {
       setSearchData('')
       setDataTable(data);
     } catch (error) {
-      console.log(error);
-
+      console.error(error);
     }
   }
   const handleSearchByCategory = (e) => {
@@ -101,153 +102,83 @@ const TableProduct = ({ title, items, category }) => {
     searchDataFetchByName();
   }
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-  };
-
+  const rows = Array.isArray(datatable?.data) ? datatable.data : [];
+  const detailLink = (element) => `/dashboard/productByName?phone_name=${encodeURIComponent(element.name)}`;
 
   return (
-    <section className="mt-16 bg-white rounded-lg p-6 sm:p-10 shadow-lg border border-gray-400">
-      <section className="flex flex-col sm:flex-row justify-between mx-4 sm:mx-10 mb-5 sm:mb-10">
-        <h1 className="green-text mt-4 sm:mt-10 font-semibold text-lg lg:text-3xl">
-          {title}
-        </h1>
-
-        <form className="flex gap-2 sm:gap-10 items-center mt-3 sm:mt-10">
-          <input
-            type="text"
-            placeholder="Search..."
-            className="input-style text-sm sm:text-base"
-            onChange={(e) => setSearchData(e.target.value)}
-            value={searchData}
-          />
-          <button
-            className="green-btn h-10 sm:h-12 w-[100px] sm:w-[150px] text-sm sm:text-base"
-            onClick={location.pathname === '/dashboard' ? handleSearch : handleSearchByCategory}
-
-          >
-            Search
+    <section className="card overflow-hidden">
+      <form
+        onSubmit={location.pathname === "/dashboard" ? handleSearch : handleSearchByCategory}
+        className="flex flex-wrap items-center justify-between gap-3 border-b border-line p-3"
+      >
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <FiSearch size={16} strokeWidth={1.5} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" />
+            <input
+              type="search"
+              placeholder={`Search ${title.toLowerCase()}`}
+              aria-label="Search products"
+              className="input h-9 w-64 pl-9"
+              onChange={(e) => setSearchData(e.target.value)}
+              value={searchData}
+            />
+          </div>
+          <button type="submit" className="btn btn-secondary h-9">Search</button>
+        </div>
+        {selectedRows.length > 0 && (
+          <button type="button" onClick={handleSelectRemove} className="btn btn-danger h-9">
+            <FiTrash2 size={14} strokeWidth={1.5} />
+            Delete <span className="price">{selectedRows.length}</span>
           </button>
-        </form>
-      </section>
+        )}
+      </form>
 
-      {/* Table Section */}
       <div className="overflow-x-auto">
-        <table className="min-w-full table-auto w-full border-separate border-spacing-0">
+        <table className="w-full min-w-[720px] text-sm">
           <thead>
-            <tr className="bg-DarkLightGray text-white border-b-2 border-gray-300">
-              {tableHeadProduct.map((header, index) => (
-                <th
-                  key={index}
-                  className={`table-data text-sm sm:text-xl px-4 sm:px-6 py-3 sm:py-4 ${index === 0 ? "rounded-l-lg" : ""
-                    } border-r border-gray-200`}
-                >
-                  {header === "ID" ? (
-                    <>
-                      <input
-                        type="checkbox"
-                        checked={selectAll}
-                        onChange={handleSelectAll}
-                        className="mr-2 sm:mr-3 h-4 sm:h-5 w-4 sm:w-5 border-2 border-white rounded"
-                      />
-                      {header}
-                    </>
-                  ) : (
-                    header
-                  )}
-                </th>
-              ))}
-              <th className="rounded-r-lg text-sm sm:text-lg px-4 sm:px-6 py-3 sm:py-4 border-l border-gray-200">
-                <p><button onClick={(e) => handleSelectRemove(e)}><img
-                  src={trash}
-                  alt="Delete"
-                  className="cursor-pointer max-w-[25px] max-h-[25px] sm:max-w-[30px] sm:max-h-[30px]"
-                /></button></p>
+            <tr className="border-b border-line text-left text-[13px] text-ink-3">
+              <th className="w-10 py-2.5 pl-4">
+                <input type="checkbox" checked={selectAll} onChange={handleSelectAll} aria-label="Select all" className="h-4 w-4 accent-brand" />
               </th>
+              {tableHeadProduct.map((header) => (
+                <th key={header} className={`px-3 py-2.5 font-normal ${["Price", "Stock"].includes(header) ? "text-right" : ""}`}>{header}</th>
+              ))}
+              <th className="w-12" />
             </tr>
           </thead>
-
           <tbody>
-            {Array.isArray(datatable?.data) && datatable.data.length > 0 ? (
-              datatable.data.map((element) => (
-                <tr
-                  key={element.phone_id}
-                  className="hover:bg-gray-50 transition duration-200 border-b border-gray-200"
-                >
-                  <td className="table-data px-4 sm:px-6 py-3 sm:py-4">
-                    <input
-                      type="checkbox"
-                      checked={selectedRows.includes(element.phone_id)}
-                      onChange={() => handleRowSelect(element.phone_id)}
-                      className="mr-2 sm:mr-3 h-4 sm:h-5 w-4 sm:w-5"
-                    />
-                    <Link
-                      to={`/dashboard/productByName?phone_name=${element.name}`}
-                      className="hover:underline text-sm sm:text-base"
-                    >
-                      {element.phone_id}
-                    </Link>
-                  </td>
-                  <td className="table-data px-4 sm:px-6 py-3 sm:py-4">
-                    <Link
-                      to={`/dashboard/productByName?phone_name=${element.name}`}
-                      className="hover:underline text-sm sm:text-base"
-                    >
-                      {element.name}
-                    </Link>
-                  </td>
-                  <td className="table-data px-4 sm:px-6 py-3 sm:py-4">
-                    <Link
-                      to={`/dashboard/productByName?phone_name=${element.name}`}
-                      className="hover:underline text-sm sm:text-base"
-                    >
-                      {element.category_name}
-                    </Link>
-                  </td>
-                  <td className="table-data px-4 sm:px-6 py-3 sm:py-4">
-                    <Link
-                      to={`/dashboard/productByName?phone_name=${element.name}`}
-                      className="hover:underline text-sm sm:text-base"
-                    >
-                      {element.price}
-                    </Link>
-                  </td>
-                  <td className="table-data px-4 sm:px-6 py-3 sm:py-4">
-                    <Link
-                      to={`/dashboard/productByName?phone_name=${element.name}`}
-                      className="hover:underline text-sm sm:text-base"
-                    >
-                      {element.stock}
-                    </Link>
-                  </td>
-                  <td className="table-data px-4 sm:px-6 py-3 sm:py-4">
-                    <Link
-                      to={`/dashboard/productByName?phone_name=${element.name}`}
-                      className="hover:underline text-sm sm:text-base"
-                    >
-                      {formatDate(element.release_date)}
-                    </Link>
-                  </td>
-                  <td className="table-data flex justify-center gap-2 sm:gap-4 px-4 sm:px-6 py-3 sm:py-4">
-                    <button
-                      onClick={() => handleRemove(element.phone_id)}
-                      className="flex"
-                    >
-                      <img
-                        src={trash}
-                        alt="Remove"
-                        className="w-4 sm:w-6 lg:w-8 h-4 sm:h-6 lg:h-8 object-contain"
-                      />
-                    </button>
-                  </td>
-                </tr>
-              ))
+            {rows.length > 0 ? (
+              rows.map((element) => {
+                const stock = Number(element.stock ?? 0);
+                return (
+                  <tr key={element.phone_id} className={`border-b border-line last:border-b-0 transition-colors duration-150 ease-out hover:bg-raised ${selectedRows.includes(element.phone_id) ? "bg-raised" : ""}`}>
+                    <td className="py-2 pl-4">
+                      <input type="checkbox" checked={selectedRows.includes(element.phone_id)} onChange={() => handleRowSelect(element.phone_id)} aria-label={`Select ${element.name}`} className="h-4 w-4 accent-brand" />
+                    </td>
+                    <td className="price px-3 py-2 text-ink-3">{element.phone_id}</td>
+                    <td className="px-3 py-2">
+                      <Link to={detailLink(element)} className="flex items-center gap-3 text-ink hover:underline">
+                        <span className="h-9 w-9 shrink-0 overflow-hidden rounded-md bg-raised">
+                          <ProductImage src={element.images} alt="" className="h-full w-full p-1" />
+                        </span>
+                        {element.name}
+                      </Link>
+                    </td>
+                    <td className="px-3 py-2 text-ink-2">{element.category_name}</td>
+                    <td className="price px-3 py-2 text-right text-ink">{formatPrice(element.price)}</td>
+                    <td className={`price px-3 py-2 text-right ${stock <= 0 ? "text-danger" : stock <= 5 ? "text-warn" : "text-ink"}`}>{stock}</td>
+                    <td className="px-3 py-2 text-ink-2">{formatDate(element.release_date)}</td>
+                    <td className="py-2 pr-3 text-right">
+                      <button type="button" onClick={() => handleRemove(element.phone_id, element.name)} className="icon-btn h-8 w-8 hover:bg-danger-soft hover:text-danger" aria-label={`Delete ${element.name}`}>
+                        <FiTrash2 size={14} strokeWidth={1.5} />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
             ) : (
               <tr>
-                <td colSpan={7} className="text-center text-sm sm:text-base py-6">
-                  No data available
-                </td>
+                <td colSpan={8} className="py-12 text-center text-sm text-ink-3">No products</td>
               </tr>
             )}
           </tbody>

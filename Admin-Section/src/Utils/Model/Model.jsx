@@ -1,39 +1,35 @@
-import Product from "../../Pages/Product";
-import UpdateOrder from "../../Section/Order/UpdateOrder";
-import AddProduct from "../../Section/Product/AddProduct";
 import UpdateProductVariants from "./UpdateProductVariant";
 import UpdateSpec from "./UpdateSpec";
+import { useEffect } from "react";
+import { FiX } from "react-icons/fi";
 
-const Model = ({ open, onClose, id, product_id, value, storage }) => {
-  const handleClose = (e) => {
-    if (e.target.id === "wrapper") onClose();
-  };
+// Dialog that hosts the edit forms
+const Model = ({ open, onClose, id, product_id, storage, title, initial }) => {
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event) => event.key === "Escape" && onClose();
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
 
   if (!open) return null;
 
   return (
-    <div
-      className="fixed inset-0 bg-black bg-opacity-20 backdrop-blur-sm flex justify-center items-center"
-      id="wrapper"
-      onClick={handleClose}
-    >
-      <div
-        className="w-[1400px] max-h-[90vh] bg-white p-6 rounded-lg shadow-lg overflow-y-auto"
-        style={{ maxHeight: "90vh" }} // Optional inline styling
-      >
-        <button
-          className="text-primary text-2xl place-self-end"
-          onClick={onClose}
-        >
-          X
-        </button>
-        {id === "addProduct" ? (
-          <AddProduct product_id={product_id} />
-        ) : id === "updateOrder" ? (
-          <UpdateOrder order_items_id={value} />
-        ) : id === "updateVariants" ? (<UpdateProductVariants product_id={product_id} />
-        ) : id === 'updateSpec' ? (<UpdateSpec product_id={product_id} storage={storage} />)
-          : null}
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4" onClick={onClose}>
+      <div className="card flex max-h-[90vh] w-full max-w-2xl flex-col shadow-float" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={title}>
+        <div className="flex items-center justify-between border-b border-line px-5 py-3">
+          <h2 className="text-base font-medium">{title}</h2>
+          <button type="button" className="icon-btn" onClick={onClose} aria-label="Close">
+            <FiX size={18} strokeWidth={1.5} />
+          </button>
+        </div>
+        <div className="overflow-y-auto p-5">
+          {id === "updateVariants" ? (
+            <UpdateProductVariants product_id={product_id} initial={initial} />
+          ) : id === "updateSpec" ? (
+            <UpdateSpec product_id={product_id} storage={storage} initial={initial} />
+          ) : null}
+        </div>
       </div>
     </div>
   );

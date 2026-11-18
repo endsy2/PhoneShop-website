@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from "react";
-import { addNewDetail, fetchProductVariantsWithSpecs, updateSpec } from "../../Fetch/FetchAPI";
+import { useEffect, useState } from "react";
+import { addNewDetail, fetchProductVariantsWithSpecs, updateSpec, API_BASE_URL } from "../../Fetch/FetchAPI";
 import axios from "axios";
+import { FiPlus } from "react-icons/fi";
+import Notice from "../../Component/Notice";
 
 const EMPTY_FORM = {
     screen_size: "",
@@ -13,7 +15,7 @@ const EMPTY_FORM = {
     stock: "",
 };
 
-const API_URL_Admin = "http://localhost:3000/admin";
+const API_URL_Admin = `${API_BASE_URL}/admin`;
 
 // Fetch all products for the dropdown
 const fetchAllProducts = async () => {
@@ -45,7 +47,7 @@ const AddDetail = () => {
     useEffect(() => {
         fetchAllProducts()
             .then(setProductOptions)
-            .catch(() => setError("Failed to load products."));
+            .catch(() => setError("Couldn\u2019t load products"));
     }, []);
 
     // When product changes, load its variants + specs
@@ -67,7 +69,7 @@ const AddDetail = () => {
                 setSelectedSpecStorage("");
                 setForm(EMPTY_FORM);
             })
-            .catch(() => setError("Failed to load product variants."))
+            .catch(() => setError("Couldn\u2019t load this product\u2019s colours"))
             .finally(() => setLoading(false));
     }, [selectedProductId]);
 
@@ -129,7 +131,7 @@ const AddDetail = () => {
         setSuccess("");
 
         if (!selectedProductId || !selectedVariantId) {
-            setError("Please select a product and a color variant.");
+            setError("Choose a product and a colour first");
             return;
         }
 
@@ -155,7 +157,7 @@ const AddDetail = () => {
                     price: form.price,
                 };
                 await updateSpec(formdata, queryParam);
-                setSuccess("Spec updated successfully! Changes are now live on the user page.");
+                setSuccess("Saved. The storefront shows the new values now");
             } else {
                 // INSERT new spec
                 const selectedVariant = variantsWithSpecs.find(
@@ -168,7 +170,7 @@ const AddDetail = () => {
                     ...form,
                 };
                 await addNewDetail({ formdata });
-                setSuccess("New spec added successfully! It is now visible on the user page.");
+                setSuccess("Added. It\u2019s on the storefront now");
             }
 
             // Refresh variants to show updated data
@@ -177,7 +179,7 @@ const AddDetail = () => {
             setSelectedSpecStorage("");
             setForm(EMPTY_FORM);
         } catch (err) {
-            setError(err?.response?.data?.message || err?.message || "Something went wrong.");
+            setError(err?.response?.data?.message || err?.message || "Couldn\u2019t save the option");
         } finally {
             setSubmitting(false);
         }
@@ -192,20 +194,14 @@ const AddDetail = () => {
 
     const isUpdate = selectedSpecStorage && selectedSpecStorage !== "__new__";
 
-    return (
-        <div className="bg-white border-gray-300 border p-8 rounded-lg w-full max-w-4xl mx-auto mt-12 shadow-lg">
-            <h1 className="text-center text-3xl text-primary font-bold mb-2">
-                {isUpdate ? "Edit Spec" : "Add New Spec"}
-            </h1>
-            <p className="text-center text-sm text-gray-500 mb-8">
-                Select a product and variant, then edit an existing spec or add a new one.
-            </p>
+    const chip = (active) =>
+        `h-9 rounded-lg border px-3 text-sm transition-colors duration-150 ease-out ${
+            active ? "border-ink bg-surface text-ink" : "border-line-strong bg-surface text-ink-2 hover:text-ink"
+        }`;
 
-            {/* ── Step 1: Select Product ── */}
-            <div className="mb-6">
-                <label className="block text-sm font-semibold text-primary mb-2">
-                    1. Select Product
-                </label>
+    return (
+        <div className="card max-w-3xl divide-y divide-line">
+            <Step number={1} title="Product">
                 <select
                     value={selectedProductId}
                     onChange={(e) => {
@@ -214,184 +210,112 @@ const AddDetail = () => {
                         const found = productOptions.find((p) => String(p.phone_id) === id);
                         setSelectedProductName(found?.name || "");
                     }}
-                    className="input-style w-full"
+                    className="input max-w-sm"
+                    aria-label="Product"
                 >
-                    <option value="">— Choose a product —</option>
+                    <option value="">Choose a product</option>
                     {productOptions.map((p) => (
-                        <option key={p.phone_id} value={p.phone_id}>
-                            {p.name}
-                        </option>
+                        <option key={p.phone_id} value={p.phone_id}>{p.name}</option>
                     ))}
                 </select>
-            </div>
+            </Step>
 
-            {/* ── Step 2: Select Color Variant ── */}
             {selectedProductId && (
-                <div className="mb-6">
-                    <label className="block text-sm font-semibold text-primary mb-2">
-                        2. Select Color Variant
-                    </label>
+                <Step number={2} title="Colour">
                     {loading ? (
-                        <p className="text-sm text-gray-400">Loading variants…</p>
+                        <p className="text-sm text-ink-3">Loading colours</p>
                     ) : uniqueColors.length === 0 ? (
-                        <p className="text-sm text-red-500">No color variants found for this product.</p>
+                        <p className="text-sm text-ink-3">This product has no colours yet. Add one on the Colour tab</p>
                     ) : (
-                        <div className="flex flex-wrap gap-3">
+                        <div className="flex flex-wrap gap-2">
                             {uniqueColors.map(({ id, color }) => (
-                                <button
-                                    key={id}
-                                    type="button"
-                                    onClick={() => setSelectedVariantId(String(id))}
-                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 font-medium text-sm transition ${
-                                        String(selectedVariantId) === String(id)
-                                            ? "border-green-600 bg-green-50 text-green-700"
-                                            : "border-gray-300 bg-white text-gray-700 hover:border-green-400"
-                                    }`}
-                                >
-                                    <span
-                                        className="w-5 h-5 rounded-full border border-gray-300 inline-block flex-shrink-0"
-                                        style={{ backgroundColor: color }}
-                                    />
+                                <button key={id} type="button" onClick={() => setSelectedVariantId(String(id))} className={chip(String(selectedVariantId) === String(id))}>
                                     {color}
                                 </button>
                             ))}
                         </div>
                     )}
-                </div>
+                </Step>
             )}
 
-            {/* ── Step 3: Select Spec to Edit or Add New ── */}
             {selectedVariantId && (
-                <div className="mb-8">
-                    <label className="block text-sm font-semibold text-primary mb-2">
-                        3. Select Spec to Edit — or Add New
-                    </label>
-                    <div className="flex flex-wrap gap-3">
+                <Step number={3} title="Storage option" description="Edit an existing option or add a new one">
+                    <div className="flex flex-wrap gap-2">
                         {specsForVariant.map((spec) => (
-                            <button
-                                key={spec.spec_id}
-                                type="button"
-                                onClick={() => setSelectedSpecStorage(spec.storage)}
-                                className={`px-4 py-2 rounded-lg border-2 font-medium text-sm transition ${
-                                    selectedSpecStorage === spec.storage
-                                        ? "border-blue-600 bg-blue-50 text-blue-700"
-                                        : "border-gray-300 bg-white text-gray-700 hover:border-blue-400"
-                                }`}
-                            >
-                                {spec.storage} — ${spec.price}
+                            <button key={spec.spec_id} type="button" onClick={() => setSelectedSpecStorage(spec.storage)} className={chip(selectedSpecStorage === spec.storage)}>
+                                {spec.storage} <span className="price ml-1 text-ink-3">${spec.price}</span>
                             </button>
                         ))}
                         <button
                             type="button"
                             onClick={() => setSelectedSpecStorage("__new__")}
-                            className={`px-4 py-2 rounded-lg border-2 font-medium text-sm transition ${
-                                selectedSpecStorage === "__new__"
-                                    ? "border-green-600 bg-green-50 text-green-700"
-                                    : "border-dashed border-gray-400 bg-white text-gray-500 hover:border-green-500"
-                            }`}
+                            className={`${chip(selectedSpecStorage === "__new__")} ${selectedSpecStorage === "__new__" ? "" : "border-dashed"} inline-flex items-center gap-1.5`}
                         >
-                            + Add New Spec
+                            <FiPlus size={14} strokeWidth={1.5} /> New option
                         </button>
                     </div>
-                </div>
+                </Step>
             )}
 
-            {/* ── Step 4: Fill in the Form ── */}
             {selectedVariantId && selectedSpecStorage && (
-                <>
-                    <div className="border-t border-gray-200 pt-6 mb-4">
-                        <p className="text-sm font-semibold text-gray-600 mb-4">
-                            {isUpdate
-                                ? `Editing spec: ${selectedSpecStorage}`
-                                : "Adding a new spec for this variant"}
-                        </p>
+                <form onSubmit={handleSubmit} onReset={handleReset} className="p-6">
+                    <p className="text-sm font-medium">
+                        {isUpdate ? `Edit ${selectedSpecStorage}` : `New storage option for ${selectedProductName}`}
+                    </p>
+                    <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                        <Field label="Storage" name="storage" value={form.storage} onChange={handleFormChange} placeholder="128GB" required />
+                        <Field label="RAM" name="ram" value={form.ram} onChange={handleFormChange} placeholder="8GB" required />
+                        <Field label="Price (USD)" name="price" value={form.price} onChange={handleFormChange} type="number" step="0.01" required />
+                        <Field label="Stock" name="stock" value={form.stock} onChange={handleFormChange} type="number" required />
+                        <Field label="Screen" name="screen_size" value={form.screen_size} onChange={handleFormChange} placeholder="6.1 inch" required />
+                        <Field label="Processor" name="processor" value={form.processor} onChange={handleFormChange} required />
+                        <Field label="Battery" name="battery" value={form.battery} onChange={handleFormChange} placeholder="4000mAh" required />
+                        <Field label="Camera" name="camera" value={form.camera} onChange={handleFormChange} placeholder="48MP" required />
                     </div>
-
-                    <form
-                        onSubmit={handleSubmit}
-                        className="grid grid-cols-1 md:grid-cols-2 gap-6"
-                    >
-                        <Field label="Storage" name="storage" value={form.storage} onChange={handleFormChange} placeholder="e.g. 128GB" required />
-                        <div className="flex flex-col">
-                        <label className="text-sm font-medium text-primary mb-2">Price ($)</label>
-                        <input
-                            type="number"
-                            name="price"
-                            value={form.price}
-                            onChange={handleFormChange}
-                            placeholder="e.g. 999.99"
-                            className="input-style"
-                            required
-                            min="0"
-                            step="0.01"
-                        />
+                    <div className="mt-6 flex gap-2">
+                        <button type="submit" disabled={submitting} className="btn btn-dark">
+                            {submitting ? "Saving" : isUpdate ? "Save changes" : "Add option"}
+                        </button>
+                        <button type="reset" className="btn btn-ghost">Cancel</button>
                     </div>
-                        <Field label="Stock" name="stock" value={form.stock} onChange={handleFormChange} placeholder="e.g. 50" type="number" required />
-                        <Field label="Screen Size" name="screen_size" value={form.screen_size} onChange={handleFormChange} placeholder="e.g. 6.1 inch" required />
-                        <Field label="Processor" name="processor" value={form.processor} onChange={handleFormChange} placeholder="e.g. A17 Pro" required />
-                        <Field label="RAM" name="ram" value={form.ram} onChange={handleFormChange} placeholder="e.g. 8GB" required />
-                        <Field label="Battery" name="battery" value={form.battery} onChange={handleFormChange} placeholder="e.g. 4000mAh" required />
-                        <Field label="Camera" name="camera" value={form.camera} onChange={handleFormChange} placeholder="e.g. 48MP" required />
-
-                        <div className="md:col-span-2 flex justify-center gap-4 mt-2">
-                            <button
-                                type="submit"
-                                disabled={submitting}
-                                className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-semibold px-8 py-2 rounded-lg transition"
-                            >
-                                {submitting ? "Saving…" : isUpdate ? "Update Spec" : "Add Spec"}
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleReset}
-                                className="bg-red-600 hover:bg-red-700 text-white font-semibold px-8 py-2 rounded-lg transition"
-                            >
-                                Reset
-                            </button>
-                        </div>
-                    </form>
-                </>
+                </form>
             )}
 
-            {/* Success/Error Messages */}
             {(error || success) && (
-                <div className="mt-6">
-                    {success && (
-                        <div className="flex items-center gap-3 p-4 bg-green-50 border-2 border-green-200 rounded-xl shadow-md animate-fade-in">
-                            <span className="text-3xl">✅</span>
-                            <div>
-                                <p className="text-green-800 font-bold text-lg">{success}</p>
-                                <p className="text-green-600 text-sm">Changes are now live on the user page!</p>
-                            </div>
-                        </div>
-                    )}
-                    {error && (
-                        <div className="flex items-center gap-3 p-4 bg-red-50 border-2 border-red-200 rounded-xl shadow-md animate-fade-in">
-                            <span className="text-3xl">❌</span>
-                            <div>
-                                <p className="text-red-800 font-bold text-lg">{error}</p>
-                                <p className="text-red-600 text-sm">Please try again or contact support.</p>
-                            </div>
-                        </div>
-                    )}
+                <div className="space-y-2 p-6">
+                    <Notice>{success}</Notice>
+                    <Notice tone="error">{error}</Notice>
                 </div>
             )}
         </div>
     );
 };
 
-const Field = ({ label, name, value, onChange, placeholder, type = "text", required }) => (
-    <div className="flex flex-col">
-        <label className="text-sm font-medium text-primary mb-2">{label}</label>
+const Step = ({ number, title, description, children }) => (
+    <section className="p-6">
+        <div className="mb-3 flex items-baseline gap-2">
+            <span className="price text-[13px] text-ink-3">{number}</span>
+            <h2 className="text-sm font-medium">{title}</h2>
+            {description && <span className="text-[13px] text-ink-3">{description}</span>}
+        </div>
+        {children}
+    </section>
+);
+
+const Field = ({ label, name, value, onChange, placeholder, type = "text", required, step }) => (
+    <div>
+        <label htmlFor={`spec-${name}`} className="label">{label}</label>
         <input
+            id={`spec-${name}`}
             type={type}
             name={name}
             value={value}
             onChange={onChange}
             placeholder={placeholder}
-            className="input-style"
+            className={`input ${type === "number" ? "price" : ""}`}
             required={required}
             min={type === "number" ? "0" : undefined}
+            step={step}
         />
     </div>
 );

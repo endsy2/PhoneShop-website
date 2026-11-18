@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
+import { FiTrash2 } from "react-icons/fi";
 import { createNotification, deleteNotification, getNotifications } from "../Fetch/FetchAPI";
+import Notice from "../Component/Notice";
+import PageHeader from "../Component/PageHeader";
 
 const Message = () => {
   const [formData, setFormData] = useState({ title: "", message: "" });
   const [notifications, setNotifications] = useState([]);
-  const [statusMessage, setStatusMessage] = useState("");
+  const [statusMessage, setStatusMessage] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const loadNotifications = async () => {
@@ -12,7 +15,7 @@ const Message = () => {
       const response = await getNotifications();
       setNotifications(response?.data || []);
     } catch (error) {
-      setStatusMessage(error?.response?.data?.message || "Failed to load notifications.");
+      setStatusMessage({ ok: false, text: error?.response?.data?.message || "Couldn\u2019t load messages" });
     }
   };
 
@@ -31,7 +34,7 @@ const Message = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setLoading(true);
-    setStatusMessage("");
+    setStatusMessage(null);
 
     try {
       await createNotification({
@@ -40,17 +43,17 @@ const Message = () => {
       });
 
       setFormData({ title: "", message: "" });
-      setStatusMessage("Message sent to user notifications.");
+      setStatusMessage({ ok: true, text: "Sent. Customers see it under the bell icon" });
       await loadNotifications();
     } catch (error) {
-      setStatusMessage(error?.response?.data?.message || error?.message || "Failed to create message.");
+      setStatusMessage({ ok: false, text: error?.response?.data?.message || error?.message || "Couldn\u2019t send the message" });
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (id) => {
-    const confirmDelete = window.confirm("Delete this message from user notifications?");
+    const confirmDelete = window.confirm("Delete this message? Customers will no longer see it.");
 
     if (!confirmDelete) {
       return;
@@ -58,127 +61,65 @@ const Message = () => {
 
     try {
       await deleteNotification(id);
-      setStatusMessage("Message deleted successfully.");
+      setStatusMessage({ ok: true, text: "Message deleted" });
       await loadNotifications();
     } catch (error) {
-      setStatusMessage(error?.response?.data?.message || error?.message || "Failed to delete message.");
+      setStatusMessage({ ok: false, text: error?.response?.data?.message || error?.message || "Couldn\u2019t delete the message" });
     }
   };
 
   return (
-    <div className="space-y-8">
-      <section className="rounded-2xl bg-white p-6 shadow-sm border border-gray-100">
-        <h1 className="text-2xl font-semibold text-gray-900">Message</h1>
-        <p className="mt-2 text-sm text-gray-500">
-          Write a message here and it will appear in the user notification bell.
-        </p>
-
-        <form className="mt-6 grid gap-4 max-w-2xl" onSubmit={handleSubmit}>
-          <div className="grid gap-2">
-            <label htmlFor="title" className="text-sm font-medium text-gray-700">
-              Title
-            </label>
-            <input
-              id="title"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              className="h-12 rounded-lg border border-gray-300 px-4 outline-none focus:border-green-600"
-              placeholder="Example: Weekend Discount"
-            />
+    <div className="space-y-6">
+      <PageHeader title="Messages" description="Announcements customers see in the storefront notification bell" />
+      <div className="grid items-start gap-6 lg:grid-cols-2">
+        <form className="card space-y-4 p-6" onSubmit={handleSubmit}>
+          <h2 className="text-base font-medium">New message</h2>
+          <div>
+            <label htmlFor="title" className="label">Title</label>
+            <input id="title" name="title" value={formData.title} onChange={handleChange} placeholder="Weekend discount" className="input" />
           </div>
-
-          <div className="grid gap-2">
-            <label htmlFor="message" className="text-sm font-medium text-gray-700">
-              Message
-            </label>
+          <div>
+            <label htmlFor="message" className="label">Message</label>
             <textarea
               id="message"
               name="message"
               value={formData.message}
               onChange={handleChange}
               rows="5"
-              className="rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
-              placeholder="Write anything about discount, new stock, opening hours, or other alerts..."
+              placeholder="A sale, new stock, opening hours"
+              className="input h-auto resize-y py-2"
               required
             />
           </div>
-
-          <div className="flex flex-col gap-3">
-            <button
-              type="submit"
-              disabled={loading}
-              className="rounded-lg bg-green-600 px-6 py-3 font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {loading ? "Sending..." : "Send Message"}
-            </button>
-            
-            {/* Success/Error Messages */}
-            {statusMessage && (
-              <div className={`flex items-center gap-3 p-4 rounded-xl shadow-md animate-fade-in ${
-                statusMessage.includes("Failed") || statusMessage.includes("error")
-                  ? "bg-red-50 border-2 border-red-200"
-                  : "bg-green-50 border-2 border-green-200"
-              }`}>
-                <span className="text-3xl">{statusMessage.includes("Failed") || statusMessage.includes("error") ? "❌" : "✅"}</span>
-                <div>
-                  <p className={`font-bold text-lg ${
-                    statusMessage.includes("Failed") || statusMessage.includes("error")
-                      ? "text-red-800"
-                      : "text-green-800"
-                  }`}>{statusMessage}</p>
-                  <p className={`text-sm ${
-                    statusMessage.includes("Failed") || statusMessage.includes("error")
-                      ? "text-red-600"
-                      : "text-green-600"
-                  }`}>
-                    {statusMessage.includes("Failed") || statusMessage.includes("error")
-                      ? "Please try again or contact support."
-                      : "Users will see this in their notification bell."}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
+          <button type="submit" disabled={loading} className="btn btn-dark">{loading ? "Sending" : "Send to customers"}</button>
+          {statusMessage && <Notice tone={statusMessage.ok ? "ok" : "error"}>{statusMessage.text}</Notice>}
         </form>
-      </section>
 
-      <section className="rounded-2xl bg-white p-6 shadow-sm border border-gray-100">
-        <div className="flex items-center justify-between gap-4">
-          <h2 className="text-xl font-semibold text-gray-900">Recent notifications</h2>
-          <span className="text-sm text-gray-500">{notifications.length} items</span>
-        </div>
-
-        <div className="mt-6 space-y-3">
-          {notifications.length > 0 ? notifications.map((notification) => (
-            <article
-              key={notification.id}
-              className="rounded-xl border border-gray-200 bg-gray-50 p-4"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-green-700">
-                    {notification.title || "Message"}
-                  </p>
-                  <p className="mt-1 text-sm text-gray-700">{notification.label}</p>
-                </div>
-                <div className="flex shrink-0 flex-col items-end gap-2">
-                  <span className="text-xs text-gray-400">{notification.last_upload}</span>
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(notification.id)}
-                    className="rounded-md border border-red-200 bg-red-50 px-3 py-1 text-xs font-medium text-red-600 transition hover:bg-red-100"
-                  >
-                    Delete
+        <section className="card">
+          <div className="flex items-baseline justify-between border-b border-line px-5 py-3">
+            <h2 className="text-sm font-medium">Sent</h2>
+            <span className="price text-[13px] text-ink-3">{notifications.length}</span>
+          </div>
+          {notifications.length > 0 ? (
+            <ul className="divide-y divide-line">
+              {notifications.map((notification) => (
+                <li key={notification.id} className="flex items-start justify-between gap-4 px-5 py-4">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-ink">{notification.title || "Message"}</p>
+                    <p className="mt-1 text-sm leading-6 text-ink-2">{notification.label}</p>
+                    <p className="mt-1 text-xs text-ink-3">{notification.last_upload}</p>
+                  </div>
+                  <button type="button" onClick={() => handleDelete(notification.id)} className="icon-btn h-8 w-8 shrink-0 hover:bg-danger-soft hover:text-danger" aria-label="Delete message">
+                    <FiTrash2 size={14} strokeWidth={1.5} />
                   </button>
-                </div>
-              </div>
-            </article>
-          )) : (
-            <p className="text-sm text-gray-500">No messages yet.</p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="px-5 py-10 text-center text-sm text-ink-3">No messages sent yet</p>
           )}
-        </div>
-      </section>
+        </section>
+      </div>
     </div>
   );
 };

@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import Notice from "../../Component/Notice";
 import { updateSpec } from "../../Fetch/FetchAPI";
 
-const UpdateSpec = ({ product_id, storage }) => {
+const UpdateSpec = ({ product_id, storage, initial }) => {
     const [id, setID] = useState("");
     const [oldStorage, setOldStorage] = useState("");
     const [newStorage, setNewStorage] = useState("");
@@ -18,7 +19,18 @@ const UpdateSpec = ({ product_id, storage }) => {
     useEffect(() => {
         setID(product_id);
         setOldStorage(storage);
-    }, [product_id, storage]);
+        // Start from the spec's current values so a single change doesn't mean retyping everything
+        if (initial) {
+            setNewStorage(initial.storage || storage || "");
+            setProcessor(initial.processor || "");
+            setRam(initial.ram || "");
+            setBattery(initial.battery || "");
+            setCamera(initial.camera || "");
+            setScreen_size(initial.screen_size || "");
+            setPrice(initial.price || "");
+            setStock(initial.spec_stock ?? initial.stock ?? "");
+        }
+    }, [product_id, storage, initial]);
 
     const handleUpdate = async (e) => {
         e.preventDefault();
@@ -27,16 +39,15 @@ const UpdateSpec = ({ product_id, storage }) => {
         try {
             const result = await updateSpec(formdata, queryParam);
             if (result?.status >= 200 && result?.status < 300) {
-                setResult("Spec updated successfully!");
+                setResult("Saved. Reload the page to see the new values");
                 setError("");
                 window.location.reload();
             } else {
-                setError(result?.data?.message || "Update failed. Please try again.");
+                setError(result?.data?.message || "Couldn\u2019t save the spec");
             }
         } catch (error) {
-            const msg = error?.response?.data?.message || "Update failed. Please try again.";
+            const msg = error?.response?.data?.message || "Couldn\u2019t save the spec";
             setError(msg);
-            console.log(error);
         }
     };
 
@@ -53,136 +64,32 @@ const UpdateSpec = ({ product_id, storage }) => {
         setError("");
     };
 
-    return (
-        <div className="bg-white border-gray-300 border p-12 rounded-lg w-full max-w-9xl mx-auto mt-12 shadow-lg">
-            <h1 className="text-center text-3xl text-primary font-bold mb-8">Update Product</h1>
-            <form
-                onSubmit={handleUpdate}
-                className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 md:items-center gap-10 py-10"
-            >
-                {/* Price */}
-
-                {/* Storage */}
-                <div className="flex flex-col">
-                    <label className="text-sm font-medium text-primary mb-2">Storage</label>
-                    <input
-                        type="text"
-                        name="storage"
-                        placeholder="Enter new storage capacity"
-                        value={newStorage}
-                        className="input-style"
-                        onChange={(e) => setNewStorage(e.target.value)}
-                    />
-                </div>
-
-                <div className="flex flex-col">
-                    <label className="text-sm font-medium text-primary mb-2">Price ($)</label>
-                    <input
-                        type="number"
-                        name="price"
-                        placeholder="e.g. 999.99"
-                        value={price}
-                        className="input-style"
-                        onChange={(e) => setPrice(e.target.value)}
-                        min="0"
-                        step="0.01"
-                        required
-                    />
-                </div>
-                {/* Processor */}
-                <div className="flex flex-col">
-                    <label className="text-sm font-medium text-primary mb-2">Processor</label>
-                    <input
-                        type="text"
-                        name="processor"
-                        placeholder="Enter processor details"
-                        value={processor}
-                        className="input-style"
-                        onChange={(e) => setProcessor(e.target.value)}
-                    />
-                </div>
-
-                {/* RAM */}
-                <div className="flex flex-col">
-                    <label className="text-sm font-medium text-primary mb-2">RAM</label>
-                    <input
-                        type="text"
-                        name="ram"
-                        placeholder="Enter RAM size"
-                        value={ram}
-                        className="input-style"
-                        onChange={(e) => setRam(e.target.value)}
-                    />
-                </div>
-
-                {/* Battery */}
-                <div className="flex flex-col">
-                    <label className="text-sm font-medium text-primary mb-2">Battery</label>
-                    <input
-                        type="text"
-                        name="battery"
-                        placeholder="Enter battery capacity"
-                        value={battery}
-                        className="input-style"
-                        onChange={(e) => setBattery(e.target.value)}
-                    />
-                </div>
-                <div className="flex flex-col">
-                    <label className="text-sm font-medium text-primary mb-2">Screen Size</label>
-                    <input
-                        type="text"
-                        name="battery"
-                        placeholder="Enter Screen Size"
-                        value={screen_size}
-                        className="input-style"
-                        onChange={(e) => setScreen_size(e.target.value)}
-                    />
-                </div>
-
-                {/* Camera */}
-                <div className="flex flex-col">
-                    <label className="text-sm font-medium text-primary mb-2">Camera</label>
-                    <input
-                        type="text"
-                        name="camera"
-                        placeholder="Enter camera specifications"
-                        value={camera}
-                        className="input-style"
-                        onChange={(e) => setCamera(e.target.value)}
-                    />
-                </div>
-
-                {/* Stock */}
-                <div className="flex flex-col">
-                    <label className="text-sm font-medium text-primary mb-2">Stock</label>
-                    <input
-                        type="number"
-                        name="stock"
-                        placeholder="Enter stock quantity"
-                        value={stock}
-                        className="input-style"
-                        onChange={(e) => setStock(e.target.value)}
-                    />
-                </div>
-
-                <div className="w-full gap-4 mt-4 grid grid-cols-2 justify-center items-center">
-                    <input
-                        type="submit"
-                        value="Submit"
-                        className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded-lg transition cursor-pointer"
-                    />
-                    <button
-                        type="button"
-                        onClick={handleClear}
-                        className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-2 rounded-lg transition"
-                    >
-                        Clear
-                    </button>
-                </div>
-            </form>
-            {result && <p className="mt-4 text-green-600 font-semibold text-center">{result}</p>}
-            {error && <p className="mt-4 text-red-600 font-semibold text-center">{error}</p>}
+    const field = (label, value, setter, type = "text") => (
+        <div>
+            <label className="label">{label}</label>
+            <input type={type} value={value} onChange={(e) => setter(e.target.value)} min={type === "number" ? "0" : undefined} step={type === "number" ? "any" : undefined} className={`input ${type === "number" ? "price" : ""}`} required />
         </div>
+    );
+
+    return (
+        <form onSubmit={handleUpdate} className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+                {field("Storage", newStorage, setNewStorage)}
+                {field("RAM", ram, setRam)}
+                {field("Price (USD)", price, setPrice, "number")}
+                {field("Stock", stock, setStock, "number")}
+                {field("Screen", screen_size, setScreen_size)}
+                {field("Processor", processor, setProcessor)}
+                {field("Battery", battery, setBattery)}
+                {field("Camera", camera, setCamera)}
+            </div>
+            <div className="flex gap-2">
+                <button type="submit" className="btn btn-dark">Save changes</button>
+                <button type="button" onClick={handleClear} className="btn btn-ghost">Clear</button>
+            </div>
+            <Notice>{result}</Notice>
+            <Notice tone="error">{error}</Notice>
+        </form>
     );
 };
 

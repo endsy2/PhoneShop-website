@@ -10,7 +10,6 @@ import Order from "./Pages/Order/Order";
 import Product from "./Pages/Product";
 import Offer from "./Pages/Offer";
 import Login from "./Pages/Auth/Login";
-import Register from "./Pages/Auth/Register";
 import AuthLayOut from "./Pages/Root/AuthLayOut";
 import Order_By_ID from "./Pages/Order/Order_By_ID";
 import AddProductPage from "./Pages/AddProductPage";
@@ -21,6 +20,7 @@ import MainOffer from "./Pages/MainOffer";
 import AddColorPage from "./Pages/AddColorPage";
 import AddDetailPage from "./Pages/AddDetailPage";
 import Message from "./Pages/Message";
+import Staff from "./Pages/Staff";
 import NotFound from "./Pages/NotFound"; // Create this component
 
 const router = createBrowserRouter(
@@ -28,7 +28,6 @@ const router = createBrowserRouter(
     <>
       <Route path="/" element={<AuthLayOut />}>
         <Route index element={<Login />} />
-        <Route path="register" element={<Register />} />
       </Route>
       <Route path="/dashboard" element={<RootLayOut />}>
         <Route index element={<DashBorad />} />
@@ -44,6 +43,7 @@ const router = createBrowserRouter(
         <Route path="offer" element={<MainOffer />} />
         <Route path="offer/:id" element={<Offer />} />
         <Route path="message" element={<Message />} />
+        <Route path="staff" element={<Staff />} />
       </Route>
       {/* Wildcard route to handle 404 */}
       <Route path="*" element={<NotFound />} />

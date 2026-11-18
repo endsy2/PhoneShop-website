@@ -1,8 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { FiX } from 'react-icons/fi';
 import { addNewColorFetch, productData } from '../../Fetch/FetchAPI';
+import Notice from '../../Component/Notice';
 
 const AddColor = () => {
-    const [color, setColor] = useState('#000000');
+    const [color, setColor] = useState('');
     const [productName, setProductName] = useState('');
     const [stock, setStock] = useState('');
     const [images, setImages] = useState([]);
@@ -19,7 +21,7 @@ const AddColor = () => {
                 const uniqueProductNames = [...new Set(rows.map((item) => item.name).filter(Boolean))];
                 setProductOptions(uniqueProductNames);
             } catch (err) {
-                console.log(err);
+              console.error(err);
             }
         };
 
@@ -39,15 +41,15 @@ const AddColor = () => {
 
     const validateForm = () => {
         if (!productName.trim()) {
-            setError('Product name is required.');
+            setError('Choose a product');
             return false;
         }
         if (!color) {
-            setError('Please select a color.');
+            setError('Enter the colour name');
             return false;
         }
         if (!images.length) {
-            setError('Please upload at least one image.');
+            setError('Add at least one photo');
             return false;
         }
         setError('');
@@ -68,16 +70,15 @@ const AddColor = () => {
         try {
             const response = await addNewColorFetch(formData);
             if (response?.status >= 200 && response?.status < 300) {
-                setResult('Successfully added the new color.');
-                setError('');
                 handleClear();
+                setResult(`Added ${color} to ${productName}`);
             } else {
-                setError('Failed to add the new color. Please try again.');
+                setError('Couldn\u2019t add the colour');
                 setResult('');
             }
         } catch (err) {
             console.error(err);
-            const msg = err?.response?.data?.message || 'Failed to add the new color. Please try again.';
+            const msg = err?.response?.data?.message || 'Couldn\u2019t add the colour';
             setError(msg);
             setResult('');
         }
@@ -88,130 +89,64 @@ const AddColor = () => {
         setProductName('');
         setStock('');
         setImages([]);
+        if (fileRef.current) fileRef.current.value = '';
         setError('');
         setResult('');
     };
 
     return (
-        <div className="bg-white border-gray-300 border p-8 rounded-lg w-full max-w-4xl mx-auto mt-12 shadow-lg">
-            <h1 className="text-center text-3xl text-primary font-bold mb-8">Add New Color</h1>
-            <form className="grid grid-cols-1 md:grid-cols-2 md:items-center gap-6" onSubmit={handleSubmit}>
-                {/* Product Name */}
-                <div className="flex flex-col">
-                    <label className="text-sm font-medium text-primary mb-2">Product Name</label>
-                    <select
-                        value={productName}
-                        onChange={(e) => setProductName(e.target.value)}
-                        className="input-style"
-                        required
-                    >
-                        <option value="">Select product</option>
+        <form onSubmit={handleSubmit} onReset={handleClear} className="card max-w-2xl space-y-4 p-6">
+            <div className="grid gap-4 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                    <label htmlFor="product" className="label">Product</label>
+                    <select id="product" value={productName} onChange={(e) => setProductName(e.target.value)} className="input" required>
+                        <option value="" disabled>Choose a product</option>
                         {productOptions.map((name) => (
-                            <option key={name} value={name}>
-                                {name}
-                            </option>
+                            <option key={name} value={name}>{name}</option>
                         ))}
                     </select>
                 </div>
-
-                {/* Color */}
-                <div className="flex flex-col">
-                    <label className="text-sm font-medium text-primary mb-2">Color</label>
-                    <input
-                        type="color"
-                        value={color}
-                        onChange={(e) => setColor(e.target.value)}
-                        className="h-10 w-28 rounded-lg border-gray-300 shadow-sm focus:ring-primary focus:border-primary"
-                        required
-                    />
+                <div>
+                    <label htmlFor="colour" className="label">Colour name</label>
+                    <input id="colour" type="text" value={color} onChange={(e) => setColor(e.target.value)} placeholder="Blue" className="input" required />
                 </div>
-
-                {/* Stock */}
-                <div className="flex flex-col">
-                    <label className="text-sm font-medium text-primary mb-2">Stock</label>
-                    <input
-                        type="text"
-                        value={stock}
-                        placeholder="Enter stock"
-                        onChange={(e) => setStock(e.target.value)}
-                        className="input-style"
-                    />
+                <div>
+                    <label htmlFor="stock" className="label">Stock <span className="font-normal text-ink-3">optional</span></label>
+                    <input id="stock" type="number" min="0" value={stock} onChange={(e) => setStock(e.target.value)} className="input price" />
                 </div>
-
-                {/* Images */}
-                <div className="flex flex-col">
-                    <label className="text-sm font-medium text-primary mb-2">Product Images</label>
+                <div className="sm:col-span-2">
+                    <label htmlFor="photos" className="label">Photos</label>
                     <input
+                        id="photos"
                         type="file"
                         accept="image/*"
                         multiple
                         ref={fileRef}
                         onChange={handleImageChange}
-                        className="h-10 w-full rounded-lg border border-gray-300 p-1 mb-2"
-                        required
+                        className="block w-full text-sm text-ink-2 file:mr-3 file:h-9 file:rounded-lg file:border file:border-line-strong file:bg-surface file:px-3 file:text-sm file:text-ink hover:file:bg-raised"
                     />
-                    <div className="flex flex-wrap gap-4 mt-2">
-                        {images.map((image, index) => (
-                            <div key={index} className="relative">
-                                <img
-                                    src={URL.createObjectURL(image)}
-                                    alt={`Product Image ${index + 1}`}
-                                    className="h-16 w-16 object-cover rounded-lg"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => handleRemoveImage(index)}
-                                    className="absolute top-0 right-0 text-red-600"
-                                >
-                                    X
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Buttons */}
-                <div className="md:col-span-2 flex justify-center items-center gap-4 mt-4">
-                    <button
-                        type="submit"
-                        className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded-lg transition"
-                    >
-                        Submit
-                    </button>
-                    <button
-                        type="button"
-                        onClick={handleClear}
-                        className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-2 rounded-lg transition"
-                    >
-                        Reset
-                    </button>
-                </div>
-            </form>
-
-            {/* Success/Error Messages */}
-            {(error || result) && (
-                <div className="mt-6">
-                    {result && (
-                        <div className="flex items-center gap-3 p-4 bg-green-50 border-2 border-green-200 rounded-xl shadow-md animate-fade-in">
-                            <span className="text-3xl">✅</span>
-                            <div>
-                                <p className="text-green-800 font-bold text-lg">{result}</p>
-                                <p className="text-green-600 text-sm">Color variant has been added successfully!</p>
-                            </div>
-                        </div>
-                    )}
-                    {error && (
-                        <div className="flex items-center gap-3 p-4 bg-red-50 border-2 border-red-200 rounded-xl shadow-md animate-fade-in">
-                            <span className="text-3xl">❌</span>
-                            <div>
-                                <p className="text-red-800 font-bold text-lg">{error}</p>
-                                <p className="text-red-600 text-sm">Please try again or contact support.</p>
-                            </div>
+                    {images.length > 0 && (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                            {images.map((image, index) => (
+                                <div key={index} className="relative h-16 w-16 overflow-hidden rounded-lg border border-line bg-raised">
+                                    <img src={URL.createObjectURL(image)} alt="" className="h-full w-full object-cover" />
+                                    <button type="button" onClick={() => handleRemoveImage(index)} className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded bg-surface/90 text-ink-2 hover:text-danger" aria-label="Remove photo">
+                                        <FiX size={12} strokeWidth={1.5} />
+                                    </button>
+                                </div>
+                            ))}
                         </div>
                     )}
                 </div>
-            )}
-        </div>
+            </div>
+            <p className="text-[13px] text-ink-3">Add storage options and prices for this colour on the Specs tab</p>
+            <div className="flex gap-2">
+                <button type="submit" className="btn btn-dark">Add colour</button>
+                <button type="reset" className="btn btn-ghost">Clear</button>
+            </div>
+            <Notice>{result}</Notice>
+            <Notice tone="error">{error}</Notice>
+        </form>
     );
 };
 

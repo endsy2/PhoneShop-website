@@ -1,18 +1,20 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
-const API_URL_Auth = "http://localhost:3000/auth";
-// const API_URL2 = 'http://localhost:3000/user/functionality';
-const API_URL_Admin = "http://localhost:3000/admin";
-const API_URL_COMMON = "http://localhost:3000/common";
+// Set VITE_REACT_APP_BASE_URL in .env to point at a deployed API (same variable as User-Section).
+export const API_BASE_URL = (import.meta.env.VITE_REACT_APP_BASE_URL || "http://localhost:3000").replace(/\/$/, "");
+const API_URL_Auth = `${API_BASE_URL}/auth`;
+const API_URL_Admin = `${API_BASE_URL}/admin`;
+const API_URL_COMMON = `${API_BASE_URL}/common`;
 
 export const signIn = async ({ email, password }) => {
   return axios.post(`${API_URL_Auth}/login`, { email, password }, { withCredentials: true });
 };
-export const register = async ({ username, email, password }) => {
+// Creates a staff account (admin only). role: "support" | "manager" | "admin"
+export const createStaff = async ({ username, email, password, role }) => {
   return axios.post(
     `${API_URL_Auth}/adminRegister`,
-    { username, email, password },
+    { username, email, password, role },
     {
       headers: { "Content-Type": "application/json" },
       withCredentials: true,
@@ -62,7 +64,7 @@ export const productHeaderData = async () => {
 
     return response;
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 }
 
@@ -74,7 +76,7 @@ export const dashboardHeaderData = async (date) => {
     });
     return response;
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 }
 export const dashboardHeaderAll = async () => {
@@ -82,7 +84,7 @@ export const dashboardHeaderAll = async () => {
     const response = await axios.get(`${API_URL_Admin}/dashboardHeadAll`, { withCredentials: true });
     return response;
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 }
 
@@ -115,7 +117,6 @@ export const deleteNotification = async (id) => {
 export const tableByDate = async (date) => {
 
   try {
-    console.log(date);
 
     const response = await axios.get(`${API_URL_COMMON}/getAllProductbydate?date=${date}`, {
       withCredentials: true
@@ -123,7 +124,7 @@ export const tableByDate = async (date) => {
 
     return response;
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 }
 
@@ -132,7 +133,7 @@ export const categoryFetch = async () => {
     const response = await axios.get(`${API_URL_COMMON}/category`, { withCredentials: true });
     return response.data;
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 }
 export const brandFetch = async () => {
@@ -140,7 +141,7 @@ export const brandFetch = async () => {
     const response = await axios.get(`${API_URL_COMMON}/brand`, { withCredentials: true });
     return response.data;
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 }
 export const tableByCategory = async (category) => {
@@ -150,10 +151,9 @@ export const tableByCategory = async (category) => {
       withCredentials: true
     });
 
-
     return response.data;
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 }
 
@@ -162,7 +162,6 @@ export const searchFetchByCategory = async ({ searchData, Category }) => {
     const response = await axios.get(`${API_URL_COMMON}/searchProduct?searchData=${searchData}&Category=${Category}`, {
       withCredentials: true
     });
-    console.log(response);
 
     return response.data; // Explicitly return data
   } catch (error) {
@@ -181,7 +180,7 @@ export const searchOrder = async ({ username }) => {
     const response = await axios.get(`${API_URL_Admin}/searchTableOrder?username=${encodeURIComponent(username)}`, { withCredentials: true })
     return response.data;
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 }
 export const addNewProductAPI = async (formdata) => {
@@ -231,8 +230,7 @@ export const addNewColorFetch = async (formdata) => {
     })
     return response;
   } catch (error) {
-    console.log(error);
-
+    console.error(error);
   }
 }
 export const addNewBrandAPI = async (formdata) => {
@@ -246,15 +244,13 @@ export const addNewBrandAPI = async (formdata) => {
     });
     return response;
   } catch (error) {
-    console.log(error);
-
-
+    console.error(error);
   }
 }
 export const addNewCategoryAPI = async (category) => {
   try {
     const response = await axios.post(`${API_URL_Admin}/addNewCategory`, { category }, { withCredentials: true });
-    console.log("Response:", response.data); // Debugging logs
+     // Debugging logs
     return response;
   } catch (error) {
     console.error("Error in addNewCategoryAPI:", error);
@@ -293,8 +289,7 @@ export const addNewDetail = async ({ formdata }) => {
     })
     return response;
   } catch (error) {
-    console.log(error);
-
+    console.error(error);
   }
 }
 export const removeOneFetch = async ({ deleteid }) => {
@@ -304,8 +299,7 @@ export const removeOneFetch = async ({ deleteid }) => {
     })
     return response;
   } catch (error) {
-    console.log(error);
-
+    console.error(error);
   }
 }
 export const removeVariants = async ({ deleteid }) => {
@@ -323,13 +317,11 @@ export const removeSpec = async (variantID, storage) => {
 }
 export const removeOrder = async ({ deleteid }) => {
   try {
-    console.log(`${API_URL_Admin}/deleleOrder/${deleteid}`);
 
     const response = await axios.delete(`${API_URL_Admin}/deleleOrder/${deleteid}`, { withCredentials: true })
     return response;
   } catch (error) {
-    console.log(error);
-
+    console.error(error);
   }
 
 }
@@ -340,6 +332,8 @@ export const loginFetch = async (email, password) => {
     const isHttps = typeof window !== "undefined" && window.location.protocol === "https:";
     Cookies.set("token", token, { expires: 7, secure: isHttps, sameSite: "strict" });
     localStorage.setItem("adminToken", token);
+    localStorage.setItem("adminRole", response.data.role || "");
+    localStorage.setItem("adminPermissions", JSON.stringify(response.data.permissions || []));
     return response.data; // Return the response payload
 
   } catch (error) {
@@ -353,12 +347,24 @@ export const loginFetch = async (email, password) => {
   }
 };
 
+// UI-only check to hide what the signed-in staff member can't use; the API enforces the real rules.
+// Sessions from before RBAC have no stored permissions and were full admins, so show everything.
+export const hasAdminPermission = (permission) => {
+  if (!permission) return true;
+  try {
+    const stored = localStorage.getItem("adminPermissions");
+    return stored === null || JSON.parse(stored).includes(permission);
+  } catch {
+    return false;
+  }
+};
+
 export const logoutFetch = async () => {
   try {
     const response = await axios.post(`${API_URL_Auth}/adminLogout`, {}, { withCredentials: true })
     return response;
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 }
 export const OrderTableFetch = async () => {
@@ -396,7 +402,6 @@ export const productByID = async (query) => {
   }
 };
 
-
 export const fetchOfferByID = async (param) => {
   try {
     const response = await axios.get(`${API_URL_COMMON}/offerDisplayByID/${param.id}`,
@@ -407,8 +412,7 @@ export const fetchOfferByID = async (param) => {
     return response.data;
 
   } catch (error) {
-    console.log(error);
-
+    console.error(error);
   }
 }
 export const headerOrder = async () => {
@@ -416,7 +420,6 @@ export const headerOrder = async () => {
     const response = await axios.get(`${API_URL_Admin}/headerOrder`, {
       withCredentials: true
     })
-    console.log(response);
     return response.data;
   } catch (error) {
     console.error("Error fetching product by ID:", error);
@@ -428,7 +431,6 @@ export const productDiscout = async () => {
     const response = await axios.get(`${API_URL_COMMON}/offerDisplay`, {
       withCredentials: true
     })
-    console.log(response);
     return response.data;
 
   } catch (error) {
@@ -437,10 +439,8 @@ export const productDiscout = async () => {
   }
 }
 
-
 export const removeOffer = async ({ deleteid }) => {
   try {
-    console.log("Deleting offer with ID:", deleteid);
 
     const response = await axios.delete(`${API_URL_Admin}/offerDelete/${deleteid}`, {
       withCredentials: true,
@@ -499,7 +499,6 @@ export const insertPromotion = async ({ formData }) => {
   }
 };
 
-
 export const updateProductVariants = async (formdata, id) => {
   const formData = new FormData();
 
@@ -544,8 +543,7 @@ export const updateSpec = async (formdata, queryParam) => {  try {
     return response;
 
   } catch (error) {
-    console.log(error);
-
+    console.error(error);
   }
 }
 export const fetchOrderItemsByID = async (id) => {
@@ -553,35 +551,18 @@ export const fetchOrderItemsByID = async (id) => {
     const response = await axios.get(`${API_URL_Admin}/tableOrderItemsByID/${id}`, {
       withCredentials: true
     })
-    // console.log(id);
 
     return response.data;
   } catch (error) {
-    console.log(error);
-
+    console.error(error);
   }
 }
-// export const fetchOrderByID = async ({ id }) => {
-//   try {
-//     const response = await axios.get(`${API_URL_Admin}/orderByID/${id}`, {
-//       withCredentials: true
-//     })
-//     // console.log(response.data);
-
-//     return response.data;
-
-//   } catch (error) {
-//     console.log(error);
-
-//   }
-// }
 export const deleteOrderItemByID = async ({ id }) => {
   try {
     const response = await axios.delete(`${API_URL_Admin}/deleteOrderItems/${id}`, { withCredentials: true })
     return response;
   } catch (error) {
-    console.log(error);
-
+    console.error(error);
   }
 }
 export const updateOrderItems = async ({ value }) => {
@@ -594,7 +575,6 @@ export const updateOrderItems = async ({ value }) => {
     });
     return response;
   } catch (error) {
-    console.log(error);
-
+    console.error(error);
   }
 }

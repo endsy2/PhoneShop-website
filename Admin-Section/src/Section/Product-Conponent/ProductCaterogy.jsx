@@ -1,67 +1,50 @@
 import { useEffect, useState } from "react";
-import { ProductSort } from "../../Constants";
 import { categoryFetch, tableByCategory } from "../../Fetch/FetchAPI";
 import TableProduct from "../../Component/TableProduct";
+
+// Category chips above the products table
 const ProductCaterogy = () => {
-  const [category, setCategory] = useState([]);
-  const [select, setSelect] = useState('');
-  const [items, setItems] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [selected, setSelected] = useState("");
+  const [items, setItems] = useState({ data: [] });
 
-  const fetchCategory = async () => {
-    try {
-      const data = await categoryFetch();
-      const categories = data?.data || [];
-      setCategory(categories);
-      if (!select && categories.length > 0) {
-        setSelect(categories[0].category_name || categories[0].category || '');
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  const fetchProducts = async () => {
-    if (!select) return;
-    try {
-      const data = await tableByCategory({ category: select }); // Wait for the async function to resolve
-      setItems(data); // Set the data once it's fetched
-    } catch (error) {
-      console.error("Error fetching products:", error);
-    }
-  };
   useEffect(() => {
-    fetchCategory();
+    categoryFetch()
+      .then((data) => {
+        const list = data?.data || [];
+        setCategories(list);
+        if (list.length > 0) setSelected(list[0].category_name || "");
+      })
+      .catch((error) => console.error(error));
   }, []);
 
   useEffect(() => {
-    fetchProducts();
-  }, [select]);
+    if (!selected) return;
+    tableByCategory({ category: selected })
+      .then((data) => setItems(data || { data: [] }))
+      .catch((error) => console.error("Error fetching products:", error));
+  }, [selected]);
+
   return (
-    <>
-
-      <section className="flex my-24 justify-between">
-        <div className="flex justify-center items-center gap-2">
-          <h2 className="text-primary text-2xl font-bold font-Roboto">
-            Categories:
-          </h2>
-
-          <select
-            name="category"
-            id="category"
-            className="border-2 py-2 px-5 rounded-xl "
-            onChange={e => setSelect(e.target.value)}
+    <section className="space-y-3">
+      <div className="flex flex-wrap gap-2" role="tablist" aria-label="Category">
+        {categories.map(({ category_name }) => (
+          <button
+            key={category_name}
+            type="button"
+            role="tab"
+            aria-selected={selected === category_name}
+            onClick={() => setSelected(category_name)}
+            className={`h-8 rounded-lg border px-3 text-[13px] transition-colors duration-150 ease-out ${
+              selected === category_name ? "border-ink bg-surface text-ink" : "border-line-strong text-ink-2 hover:text-ink"
+            }`}
           >
-            {category.map((element) => (
-              <option value={element.category_name} key={element.category_name} className="" >
-                {element.category_name}{""}
-              </option>
-            ))}
-          </select>
-        </div>
-
-      </section>
-      <TableProduct title="All Product" items={items} category={select} />
-    </>
+            {category_name}
+          </button>
+        ))}
+      </div>
+      <TableProduct title={selected || "Products"} items={items} category={selected} />
+    </section>
   );
 };
 

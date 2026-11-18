@@ -1,32 +1,24 @@
 import { useEffect, useState } from "react";
-import TableProduct from "../../Component/TableProduct";
 import Order_main from "../../Section/Order/Order_main";
-import { OrderTableFetch, productData } from "../../Fetch/FetchAPI";
+import { OrderTableFetch } from "../../Fetch/FetchAPI";
 import TableOrder from "../../Component/TableOrder";
+import PageHeader from "../../Component/PageHeader";
 
 const Order = () => {
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState({ data: [] });
 
   useEffect(() => {
-    const fetchOrder = async () => {
-      try {
-        const data = await OrderTableFetch();
-
-        // console.log(data);
-
-        setItems(data); // Update state with fetched data
-      } catch (error) {
-        console.log("Error fetching initial data:", error);
-      }
-    };
-    fetchOrder();
+    OrderTableFetch()
+      .then((response) => setItems(response?.data || { data: [] }))
+      .catch((error) => console.error(error));
   }, []);
 
   return (
-    <section>
+    <div className="space-y-6">
+      <PageHeader title="Orders" description="Newest first" />
       <Order_main />
-      <TableOrder title="Order" items={items?.data || { data: [] }} />
-    </section>
+      <TableOrder items={items} />
+    </div>
   );
 };
 

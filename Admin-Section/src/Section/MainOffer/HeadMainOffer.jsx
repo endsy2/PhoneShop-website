@@ -1,18 +1,15 @@
 import { useEffect, useState } from "react";
-import { offer_header } from "../../Constants";
+import Notice from "../../Component/Notice";
 import { insertPromotion, productByID, productData } from "../../Fetch/FetchAPI";
 
 const HeadMainOffer = () => {
     // State to manage form inputs
     const [formData, setFormData] = useState(
-        offer_header.reduce((acc, field) => {
-            acc[field.dbLabel] = ""; // Initialize all fields as empty strings
-            return acc;
-        }, {})
+        { phone_name: "", Color: "", storage: "", discount_percent: "", start_date: "", end_date: "" }
     );
 
     // State to handle feedback messages
-    const [feedbackMessage, setFeedbackMessage] = useState("");
+    const [feedbackMessage, setFeedbackMessage] = useState(null);
     const [productOptions, setProductOptions] = useState([]);
     const [productVariants, setProductVariants] = useState([]);
     const [colorOptions, setColorOptions] = useState([]);
@@ -106,148 +103,64 @@ const HeadMainOffer = () => {
             });
 
             if (!response) {
-                setFeedbackMessage("No data returned. Please check your input or try again.");
+                setFeedbackMessage({ ok: false, text: "Couldn\u2019t save the promotion. Check the fields and try again" });
                 return;
             }
 
-            setFeedbackMessage("Promotion submitted successfully!");
-            console.log("Submitted Data:", response);
+            setFeedbackMessage({ ok: true, text: "Promotion saved" });
             window.location.reload();
         } catch (error) {
             // Handle errors from the API call
             console.error("Submission Error:", error);
-            setFeedbackMessage(error?.message || "An error occurred during submission. Please try again.");
+            setFeedbackMessage({ ok: false, text: error?.message || "Couldn\u2019t save the promotion" });
         }
     };
 
+    const select = (id, options, empty) => (
+        <select id={id} value={formData[id]} onChange={handleInputChange} className="input" required>
+            {options.length === 0 ? <option value="">{empty}</option> : options.map((o) => <option key={o} value={o}>{o}</option>)}
+        </select>
+    );
+
     return (
-        <div className="p-6">
-            <section className="max-w-4xl mx-auto">
-                <h1 className="green-title mb-20 green-text font-semibold text-center">
-                    Offer Discount
-                </h1>
-                <form
-                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-                    onSubmit={handleSubmit}
-                >
-                    {offer_header.map((element, index) => (
-                        <div key={index} className="col-span-1">
-                            <label
-                                htmlFor={element.dbLabel}
-                                className="text-sm font-medium text-primary mb-2"
-                            >
-                                {element.label}
-                            </label>
-                            {element.dbLabel === "phone_name" ? (
-                                <select
-                                    id={element.dbLabel}
-                                    value={formData[element.dbLabel]}
-                                    onChange={handleInputChange}
-                                    className="input-style h-12 w-full px-3 border border-gray-300 rounded-lg focus:border-primary focus:ring-0 transition"
-                                    required
-                                >
-                                    <option value="">Select product</option>
-                                    {productOptions.map((productName) => (
-                                        <option key={productName} value={productName}>
-                                            {productName}
-                                        </option>
-                                    ))}
-                                </select>
-                            ) : element.dbLabel === "Color" ? (
-                                <select
-                                    id={element.dbLabel}
-                                    value={formData[element.dbLabel]}
-                                    onChange={handleInputChange}
-                                    className="input-style h-12 w-full px-3 border border-gray-300 rounded-lg focus:border-primary focus:ring-0 transition"
-                                    required
-                                >
-                                    {colorOptions.length === 0 ? (
-                                        <option value="">No colors available</option>
-                                    ) : (
-                                        colorOptions.map((colorValue) => (
-                                            <option key={colorValue} value={colorValue}>
-                                                {colorValue}
-                                            </option>
-                                        ))
-                                    )}
-                                </select>
-                            ) : element.dbLabel === "storage" ? (
-                                <select
-                                    id={element.dbLabel}
-                                    value={formData[element.dbLabel]}
-                                    onChange={handleInputChange}
-                                    className="input-style h-12 w-full px-3 border border-gray-300 rounded-lg focus:border-primary focus:ring-0 transition"
-                                    required
-                                >
-                                    {storageOptions.length === 0 ? (
-                                        <option value="">No storage available</option>
-                                    ) : (
-                                        storageOptions.map((storageValue) => (
-                                            <option key={storageValue} value={storageValue}>
-                                                {storageValue}
-                                            </option>
-                                        ))
-                                    )}
-                                </select>
-                            ) : element.dbLabel === "discount_percent" ? (
-                                <input
-                                    type="number"
-                                    id={element.dbLabel}
-                                    value={formData[element.dbLabel]}
-                                    onChange={handleInputChange}
-                                    min="0"
-                                    max="100"
-                                    step="0.01"
-                                    className="input-style h-12 w-full px-3 border border-gray-300 rounded-lg focus:border-primary focus:ring-0 transition"
-                                    aria-label={element.label}
-                                    required
-                                />
-                            ) : (
-                                <FormField
-                                    id={element.dbLabel}
-                                    label={element.label}
-                                    value={formData[element.dbLabel]}
-                                    onChange={handleInputChange}
-                                    type={
-                                        ["start_date", "end_date"].includes(
-                                            element.dbLabel
-                                        )
-                                            ? "date"
-                                            : "text"
-                                    }
-                                />
-                            )}
-                        </div>
-                    ))}
-                    <div className="col-span-1 md:col-span-2 lg:col-span-3 flex justify-end">
-                        <input
-                            type="submit"
-                            className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded-md transition"
-                            value="Submit"
-                        />
-                    </div>
-                </form>
-                {feedbackMessage && (
-                    <p className="text-center text-sm mt-4 text-red-600">
-                        {feedbackMessage}
-                    </p>
-                )}
-            </section>
-        </div>
+        <form onSubmit={handleSubmit} className="card p-6">
+            <h2 className="text-base font-medium">New promotion</h2>
+            <p className="mt-1 text-[13px] text-ink-3">Applies to one colour and storage option. Saving again for the same option updates it</p>
+            <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div>
+                    <label htmlFor="phone_name" className="label">Product</label>
+                    <select id="phone_name" value={formData.phone_name} onChange={handleInputChange} className="input" required>
+                        <option value="">Choose a product</option>
+                        {productOptions.map((name) => <option key={name} value={name}>{name}</option>)}
+                    </select>
+                </div>
+                <div>
+                    <label htmlFor="Color" className="label">Colour</label>
+                    {select("Color", colorOptions, "Choose a product first")}
+                </div>
+                <div>
+                    <label htmlFor="storage" className="label">Storage</label>
+                    {select("storage", storageOptions, "Choose a colour first")}
+                </div>
+                <div>
+                    <label htmlFor="discount_percent" className="label">Discount (%)</label>
+                    <input type="number" id="discount_percent" value={formData.discount_percent} onChange={handleInputChange} min="1" max="100" step="0.01" className="input price" required />
+                </div>
+                <div>
+                    <label htmlFor="start_date" className="label">Starts</label>
+                    <input type="date" id="start_date" value={formData.start_date} onChange={handleInputChange} className="input" required />
+                </div>
+                <div>
+                    <label htmlFor="end_date" className="label">Ends</label>
+                    <input type="date" id="end_date" value={formData.end_date} min={formData.start_date || undefined} onChange={handleInputChange} className="input" required />
+                </div>
+            </div>
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+                <button type="submit" className="btn btn-dark">Save promotion</button>
+                {feedbackMessage && <Notice tone={feedbackMessage.ok ? "ok" : "error"}>{feedbackMessage.text}</Notice>}
+            </div>
+        </form>
     );
 };
-
-const FormField = ({ id, label, value, onChange, type }) => (
-    <div className="flex flex-col items-start">
-        <input
-            type={type}
-            id={id}
-            value={value}
-            onChange={onChange}
-            className="input-style h-12 w-full px-3 border border-gray-300 rounded-lg focus:border-primary focus:ring-0 transition"
-            aria-label={label}
-        />
-    </div>
-);
 
 export default HeadMainOffer;

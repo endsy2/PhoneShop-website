@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { trash } from "../Assets";
+import { FiSearch, FiTrash2 } from "react-icons/fi";
+import { formatDate, formatPrice } from "../Utils/display";
 import { tableHeadOffer } from "../Constants";
 import { removeOffer, searchPromotion } from "../Fetch/FetchAPI.js";
 import { Link } from "react-router-dom";
 
-const TableOffer = ({ title, items }) => {
+const TableOffer = ({ items }) => {
     const [datatable, setDataTable] = useState(items || []);
     const [selectAll, setSelectAll] = useState(false);
     const [selectedRows, setSelectedRows] = useState([]); // Track selected row IDs
@@ -12,7 +13,6 @@ const TableOffer = ({ title, items }) => {
 
     useEffect(() => {
         setDataTable(items);
-        console.log(items);
     }, [items]);
 
     const handleSelectAll = () => {
@@ -34,6 +34,7 @@ const TableOffer = ({ title, items }) => {
     };
 
     const handleRemove = async (id) => {
+        if (!window.confirm(`End promotion #${id}?`)) return;
         try {
             await removeOffer({ deleteid: id });
             setDataTable((prev) => ({
@@ -43,14 +44,12 @@ const TableOffer = ({ title, items }) => {
         } catch (error) {
             console.error("Error deleting row:", error);
         }
-        // console.log(id);
 
     };
 
-
     const handleSelectRemove = async (e) => {
         e.preventDefault();
-
+        if (!selectedRows.length || !window.confirm(`End ${selectedRows.length} selected promotion(s)?`)) return;
 
         try {
             // Loop through each selected row ID and remove it using the removeOneFetch function
@@ -87,172 +86,68 @@ const TableOffer = ({ title, items }) => {
     };
 
 
-
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-    };
+    const rows = Array.isArray(datatable?.data) ? datatable.data : [];
 
     return (
-        <section className="mt-16 bg-white rounded-lg p-6 sm:p-3 shadow-lg border border-gray-400">
-            <section className="flex flex-col sm:flex-row justify-between mx-4 sm:mx-10 mb-5 sm:mb-10">
-                <h1 className="green-text mt-4 sm:mt-10 font-semibold text-lg lg:text-3xl">
-                    {title}
-                </h1>
-
-                <form className="flex gap-2 sm:gap-10 items-center mt-3 sm:mt-10">
-                    <input
-                        type="text"
-                        placeholder="Search Promotion Name"
-                        className="input-style text-sm sm:text-base"
-                        onChange={(e) => setSearchData(e.target.value)}
-                    />
-                    <button
-                        className="green-btn h-10 sm:h-12 w-[100px] sm:w-[150px] text-sm sm:text-base"
-                        onClick={handleSearch}
-                    >
-                        Search
+        <section className="card overflow-hidden">
+            <form onSubmit={handleSearch} className="flex flex-wrap items-center justify-between gap-3 border-b border-line p-3">
+                <div className="flex items-center gap-2">
+                    <div className="relative">
+                        <FiSearch size={16} strokeWidth={1.5} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" />
+                        <input type="search" placeholder="Promotion name" aria-label="Search promotions" className="input h-9 w-64 pl-9" onChange={(e) => setSearchData(e.target.value)} />
+                    </div>
+                    <button type="submit" className="btn btn-secondary h-9">Search</button>
+                </div>
+                {selectedRows.length > 0 && (
+                    <button type="button" onClick={handleSelectRemove} className="btn btn-danger h-9">
+                        <FiTrash2 size={14} strokeWidth={1.5} />
+                        End <span className="price">{selectedRows.length}</span>
                     </button>
-
-                </form>
-            </section>
-
-            {/* Table Section */}
+                )}
+            </form>
             <div className="overflow-x-auto">
-                <table className="table-auto w-full border-separate border-spacing-0">
+                <table className="w-full min-w-[820px] text-sm">
                     <thead>
-                        <tr className="bg-DarkLightGray text-white border-b-2 border-gray-300">
-                            {tableHeadOffer.map((header, index) => (
-                                <th
-                                    key={index}
-                                    className={`table-data text-sm sm:text-xl px-4 sm:px-6 py-3 sm:py-4 ${index === 0 ? "rounded-l-lg" : ""
-                                        } border-r border-gray-200`}
-                                >
-                                    {header === "ID" ? (
-                                        <>
-                                            <input
-                                                type="checkbox"
-                                                checked={selectAll}
-                                                onChange={handleSelectAll}
-                                                className="mr-2 sm:mr-3 h-3  w-3 lg:w-4 lg:h-4  border-1 border-white rounded"
-                                            />
-                                            {header}
-                                        </>
-                                    ) : (
-                                        header
-                                    )}
-
-                                </th>
+                        <tr className="border-b border-line text-left text-[13px] text-ink-3">
+                            <th className="w-10 py-2.5 pl-4">
+                                <input type="checkbox" checked={selectAll} onChange={handleSelectAll} aria-label="Select all" className="h-4 w-4 accent-brand" />
+                            </th>
+                            {tableHeadOffer.map((header) => (
+                                <th key={header} className={`px-3 py-2.5 font-normal ${["Price", "Sale price", "Discount"].includes(header) ? "text-right" : ""}`}>{header}</th>
                             ))}
-
-                            <td className="table-data flex justify-center  gap-2 sm:gap-4 px-4 sm:px-6 py-3 sm:py-4">
-                                <button
-                                    onClick={(e) => handleSelectRemove(e)}
-                                    className="flex items-center"
-                                >
-                                    <img
-                                        src={trash}
-                                        alt="Remove"
-                                        className="w-4 sm:w-6 lg:w-8 h-4 sm:h-6 lg:h-8 object-contain"
-                                    />
-                                </button>
-                            </td>
+                            <th className="w-12" />
                         </tr>
                     </thead>
-
                     <tbody>
-                        {Array.isArray(datatable?.data) && datatable.data.length > 0 ? (
-                            datatable.data.map((element) => (
-                                <tr
-                                    key={element.promo_id}
-                                    className="hover:bg-gray-50 transition duration-200 border-b border-gray-200"
-                                >
-                                    <td className="table-data flex justify-start items-center px-4 sm:px-6 py-3 sm:py-4">
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedRows.includes(element.promo_id)}
-                                            onChange={() => handleRowSelect(element.promo_id)}
-                                            className="mr-2 sm:mr-3 h-3 w-3 lg:w-4 lg:h-4 border-1 border-white rounded"
-                                        />
-                                        <Link
-                                            to={`/dashboard/offer/${element.phone_id}`}
-                                            className="text-sm sm:text-base"
-                                        >
-                                            {element.promo_id}
-                                        </Link>
-                                    </td>
-                                    <td className="table-data px-4 sm:px-6 py-3 sm:py-4">
-                                        <Link
-                                            to={`/dashboard/offer/${element.phone_id}`}
-                                            className="text-sm sm:text-base"
-                                        >
-                                            {element.name}
-                                        </Link>
-                                    </td>
-                                    <td className="table-data px-4 sm:px-6 py-3 sm:py-4 ">
-                                        <Link
-                                            to={`/dashboard/offer/${element.phone_id}`}
-                                            className="text-sm sm:text-base"
-                                        >
-                                            {element.promo_name}
-                                        </Link>
-                                    </td>
-                                    <td className="table-data px-4 sm:px-6 py-3 sm:py-4">
-                                        <Link
-                                            to={`/dashboard/offer/${element.phone_id}`}
-                                            className="text-sm sm:text-base"
-                                        >
-                                            {element.price}
-                                        </Link>
-                                    </td>
-                                    <td className="table-data px-4 sm:px-6 py-3 sm:py-4">
-                                        <Link
-                                            to={`/dashboard/offer/${element.phone_id}`}
-                                            className="text-sm sm:text-base"
-                                        >
-                                            {element.price_discount}
-                                        </Link>
-                                    </td>
-                                    <td className="table-data px-4 sm:px-6 py-3 sm:py-4">
-                                        <Link
-                                            to={`/dashboard/offer/${element.phone_id}`}
-                                            className="text-sm sm:text-base"
-                                        >
-                                            {element.discount_percentage}
-                                        </Link>
-                                    </td>
-                                    <td className="table-data px-4 sm:px-6 py-3 sm:py-4">
-                                        <Link
-                                            to={`/dashboard/offer/${element.phone_id}`}
-                                            className="text-sm sm:text-base"
-                                        >
-                                            {formatDate(element.end_date)}
-                                        </Link>
-                                    </td>
-                                    <td className="table-data flex justify-center gap-2 sm:gap-4 px-4 sm:px-6 py-3 sm:py-4">
-                                        <button
-                                            onClick={() => handleRemove(element.promo_id)}
-                                            className="flex"
-                                        >
-                                            <img
-                                                src={trash}
-                                                alt="Remove"
-                                                className="w-4 sm:w-6 lg:w-8 h-4 sm:h-6 lg:h-8 object-contain"
-                                            />
-                                        </button>
-                                    </td>
-
-                                </tr>
-                            ))
+                        {rows.length > 0 ? (
+                            rows.map((element) => {
+                                const link = `/dashboard/offer/${element.phone_id}`;
+                                return (
+                                    <tr key={element.promo_id} className={`border-b border-line last:border-b-0 transition-colors duration-150 ease-out hover:bg-raised ${selectedRows.includes(element.promo_id) ? "bg-raised" : ""}`}>
+                                        <td className="py-2.5 pl-4">
+                                            <input type="checkbox" checked={selectedRows.includes(element.promo_id)} onChange={() => handleRowSelect(element.promo_id)} aria-label={`Select promotion ${element.promo_id}`} className="h-4 w-4 accent-brand" />
+                                        </td>
+                                        <td className="price px-3 py-2.5 text-ink-3">{element.promo_id}</td>
+                                        <td className="px-3 py-2.5"><Link to={link} className="text-ink hover:underline">{element.name}</Link></td>
+                                        <td className="px-3 py-2.5 text-ink-2">{element.promo_name}</td>
+                                        <td className="price px-3 py-2.5 text-right text-ink-3 line-through">{formatPrice(element.price)}</td>
+                                        <td className="price px-3 py-2.5 text-right text-brand">{formatPrice(element.price_discount)}</td>
+                                        <td className="price px-3 py-2.5 text-right text-ink">−{Number(element.discount_percentage || 0)}%</td>
+                                        <td className="whitespace-nowrap px-3 py-2.5 text-ink-2">{formatDate(element.end_date)}</td>
+                                        <td className="py-2.5 pr-3 text-right">
+                                            <button type="button" onClick={() => handleRemove(element.promo_id)} className="icon-btn h-8 w-8 hover:bg-danger-soft hover:text-danger" aria-label={`End promotion ${element.promo_id}`}>
+                                                <FiTrash2 size={14} strokeWidth={1.5} />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                );
+                            })
                         ) : (
                             <tr>
-                                <td colSpan={7} className="text-center text-sm sm:text-base py-6">
-                                    No data available
-                                </td>
+                                <td colSpan={9} className="py-12 text-center text-sm text-ink-3">No promotions running</td>
                             </tr>
                         )}
                     </tbody>
-
                 </table>
             </div>
         </section>

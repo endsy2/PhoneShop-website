@@ -1,10 +1,29 @@
 import { useEffect, useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { FiX } from "react-icons/fi";
 import { addNewProductAPI, brandFetch, categoryFetch, productData } from "../../Fetch/FetchAPI";
+import Notice from "../../Component/Notice";
 
+// Defined outside the form so inputs keep focus between renders
+const Field = ({ label, hint, children, className = "" }) => (
+  <div className={className}>
+    <label className="label">
+      {label} {hint && <span className="font-normal text-ink-3">{hint}</span>}
+    </label>
+    {children}
+  </div>
+);
+
+const Group = ({ title, description, children }) => (
+  <section className="grid gap-6 border-t border-line py-6 first:border-t-0 first:pt-0 md:grid-cols-[220px_1fr]">
+    <div>
+      <h2 className="text-sm font-medium">{title}</h2>
+      {description && <p className="mt-1 text-[13px] text-ink-3">{description}</p>}
+    </div>
+    <div className="grid gap-4 sm:grid-cols-2">{children}</div>
+  </section>
+);
 
 const AddProduct = ({ product_id }) => {
-  const location = useLocation();
   const fileRef = useRef();
   const [id, setID] = useState('');
   const [name, setName] = useState('');
@@ -16,7 +35,7 @@ const AddProduct = ({ product_id }) => {
   const [storage, setStorage] = useState('');
   const [camera, setCamera] = useState('');
   const [category, setCategory] = useState('');
-  const [colors, setColors] = useState("#000000"); // Default to one color
+  const [colors, setColors] = useState("");
   const [description, setDescription] = useState('');
   const [stock, setStock] = useState('');
   const [screenSize, setScreenSize] = useState('');
@@ -51,13 +70,12 @@ const AddProduct = ({ product_id }) => {
           setBrandList(uniqueBrands);
         }
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     };
 
     loadSelectOptions();
   }, []);
-
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files); // Convert FileList to Array
@@ -92,19 +110,18 @@ const AddProduct = ({ product_id }) => {
     try {
       const result = await addNewProductAPI(formdata, id);
       if (result?.status >= 200 && result?.status < 300) {
-        setResult("Add New Product Success")
+        setResult(`Added ${name}. Add more colours or storage options from the tabs above`)
         setError('')
         handleClear();
       } else {
-        setError("Something Went Wrong")
+        setError("Couldn\u2019t add the product")
         setResult('')
       }
     } catch (error) {
       // Show the actual server error message (e.g. "product already exists")
-      const serverMessage = error?.response?.data?.message || error?.message || "Something Went Wrong";
+      const serverMessage = error?.response?.data?.message || error?.message || "Couldn\u2019t add the product";
       setError(serverMessage)
       setResult('')
-      console.log(error);
     }
   };
 
@@ -118,7 +135,7 @@ const AddProduct = ({ product_id }) => {
     setProcessor('');
     setStorage('');
     setCamera('');
-    setColors('#000000');
+    setColors('');
     setDescription('');
     setStock('');
     setScreenSize('');
@@ -126,328 +143,91 @@ const AddProduct = ({ product_id }) => {
     setBattery('');
     setCategory('');
   }
-  return (
-    <div className="bg-white border-gray-300 border p-12 rounded-lg w-full max-w-9xl mx-auto mt-12 shadow-lg">
-      <h1 className="text-center text-3xl text-primary font-bold mb-8">Add Product</h1>
-      <form
-        onSubmit={handleSubmit}
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:items-center gap-10 "
-      >
-        {/* Product Name */}
-        <div className="flex flex-col">
-          <label className="text-sm font-medium text-primary mb-2">
-            Product Name
-          </label>
-          <input
-            type="text"
-            name="productName"
-            placeholder="Enter product name"
-            className="input-style"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-        </div>
+  const text = (value, setter, props = {}) => (
+    <input type="text" value={value} onChange={(e) => setter(e.target.value)} className="input" required {...props} />
+  );
 
-        {/* Category */}
-        <div className="flex flex-col">
-          <label className="text-sm font-medium text-primary mb-2">
-            Category
-          </label>
-          <select
-            name="name_category"
-            value={category}
-            className="input-style"
-            onChange={(e) => setCategory(e.target.value)}
-            required
-          >
-            <option value="" disabled>Select category</option>
-            {categoryList.map((item, index) => (
-              <option
-                key={item.category_name || item.category || index}
-                value={item.category_name || item.category || ""}
-              >
-                {item.category_name || item.category}
-              </option>
+  return (
+    <form onSubmit={handleSubmit} onReset={handleClear} className="card p-6">
+      <Group title="Basics" description="Shown on the product page">
+        <Field label="Product name">{text(name, setName)}</Field>
+        <Field label="Release date">
+          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="input" required />
+        </Field>
+        <Field label="Brand">
+          <select value={brand} onChange={(e) => setBrand(e.target.value)} className="input" required>
+            <option value="" disabled>Choose a brand</option>
+            {brandList.map((item, index) => (
+              <option key={item.brand_name || index} value={item.brand_name || ""}>{item.brand_name}</option>
             ))}
           </select>
-        </div>
+        </Field>
+        <Field label="Category">
+          <select value={category} onChange={(e) => setCategory(e.target.value)} className="input" required>
+            <option value="" disabled>Choose a category</option>
+            {categoryList.map((item, index) => (
+              <option key={item.category_name || index} value={item.category_name || ""}>{item.category_name}</option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Description" className="sm:col-span-2">
+          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} className="input h-auto resize-y py-2" required />
+        </Field>
+      </Group>
 
-        {/* image */}
-        <div className="flex flex-col">
-          <label className="text-sm font-medium text-primary mb-2">
-            Product Images
-          </label>
+      <Group title="First colour" description="More colours can be added later">
+        <Field label="Colour name">{text(colors, setColors, { placeholder: "Black" })}</Field>
+        <Field label="Photos">
           <input
             type="file"
             accept="image/*"
-            multiple // This allows multiple files selection
+            multiple
             ref={fileRef}
             onChange={handleImageChange}
-            className="h-10 w-full rounded-lg border border-gray-300 p-1 mb-2"
+            className="block w-full text-sm text-ink-2 file:mr-3 file:h-9 file:rounded-lg file:border file:border-line-strong file:bg-surface file:px-3 file:text-sm file:text-ink hover:file:bg-raised"
           />
-          <div className="flex flex-wrap gap-4 mt-2">
+        </Field>
+        {images.length > 0 && (
+          <div className="flex flex-wrap gap-2 sm:col-span-2">
             {images.map((image, index) => (
-              <div key={index} className="relative">
-                <img
-                  src={URL.createObjectURL(image)}
-                  alt={`Product Image ${index + 1}`}
-                  className="h-16 w-16 object-cover rounded-lg"
-                />
-                <button
-                  type="button"
-                  onClick={() => handleRemoveImage(index)}
-                  className="absolute top-0 right-0 text-red-600"
-                >
-                  X
+              <div key={index} className="relative h-16 w-16 overflow-hidden rounded-lg border border-line bg-raised">
+                <img src={URL.createObjectURL(image)} alt="" className="h-full w-full object-cover" />
+                <button type="button" onClick={() => handleRemoveImage(index)} className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded bg-surface/90 text-ink-2 hover:text-danger" aria-label="Remove photo">
+                  <FiX size={12} strokeWidth={1.5} />
                 </button>
               </div>
             ))}
           </div>
-        </div>
-        {/* Colors Section */}
-        <div className="flex flex-col">
-          <label className="text-sm font-medium text-primary mb-2">Colors</label>
-          <div className="flex flex-col gap-4 bg-gray-50 p-4 rounded-lg shadow-md">
+        )}
+      </Group>
 
-            <div className="flex items-center gap-6">
-              {/* Color Picker */}
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">Color </span>
-                <input
-                  type="color"
-                  value={colors}
-                  onChange={(e) => setColors(e.target.value)}
-                  className="h-6 w-28 rounded-lg border-gray-300 shadow-sm focus:ring-primary focus:border-primary"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+      <Group title="First spec" description="Storage, price and stock for this colour">
+        <Field label="Storage">{text(storage, setStorage, { placeholder: "128GB" })}</Field>
+        <Field label="RAM">{text(ram, setRam, { placeholder: "8GB" })}</Field>
+        <Field label="Price" hint="USD">
+          <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} min="0" step="0.01" className="input price" required />
+        </Field>
+        <Field label="Stock">
+          <input type="number" value={stock} onChange={(e) => setStock(e.target.value)} min="0" className="input price" required />
+        </Field>
+      </Group>
 
+      <Group title="Hardware" description="The same for every colour and storage option">
+        <Field label="Screen">{text(screenSize, setScreenSize, { placeholder: "6.1 inch" })}</Field>
+        <Field label="Processor">{text(processor, setProcessor)}</Field>
+        <Field label="Battery">{text(battery, setBattery, { placeholder: "4000mAh" })}</Field>
+        <Field label="Camera">{text(camera, setCamera, { placeholder: "48MP" })}</Field>
+      </Group>
 
-        {/* brand */}
-        <div className="flex flex-col">
-          <label className="text-sm font-medium text-primary mb-2">Brand</label>
-          <select
-            name="name_brand"
-            value={brand}
-            className="input-style"
-            onChange={((e) => setBrand(e.target.value))}
-            required
-          >
-            <option value="" disabled>Select brand</option>
-            {brandList.map((item, index) => (
-              <option
-                key={item.brand_name || item.brand || index}
-                value={item.brand_name || item.brand || ""}
-              >
-                {item.brand_name || item.brand}
-              </option>
-            ))}
-          </select>
-        </div>
-
-
-        {/* Description */}
-        <div className="flex flex-col">
-          <label className="text-sm font-medium text-primary mb-2">
-            Description
-          </label>
-          <textarea
-            name="description"
-            placeholder="Enter product description"
-            className="input-style h-28"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            required
-          />
-        </div>
-
-        {/* Price */}
-        <div className="flex flex-col">
-          <label className="text-sm font-medium text-primary mb-2">Price ($)</label>
-          <input
-            type="number"
-            name="price"
-            placeholder="e.g. 999.99"
-            value={price}
-            className="input-style"
-            onChange={(e) => setPrice(e.target.value)}
-            min="0"
-            step="0.01"
-            required
-          />
-        </div>
-
-        {/* Stock */}
-        <div className="flex flex-col">
-          <label className="text-sm font-medium text-primary mb-2">Stock</label>
-          <input
-            type="number"
-            name="stock"
-            placeholder="Enter product stock quantity"
-            className="input-style"
-            value={stock}
-            onChange={(e) => setStock(e.target.value)}
-            required
-          />
-        </div>
-
-        {/* Release Date */}
-        <div className="flex flex-col">
-          <label className="text-sm font-medium text-primary mb-2">
-            Release Date
-          </label>
-          <input
-            type="date"
-            name="release_date"
-            value={date}
-            className="input-style"
-            onChange={(e) => setDate(e.target.value)}
-            required
-          />
-        </div>
-
-        {/* Screen Size */}
-        <div className="flex flex-col">
-          <label className="text-sm font-medium text-primary mb-2">
-            Screen Size
-          </label>
-          <input
-            type="text"
-            name="screen_size"
-            value={screenSize}
-            placeholder="Enter screen size"
-            className="input-style"
-            onChange={(e) => setScreenSize(e.target.value)}
-            required
-          />
-        </div>
-
-        {/* Processor */}
-        <div className="flex flex-col">
-          <label className="text-sm font-medium text-primary mb-2">
-            Processor
-          </label>
-          <input
-            type="text"
-            name="processor"
-            value={processor}
-            placeholder="Enter processor details"
-            className="input-style"
-            onChange={(e) => setProcessor(e.target.value)}
-            required
-          />
-        </div>
-
-        {/* RAM */}
-        <div className="flex flex-col">
-          <label className="text-sm font-medium text-primary mb-2">RAM</label>
-          <select
-            name="ram"
-            className="input-style"
-            value={ram}
-            onChange={(e) => setRam(e.target.value)}
-            required
-          >
-            <option value="" disabled>Select RAM</option>
-            <option value="8GB">8GB</option>
-            <option value="16GB">16GB</option>
-            <option value="32GB">32GB</option>
-            <option value="64GB">64GB</option>
-            <option value="128GB">128GB</option>
-          </select>
-        </div>
-
-        {/* Storage */}
-        <div className="flex flex-col">
-          <label className="text-sm font-medium text-primary mb-2">
-            Storage
-          </label>
-          <input
-            type="text"
-            name="storage"
-            placeholder="Enter storage capacity"
-            value={storage}
-            className="input-style"
-            onChange={(e) => setStorage(e.target.value)}
-            required
-          />
-        </div>
-
-        {/* Battery */}
-        <div className="flex flex-col">
-          <label className="text-sm font-medium text-primary mb-2">
-            Battery
-          </label>
-          <input
-            type="text"
-            name="battery"
-            placeholder="Enter battery capacity"
-            value={battery}
-            className="input-style"
-            onChange={(e) => setBattery(e.target.value)}
-            required
-          />
-        </div>
-
-        {/* Camera */}
-        <div className="flex flex-col">
-          <label className="text-sm font-medium text-primary mb-2">
-            Camera
-          </label>
-          <input
-            type="text"
-            name="camera"
-            placeholder="Enter camera details"
-            className="input-style"
-            value={camera}
-            onChange={(e) => setCamera(e.target.value)}
-            required
-          />
-        </div>
-
-        {/* Buttons */}
-        <div className=" w-full gap-4 mt-4 grid grid-cols-2 justify-center items-center">
-          <input
-            type="submit"
-            value="submit"
-            className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded-lg transition"
-          />
-          <button
-            type="button"
-            onClick={(e) => handleClear(e)}
-            className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-2 rounded-lg transition"
-          >
-            Clear
-          </button>
-        </div>
-      </form >
-      {/* Success/Error Messages */}
-      {(error || result) && (
-        <div className="mt-6">
-          {result && (
-            <div className="flex items-center gap-3 p-4 bg-green-50 border-2 border-green-200 rounded-xl shadow-md animate-fade-in">
-              <span className="text-3xl">✅</span>
-              <div>
-                <p className="text-green-800 font-bold text-lg">{result}</p>
-                <p className="text-green-600 text-sm">Product has been added successfully!</p>
-              </div>
-            </div>
-          )}
-          {error && (
-            <div className="flex items-center gap-3 p-4 bg-red-50 border-2 border-red-200 rounded-xl shadow-md animate-fade-in">
-              <span className="text-3xl">❌</span>
-              <div>
-                <p className="text-red-800 font-bold text-lg">{error}</p>
-                <p className="text-red-600 text-sm">Please try again or contact support.</p>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-    </div >
+      <div className="flex flex-wrap items-center gap-3 border-t border-line pt-6">
+        <button type="submit" className="btn btn-dark">Add product</button>
+        <button type="reset" className="btn btn-ghost">Clear</button>
+      </div>
+      <div className="mt-4 space-y-2">
+        <Notice>{result}</Notice>
+        <Notice tone="error">{error}</Notice>
+      </div>
+    </form>
   );
 };
 

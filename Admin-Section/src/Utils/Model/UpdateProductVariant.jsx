@@ -1,159 +1,74 @@
 import { useEffect, useState } from "react";
+import { FiX } from "react-icons/fi";
 import { updateProductVariants } from "../../Fetch/FetchAPI";
+import Notice from "../../Component/Notice";
 
-
-const UpdateProductVariants = ({ product_id }) => {
-    const [id, setID] = useState('');
+// Rename a colour and replace its photos (the API swaps the whole photo set)
+const UpdateProductVariants = ({ product_id, initial }) => {
     const [images, setImages] = useState([]);
-    const [colors, setColors] = useState("#000000");
-    const [stock, setStock] = useState('');
-    const [result, setResult] = useState('');
-    const [error, setError] = useState('');
+    const [colors, setColors] = useState("");
+    const [result, setResult] = useState("");
+    const [error, setError] = useState("");
 
     useEffect(() => {
-        setID(product_id)
-    }, [product_id])
-    const handleImageChange = (e) => {
-        const files = Array.from(e.target.files); // Convert FileList to Array
-        setImages([...images, ...files]); // Append new files to the existing ones
-    };
+        setColors(initial?.color || "");
+    }, [initial]);
 
-    const handleRemoveImage = (index) => {
-        const newImages = [...images];
-        newImages.splice(index, 1);
-        setImages(newImages);
-    };
+    const handleImageChange = (e) => setImages([...images, ...Array.from(e.target.files)]);
+    const handleRemoveImage = (index) => setImages(images.filter((_, i) => i !== index));
 
-    // const handleSubmit = async (e) => {
-    //     e.preventDefault();
-    //     const formdata = {
-    //         images,
-    //         price,
-    //         colors,
-    //         stock
-    //     }
-    //     try {
-    //         const result = await addNewProductAPI(formdata, id);
-    //         // console.log(formdata.colors);
-
-    //         // console.log(formdata.images);
-
-    //         // handleClear(); // Clear form after successful submission
-    //         console.log(result);
-    //     } catch (error) {
-    //         console.log(error);
-    //     }
-    // };
     const handleUpdate = async (e) => {
         e.preventDefault();
-        const formdata = {
-            images,
-            colors,
-            stock,
+        if (!images.length) {
+            setError("Add the photos to keep for this colour. They replace the current ones");
+            return;
         }
         try {
-            const result = await updateProductVariants(formdata, id);
-            if (result?.status >= 200 && result?.status < 300) {
-                setResult("Updated successfully!");
-                setError('');
+            const response = await updateProductVariants({ images, colors }, product_id);
+            if (response?.status >= 200 && response?.status < 300) {
                 window.location.reload();
             } else {
-                setError("Update failed. Please try again.");
+                setError("Couldn’t save the colour");
             }
-        } catch (error) {
-            setError("Update failed. Please try again.");
-            console.log(error);
+        } catch {
+            setError("Couldn’t save the colour");
         }
-    }
+        setResult("");
+    };
 
-
-    const handleClear = () => {
-        setImages([]);
-        setColors('#000000');
-        setStock('');
-        setResult('');
-        setError('');
-    }
     return (
-        <div className="bg-white border-gray-300 border p-12 rounded-lg w-full max-w-9xl mx-auto mt-12 shadow-lg">
-            <h1 className="text-center text-3xl text-primary font-bold mb-8">Update Color / Images</h1>
-            <form
-                onSubmit={handleUpdate}
-                className="grid grid-cols-1 xl:grid-cols-2 md:items-center gap-10 py-10"
-            >
-                {/* Colors Section */}
-                <div className="flex flex-col">
-                    <label className="text-sm font-medium text-primary mb-2">Color</label>
-                    <div className="flex flex-col gap-4 bg-gray-50 p-4 rounded-lg shadow-md">
-                        <div className="flex items-center gap-2">
-                            <input
-                                type="color"
-                                value={colors}
-                                onChange={(e) => setColors(e.target.value)}
-                                className="h-6 w-56 rounded-lg border-gray-300 shadow-sm"
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                {/* Stock */}
-                <div className="flex flex-col">
-                    <label className="text-sm font-medium text-primary mb-2">Stock</label>
-                    <input
-                        type="number"
-                        placeholder="Enter stock quantity"
-                        value={stock}
-                        className="input-style"
-                        onChange={(e) => setStock(e.target.value)}
-                        min="0"
-                    />
-                </div>
-
-                {/* Images */}
-                <div className="flex flex-col">
-                    <label className="text-sm font-medium text-primary mb-2">Product Images</label>
-                    <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={handleImageChange}
-                        className="h-10 w-full rounded-lg border border-gray-300 p-1 mb-2"
-                    />
-                    <div className="flex flex-wrap gap-4 mt-2">
+        <form onSubmit={handleUpdate} className="space-y-4">
+            <div>
+                <label htmlFor="variant-colour" className="label">Colour name</label>
+                <input id="variant-colour" type="text" value={colors} onChange={(e) => setColors(e.target.value)} className="input" required />
+            </div>
+            <div>
+                <label htmlFor="variant-photos" className="label">Photos <span className="font-normal text-ink-3">replace the current ones</span></label>
+                <input
+                    id="variant-photos"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageChange}
+                    className="block w-full text-sm text-ink-2 file:mr-3 file:h-9 file:rounded-lg file:border file:border-line-strong file:bg-surface file:px-3 file:text-sm file:text-ink hover:file:bg-raised"
+                />
+                {images.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
                         {images.map((image, index) => (
-                            <div key={index} className="relative">
-                                <img
-                                    src={URL.createObjectURL(image)}
-                                    alt={`Product Image ${index + 1}`}
-                                    className="h-16 w-16 object-cover rounded-lg"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => handleRemoveImage(index)}
-                                    className="absolute top-0 right-0 text-red-600 font-bold"
-                                >X</button>
+                            <div key={index} className="relative h-16 w-16 overflow-hidden rounded-lg border border-line bg-raised">
+                                <img src={URL.createObjectURL(image)} alt="" className="h-full w-full object-cover" />
+                                <button type="button" onClick={() => handleRemoveImage(index)} className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded bg-surface/90 text-ink-2 hover:text-danger" aria-label="Remove photo">
+                                    <FiX size={12} strokeWidth={1.5} />
+                                </button>
                             </div>
                         ))}
                     </div>
-                </div>
-
-                <div className="w-full gap-4 mt-4 grid grid-cols-2 justify-center items-center">
-                    <input
-                        type="submit"
-                        value="Update"
-                        className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded-lg transition cursor-pointer"
-                    />
-                    <button
-                        type="button"
-                        onClick={handleClear}
-                        className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-2 rounded-lg transition"
-                    >Clear</button>
-                </div>
-            </form>
-
-            {result && <p className="mt-4 text-green-600 font-semibold text-center">{result}</p>}
-            {error && <p className="mt-4 text-red-600 font-semibold text-center">{error}</p>}
-        </div>
+                )}
+            </div>
+            <button type="submit" className="btn btn-dark">Save colour</button>
+            <Notice>{result}</Notice>
+            <Notice tone="error">{error}</Notice>
+        </form>
     );
 };
 

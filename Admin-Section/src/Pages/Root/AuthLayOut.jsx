@@ -1,42 +1,14 @@
-import { logo } from "../../Assets";
 import { Outlet } from "react-router-dom";
+import { logo } from "../../Assets";
 
-const AuthLayOut = () => {
-  return (
-    // <>
-    //   <nav>
-    //     <header>
-    //       <img src={logo} alt="Nav logo" className="p-16 w-70 lg:w-70" />
-    //     </header>
-    //   </nav>
-    //   <main>
-    //     <Outlet />
-    //   </main>
-    // </>
-    <>
-  {/* <nav className="w-full">
-    <header className="flex justify px-6 py-4">
-      <img src={logo} alt="Nav logo" className="w-40 lg:w-48" />
-    </header>
-  </nav>
-
-  <main className="flex justify-center items-center min-h-[80vh]">
-    <Outlet />
-  </main> */}
-  <nav className="w-full">
-  <header className="px-10 py-6">
-    <img src={logo} alt="Nav logo" className="w-56 lg:w-72" />
-  </header>
-</nav>
-
-<main className="flex justify-center items-center min-h-[80vh]">
-  <div className="w-full max-w-lg scale-110">
-    <Outlet />
+const AuthLayOut = () => (
+  <div className="flex min-h-screen flex-col items-center bg-page px-4 pt-20">
+    <img src={logo} alt="Genius Store" className="h-10 w-auto" />
+    <p className="mt-3 text-sm text-ink-3">Store admin</p>
+    <main className="mt-10 w-full max-w-sm">
+      <Outlet />
+    </main>
   </div>
-</main>
-</>
-
-  );
-};
+);
 
 export default AuthLayOut;

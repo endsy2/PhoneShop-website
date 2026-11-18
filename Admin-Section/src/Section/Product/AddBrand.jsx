@@ -1,5 +1,8 @@
 import { useEffect, useState, useRef } from "react";
+import { FiX } from "react-icons/fi";
 import { addNewBrandAPI, brandFetch, deleteBrandAPI } from "../../Fetch/FetchAPI";
+import Notice from "../../Component/Notice";
+import ProductImage from "../../Component/ProductImage";
 
 const AddBrand = () => {
   const [brand, setBrand] = useState('');
@@ -14,7 +17,7 @@ const AddBrand = () => {
       const data = await brandFetch();
       setBrandList(data?.data || []);
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
 
@@ -26,7 +29,7 @@ const AddBrand = () => {
 
     // Check if the image is selected
     if (!img) {
-      alert("Please select an image.");
+      setError("Choose a logo image");
       return;
     }
 
@@ -36,22 +39,20 @@ const AddBrand = () => {
 
     try {
       const result = await addNewBrandAPI(formData); // Send the formData containing the image
-      console.log(result);
 
       // After successful submission, reset the state and input fields
       setImg(null);  // Reset img state
       setBrand('');  // Reset brand input
       fileInputRef.current.value = '';  // Manually reset the file input value
       if (result?.status >= 200 && result?.status < 300) {
-        setResult("Add Success")
+        setResult(`Added ${brand}`)
         setError('')
         loadBrands();
       }
       // Handle success response here (e.g., show success message, clear fields)
-    } catch (error) {
-      console.log(error);
+    } catch {
       setResult('')
-      setError('Something went wrong')
+      setError('Couldn\u2019t add the brand. It may already exist')
       // Handle error response here
     }
   };
@@ -73,9 +74,10 @@ const AddBrand = () => {
   };
 
   const handleDeleteBrand = async (brandName) => {
+    if (!window.confirm(`Remove the brand ${brandName}?`)) return;
     try {
       await deleteBrandAPI(brandName);
-      setResult("Delete Success");
+      setResult(`Removed ${brandName}`);
       setError("");
       loadBrands();
     } catch (err) {
@@ -85,103 +87,57 @@ const AddBrand = () => {
   };
 
   return (
-    <div className="bg-white border-gray-300 border p-8 rounded-lg w-full max-w-4xl mx-auto mt-12 shadow-lg">
-      <h1 className="text-center text-3xl text-primary font-bold mb-8">
-        Add New Brand
-      </h1>
-      <form
-        onSubmit={handleSubmit}
-        className="grid grid-cols-1 md:grid-cols-2 md:items-center gap-6"
-      >
-        {/* Brand */}
-        <div className="flex flex-col">
-          <label className="text-sm font-medium text-primary mb-2">Brand</label>
-          <input
-            type="text"
-            name="brand"
-            placeholder="Enter brand name"
-            className="input-style"
-            value={brand}
-            onChange={(e) => setBrand(e.target.value)}
-            required
-          />
+    <div className="grid items-start gap-6 lg:grid-cols-2">
+      <form onSubmit={handleSubmit} onReset={handleReset} className="card space-y-4 p-6">
+        <h2 className="text-base font-medium">New brand</h2>
+        <div>
+          <label htmlFor="brand" className="label">Name</label>
+          <input id="brand" type="text" value={brand} onChange={(e) => setBrand(e.target.value)} className="input" required />
         </div>
-
-        {/* Picture */}
-        <div className="flex flex-col">
-          <label className="text-sm font-medium text-primary mb-2">Picture</label>
+        <div>
+          <label htmlFor="logo" className="label">Logo</label>
           <input
+            id="logo"
             type="file"
             accept="image/*"
-            ref={fileInputRef}  // Set the ref on the input
-            onChange={handleImageChange}  // Update the image handler
-            className="h-10 w-full rounded-lg border text-primary p-1"
-            required
+            ref={fileInputRef}
+            onChange={handleImageChange}
+            className="block w-full text-sm text-ink-2 file:mr-3 file:h-9 file:rounded-lg file:border file:border-line-strong file:bg-surface file:px-3 file:text-sm file:text-ink hover:file:bg-raised"
           />
         </div>
-
-        {/* Buttons */}
-        <div className="md:col-span-2 flex justify-center gap-4 mt-4">
-          <button
-            type="submit"
-            className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded-lg transition"
-          >
-            Submit
-          </button>
-          <button
-            type="button"
-            onClick={handleReset}  // Simplified reset
-            className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-2 rounded-lg transition"
-          >
-            Reset
-          </button>
+        <div className="flex gap-2">
+          <button type="submit" className="btn btn-dark">Add brand</button>
+          <button type="reset" className="btn btn-ghost">Clear</button>
         </div>
+        <Notice>{result}</Notice>
+        <Notice tone="error">{error}</Notice>
       </form>
-      {/* Success/Error Messages */}
-      {(error || result) && (
-        <div className="mt-6">
-          {result && (
-            <div className="flex items-center gap-3 p-4 bg-green-50 border-2 border-green-200 rounded-xl shadow-md animate-fade-in">
-              <span className="text-3xl">✅</span>
-              <div>
-                <p className="text-green-800 font-bold text-lg">{result}</p>
-                <p className="text-green-600 text-sm">Brand has been added successfully!</p>
-              </div>
-            </div>
-          )}
-          {error && (
-            <div className="flex items-center gap-3 p-4 bg-red-50 border-2 border-red-200 rounded-xl shadow-md animate-fade-in">
-              <span className="text-3xl">❌</span>
-              <div>
-                <p className="text-red-800 font-bold text-lg">{error}</p>
-                <p className="text-red-600 text-sm">Please try again or contact support.</p>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
 
-      <div className="mt-8">
-        <h2 className="text-xl font-semibold text-primary mb-3">Brand List</h2>
-        <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg">
-          {brandList.length === 0 ? (
-            <p className="p-4 text-gray-500">No brands found.</p>
-          ) : (
-            brandList.map((item) => (
-              <div key={item.brand_name} className="flex justify-between items-center p-3 border-b border-gray-100 last:border-b-0">
-                <span className="text-gray-800">{item.brand_name}</span>
-                <button
-                  type="button"
-                  onClick={() => handleDeleteBrand(item.brand_name)}
-                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
-                >
-                  Remove
-                </button>
-              </div>
-            ))
-          )}
+      <section className="card">
+        <div className="flex items-baseline justify-between border-b border-line px-5 py-3">
+          <h2 className="text-sm font-medium">Brands</h2>
+          <span className="price text-[13px] text-ink-3">{brandList.length}</span>
         </div>
-      </div>
+        {brandList.length === 0 ? (
+          <p className="px-5 py-8 text-center text-sm text-ink-3">No brands yet</p>
+        ) : (
+          <ul className="max-h-96 divide-y divide-line overflow-y-auto">
+            {brandList.map((item) => (
+              <li key={item.brand_name} className="flex h-12 items-center justify-between gap-3 px-5 text-sm">
+                <span className="flex items-center gap-3">
+                  <span className="h-8 w-8 overflow-hidden rounded-md bg-raised">
+                    <ProductImage src={item.img} alt="" className="h-full w-full p-1" />
+                  </span>
+                  {item.brand_name}
+                </span>
+                <button type="button" onClick={() => handleDeleteBrand(item.brand_name)} className="icon-btn h-8 w-8 hover:bg-danger-soft hover:text-danger" aria-label={`Remove ${item.brand_name}`}>
+                  <FiX size={14} strokeWidth={1.5} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 };
