@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { FiArrowRight } from "react-icons/fi";
+import { FiArrowRight, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import ProductCard from "./ProductCard";
 import Card from "./Card";
 import Price from "../../Components/Price";
@@ -52,6 +52,100 @@ const ProductGrid = ({ products }) => (
 
 const Section = ({ children }) => <section className="page-container mt-16">{children}</section>;
 
+const SLIDE_MS = 5000;
+
+// Hero slider: advances on its own, pauses on hover/focus, and has arrows, dots and touch swipe.
+const HeroSlider = ({ slides }) => {
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [touchX, setTouchX] = useState(null);
+  const count = slides.length;
+  const go = (step) => setIndex((i) => (i + step + count) % count);
+
+  useEffect(() => {
+    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (paused || count < 2 || reduceMotion) return;
+    const timer = setInterval(() => setIndex((i) => (i + 1) % count), SLIDE_MS);
+    return () => clearInterval(timer);
+  }, [paused, count, index]); // index: a manual move restarts the countdown
+
+  const arrow = "absolute top-1/2 z-10 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-line bg-surface/90 text-ink shadow-sm transition-opacity duration-150 hover:bg-surface focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100";
+
+  return (
+    <div
+      className="group card relative overflow-hidden p-3"
+      role="region"
+      aria-roledescription="carousel"
+      aria-label="Featured deals"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={() => setPaused(false)}
+      onTouchStart={(e) => setTouchX(e.touches[0].clientX)}
+      onTouchEnd={(e) => {
+        if (touchX === null) return;
+        const dx = e.changedTouches[0].clientX - touchX;
+        if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1);
+        setTouchX(null);
+      }}
+    >
+      <div className="overflow-hidden">
+        <div className="flex transition-transform duration-500 ease-out" style={{ transform: `translateX(-${index * 100}%)` }}>
+          {slides.map((item, i) => (
+            <Link
+              key={productKey(item)}
+              to={detailUrl(item)}
+              className="block w-full shrink-0"
+              aria-hidden={i !== index}
+              tabIndex={i === index ? 0 : -1}
+              aria-label={`${i + 1} of ${count}: ${item.name}`}
+            >
+              <div className="aspect-[4/3] overflow-hidden rounded-lg bg-raised">
+                <ProductImage src={item.images || item.image} alt={item.name} className="h-full w-full p-8" />
+              </div>
+              <div className="flex items-end justify-between gap-4 px-3 pb-3 pt-5">
+                <div>
+                  <p className="text-[13px] text-ink-3">{item.price_discount ? "Deal of the day" : "Featured"}</p>
+                  <p className="mt-1 text-lg text-ink">{item.name}</p>
+                </div>
+                <Price
+                  size="lg"
+                  price={item.price_discount ?? item.price}
+                  original={item.price_discount ? item.price : null}
+                  className="justify-end"
+                />
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {count > 1 && (
+        <>
+          <button type="button" onClick={() => go(-1)} className={`${arrow} left-5`} aria-label="Previous deal">
+            <FiChevronLeft size={20} />
+          </button>
+          <button type="button" onClick={() => go(1)} className={`${arrow} right-5`} aria-label="Next deal">
+            <FiChevronRight size={20} />
+          </button>
+          <div className="mt-1 flex justify-center gap-2 pb-1">
+            {slides.map((item, i) => (
+              <button
+                key={productKey(item)}
+                type="button"
+                onClick={() => setIndex(i)}
+                aria-label={`Show ${item.name}`}
+                aria-current={i === index}
+                className={`h-2 rounded-full transition-all duration-300 ${i === index ? "w-6 bg-ink" : "w-2 bg-line-strong hover:bg-ink-3"}`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
 const HomePage = () => {
   const [products, setProducts] = useState([]);
   const [discountProducts, setDiscountProducts] = useState([]);
@@ -79,7 +173,8 @@ const HomePage = () => {
   }, []);
 
   const deals = Array.from(new Map(discountProducts.map((item) => [item.phone_id, item])).values());
-  const featured = deals[0] || products[0];
+  // Deals first; with fewer than 2 deals, fill up with other products so the slider has something to slide.
+  const heroSlides = deals.length >= 2 ? deals : [...deals, ...products.filter((p) => !deals.some((d) => d.phone_id === p.phone_id))].slice(0, 5);
 
   return (
     <div className="pb-4">
@@ -99,25 +194,7 @@ const HomePage = () => {
           </div>
         </div>
 
-        {featured && (
-          <Link to={detailUrl(featured)} className="group card block p-3 transition-colors duration-150 ease-out hover:border-line-strong">
-            <div className="aspect-[4/3] overflow-hidden rounded-lg bg-raised">
-              <ProductImage src={featured.images || featured.image} alt={featured.name} className="h-full w-full p-8" />
-            </div>
-            <div className="flex items-end justify-between gap-4 px-3 pb-3 pt-5">
-              <div>
-                <p className="text-[13px] text-ink-3">{featured.price_discount ? "Deal of the day" : "Featured"}</p>
-                <p className="mt-1 text-lg text-ink">{featured.name}</p>
-              </div>
-              <Price
-                size="lg"
-                price={featured.price_discount ?? featured.price}
-                original={featured.price_discount ? featured.price : null}
-                className="justify-end"
-              />
-            </div>
-          </Link>
-        )}
+        {heroSlides.length > 0 && <HeroSlider slides={heroSlides} />}
       </section>
 
       {brands.length > 0 && (
