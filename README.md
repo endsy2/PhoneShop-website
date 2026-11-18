@@ -19,6 +19,14 @@ A customer storefront, an admin panel and a REST API, with Bakong KHQR payments,
 
 ---
 
+## 📸 Screenshots
+
+| 🛍️ Storefront | 🛠️ Admin dashboard |
+|---|---|
+| ![Storefront home page](docs/screenshots/storefront.png) | ![Admin dashboard](docs/screenshots/admin-dashboard.png) |
+
+<sub>Shown with demo data and generated product images.</sub>
+
 ## ✨ Features
 
 <table>
