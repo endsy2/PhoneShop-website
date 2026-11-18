@@ -25,6 +25,24 @@ A customer storefront, an admin panel and a REST API, with Bakong KHQR payments,
 |---|---|
 | ![Storefront home page](docs/screenshots/storefront.png) | ![Admin dashboard](docs/screenshots/admin-dashboard.png) |
 
+### 🛍️ Shopping flow
+
+| **Product page**: pick storage and colour, live deal price | **Reviews**: rating summary, filters, helpful votes |
+|---|---|
+| ![Product page](docs/screenshots/product-detail.png) | ![Product reviews](docs/screenshots/product-reviews.png) |
+| **Compare**: up to 3 phones side by side, differences highlighted | **Checkout**: delivery or pickup, cash on delivery or Bakong KHQR |
+| ![Compare products](docs/screenshots/compare.png) | ![Checkout](docs/screenshots/checkout.png) |
+| **My orders**: order history with status and receipts | |
+| ![My orders](docs/screenshots/my-orders.png) | |
+
+### 🛠️ Running the store
+
+| **Orders**: status counts, search, payment and delivery status | **Order detail**: items, payment check, customer and delivery |
+|---|---|
+| ![Admin orders](docs/screenshots/admin-orders.png) | ![Admin order detail](docs/screenshots/admin-order-detail.png) |
+| **Promotions**: discount a product variant for a date range | |
+| ![Admin promotions](docs/screenshots/admin-promotions.png) | |
+
 <sub>Shown with demo data. Product photos from Wikimedia Commons, see Photo credits below.</sub>
 
 ## ✨ Features
